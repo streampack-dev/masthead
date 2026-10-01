@@ -2,7 +2,8 @@
    the old arcade racers drew theirs: segments of road projected toward a high horizon, so it
    fans out around and below the name. Rumble ticks, centre dashes and roadside posts pass at a
    slow cruise, and the hills on the horizon slide aside as the road bends. The course comes from
-   the seed, so ?ambientSeed=<n> drives the same road again. */
+   the seed, so ?ambientSeed=<n> drives the same road again. A click opens the throttle: the road
+   rushes up at five times the cruise and eases back to it over a few seconds. */
 /* A segment is SEG of a road width long; DRAW of them reach the horizon. */
 export var SEG = 0.3, DRAW = 260;
 /* Beyond DETAIL road widths the ticks, dashes and posts would crowd into a smear, so only the
@@ -13,6 +14,8 @@ var NEAR = 0.9, HORIZON = 82, DEPTH = 300, ROAD = 560, PARALLAX = 2400;
 export var SPEED = 0.08 / SEG;
 export var MAX_CURVE = 0.02;
 var MIN_CURVE = 0.006, MAX_SLOPE = 0.006;
+/* How much faster than the cruise a click takes you, and how quickly (per step) that eases off. */
+export var BOOST = 5, EASE_OFF = 0.975;
 
 function ease(t) { return t <= 0 ? 0 : t >= 1 ? 1 : (1 - Math.cos(Math.PI * t)) / 2; }
 
@@ -83,7 +86,7 @@ export default function ghostrider(layer, m) {
   var dashes = m.el('path', { 'class': 'masthead-ghostrider-dash' });
   var posts = m.el('path', { 'class': 'masthead-ghostrider-post' });
 
-  var cz = 0, scenery = 0;
+  var cz = 0, scenery = 0, boost = 0;
 
   function n(v) { return v.toFixed(1); }
 
@@ -121,10 +124,13 @@ export default function ghostrider(layer, m) {
 
   return {
     interval: 40,
+    poke: function () { boost = BOOST - 1; },
     step: function () {
+      var speed = SPEED * (1 + boost);
+      boost = boost > 0.01 ? boost * EASE_OFF : 0;
       // The hills slide against the bend you're in, as a turning view does.
-      scenery += road.curve(Math.floor(cz)) * SPEED * SEG * PARALLAX;
-      cz += SPEED;
+      scenery += road.curve(Math.floor(cz)) * speed * SEG * PARALLAX;
+      cz += speed;
       draw();
     }
   };

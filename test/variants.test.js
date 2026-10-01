@@ -14,7 +14,7 @@ import spider, { spider as spiderShape, web } from '../src/variants/spider.js';
 import { find, run, serialize } from './fake.js';
 import boids from '../src/variants/boids.js';
 import bytecode, { OCTOBER, PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
-import circuit from '../src/variants/circuit.js';
+import circuit, { WIRES, along } from '../src/variants/circuit.js';
 import chase, { whirl } from '../src/variants/chase.js';
 import citydefense, { BASES, CITIES, GROUND, intercept } from '../src/variants/citydefense.js';
 import grass, { wind as grassWind } from '../src/variants/grass.js';
@@ -25,7 +25,7 @@ import pongwars, { COLS as WAR_COLS, ROWS as WAR_ROWS, bounce } from '../src/var
 import stix, { GH, GW, claim, field, route } from '../src/variants/stix.js';
 import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
 import fractal from '../src/variants/fractal.js';
-import ghostrider, { DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
+import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
 import life, { PLANTS } from '../src/variants/life.js';
 import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
@@ -33,7 +33,7 @@ import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
 
-const all = { bats, boids, bytecode, chase, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -68,8 +68,8 @@ describe('every variant', () => {
 describe('a poke', () => {
   const poking = Object.keys(all).filter((name) => run(all[name], 0).art && run(all[name], 0).art.poke);
 
-  it('is taken by boids, life and water', () => {
-    for (const name of ['boids', 'life', 'water']) assert.ok(poking.includes(name), name);
+  it('is taken by boids, circuit, fractal, ghostrider, life and water', () => {
+    for (const name of ['boids', 'circuit', 'fractal', 'ghostrider', 'life', 'water']) assert.ok(poking.includes(name), name);
   });
 
   for (const name of poking) {
@@ -111,6 +111,51 @@ describe('a poke', () => {
     }
   });
 
+  it('sprouts a root in the fractal where it lands, or beside the name, and wakes a resting growth', () => {
+    const { layer, art } = run(fractal, 0);
+    const tips = find(layer, 'masthead-fractal-tips')[0];
+    let i = 1;
+    for (; i <= 400 && tips.children.length > 0; i++) art.step(i, i * 92);
+    assert.equal(tips.children.length, 0);
+    art.poke(100, 60, i, i * 92);
+    assert.equal(tips.children.length, 3);
+    assert.ok(tips.children.every((g) => g.attrs.transform === 'translate(100.0 60.0)'));
+    const grown = () => find(layer, 'masthead-fractal-glow')[0].attrs.d.split('M').length;
+    const before = grown();
+    for (let k = 1; k <= 20; k++) art.step(i + k, (i + k) * 92);
+    assert.ok(grown() > before + 20, `${before} -> ${grown()}`);
+    art.poke(600, 160, i + 20, (i + 20) * 92);
+    const [x, y] = /translate\(([\d.]+) ([\d.]+)\)/.exec(tips.children[0].attrs.transform).slice(1).map(Number);
+    assert.ok(Math.hypot((x - 600) / 300, (y - 160) / 94) >= 1, `${x} ${y}`);
+  });
+
+  it('surges through every trace on the circuit board, then fades', () => {
+    const { layer, art } = run(circuit, 0);
+    const surge = find(layer, 'masthead-circuit-surge')[0];
+    const near = along(WIRES[4], 100);
+    art.poke(near[0] + 3, near[1], 0, 0);
+    assert.equal(surge.children.length, 2);
+    const seen = new Set(surge.children);
+    for (let i = 1; i <= 200; i++) {
+      art.step(i, i * 24);
+      surge.children.forEach((g) => seen.add(g));
+    }
+    assert.equal(seen.size, WIRES.length * 2);
+    assert.equal(surge.children.length, 0);
+  });
+
+  it('opens the throttle on the road, then eases back to the cruise', () => {
+    const { layer, art } = run(ghostrider, 0);
+    const posts = find(layer, 'masthead-ghostrider-post')[0];
+    const quiet = run(ghostrider, 0);
+    const quietPosts = find(quiet.layer, 'masthead-ghostrider-post')[0];
+    art.poke(600, 160, 0, 0);
+    for (let i = 1; i <= 10; i++) { art.step(i, i * 40); quiet.art.step(i, i * 40); }
+    assert.notEqual(posts.attrs.d, quietPosts.attrs.d);
+    assert.ok(BOOST > 1 && SPEED > 0);
+    for (let i = 11; i <= 600; i++) art.step(i, i * 40);
+  });
+
   it('skips a stone across the water, shorter and lighter each time, toward the open side', () => {
     const from = skips(10, 30);
     assert.ok(from.length >= 3 && from.every((s) => s.x > 10 && s.y < 30));
@@ -124,9 +169,11 @@ describe('a poke', () => {
 });
 
 describe('the circuit', () => {
-  it('draws its board and four fireflies that move by SVG alone, so it takes no steps', () => {
+  it('draws its board and four fireflies that move by SVG alone, its steps idle until a surge', () => {
     const { layer, art } = run(circuit, 0);
-    assert.equal(art, undefined);
+    const before = serialize(layer);
+    for (let i = 1; i <= 50; i++) art.step(i, i * 24);
+    assert.equal(serialize(layer), before);
     assert.equal(find(layer, 'masthead-circuit-traces')[0].children.length, 9);
     assert.equal(find(layer, 'masthead-circuit-nodes')[0].children.length, 12);
     const runs = find(layer, 'masthead-circuit-fireflies')[0].children.map((g) => g.children[2].attrs);
