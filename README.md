@@ -13,17 +13,23 @@ only puts the art on its page and starts the runner.
 
 | Name | What it is |
 |---|---|
-| `circuit` | Fireflies running the traces of a circuit board, moving by SVG alone. |
 | `boids` | Sixteen fireflies flocking. |
 | `bytecode` | The code rain in JVM bytecode: real instructions in hex, now and then one decoded. |
+| `circuit` | Fireflies running the traces of a circuit board, moving by SVG alone. |
+| `citydefense` | Missile defense playing itself, slowly: trails from above, counter-missiles bursting into rings, cities falling and rebuilt. |
 | `fractal` | A branching growth tracing round the name, resting when grown, then starting again. |
 | `ghostrider` | A wireframe road ahead at a slow cruise, bending and rising gently, hills sliding aside on the bends. For Neil Peart. |
+| `grass` | A field of grass along the foot of the masthead, the wind moving through it. |
+| `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
 | `life` | Conway's Game of Life, reseeded when it settles. |
+| `paddles` | Two paddles and a ball, playing itself at an easy pace, scores ticking up to eleven. |
+| `rocks` | Rocks drifting and turning; a small ship turns, fires, and splits them. |
 | `signalnoise` | Faint scanlines and a rolling band, with brief bursts of interference. |
 | `solari` | A split-flap board showing the front page's other deks, riffling to the next every so often. |
 | `terrainflight` | Ridgelines rolling toward you from the horizon. |
 | `train` | An ASCII-art train running along a track at the foot of the masthead, trailing smoke. |
 | `water` | A still surface seen from just above; drops land and their rings spread and cross. |
+| `windfarm` | Turbines along low hills, each turning at its own pace in a wind that rises and falls. |
 
 On a page running them, `?ambient=<name>` picks one, `?ambientSeed=<n>` replays a run (the art's
 title names the seed) and `?ambientDebug=1` logs the choice.

@@ -3,16 +3,22 @@ import { startMasthead, variants } from '../src/index.js';
 
 var BLURBS = {
   circuit: 'Fireflies running the traces of a circuit board.',
+  citydefense: 'Missile Command, playing itself, slowly: trails from above, rings bursting, cities falling and rebuilt.',
   boids: 'Sixteen fireflies flocking.',
   bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded.',
   fractal: 'A branching growth tracing round the name, resting when grown, then starting again.',
   ghostrider: 'A wireframe road ahead, bending and rising gently, the hills sliding aside on the bends. For Neil Peart.',
+  grass: 'A field of grass, the wind moving through it in slow swells and passing gusts.',
+  lander: 'Lunar Lander, flown by its autopilot: a slow descent, short burns, a gentle landing on the pad.',
   life: "Conway's Game of Life, reseeded when it settles.",
+  paddles: 'Pong, playing itself at an easy pace, scores ticking up to eleven.',
+  rocks: 'Asteroids, playing itself: rocks drifting and turning, splitting when the ship hits them.',
   signalnoise: 'Faint scanlines and a rolling band, with brief bursts of interference.',
   solari: "A split-flap board showing the front page's deks, riffling to the next every so often.",
   terrainflight: 'Ridgelines rolling toward you from the horizon.',
   train: 'An ASCII train along the foot of the masthead, trailing smoke; then the empty track.',
-  water: 'A still surface, seen from just above, that drops land on now and then.'
+  water: 'A still surface, seen from just above, that drops land on now and then.',
+  windfarm: 'Turbines along low hills, each turning at its own pace in a wind that rises and falls.'
 };
 
 /* What a front page's other posts might say, for Solari. */

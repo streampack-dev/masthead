@@ -6,6 +6,12 @@ import { find, run, serialize } from './fake.js';
 import boids from '../src/variants/boids.js';
 import bytecode, { PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
 import circuit from '../src/variants/circuit.js';
+import citydefense, { BASES, CITIES, GROUND, intercept } from '../src/variants/citydefense.js';
+import grass, { wind as grassWind } from '../src/variants/grass.js';
+import lander, { GRAVITY, SIDE, THRUST, ground, pilot } from '../src/variants/lander.js';
+import paddles, { LEFT, RIGHT, landing } from '../src/variants/paddles.js';
+import rocks, { SIZES, outline } from '../src/variants/rocks.js';
+import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
 import fractal from '../src/variants/fractal.js';
 import ghostrider, { DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
 import life from '../src/variants/life.js';
@@ -15,7 +21,7 @@ import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple } from '../src/variants/water.js';
 
-const all = { boids, bytecode, fractal, ghostrider, life, signalnoise, solari, terrainflight, train, water };
+const all = { boids, bytecode, citydefense, fractal, ghostrider, grass, lander, paddles, rocks, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -39,7 +45,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['boids', 'bytecode', 'fractal', 'ghostrider', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['boids', 'bytecode', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'rocks', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -114,6 +120,155 @@ describe('the bytecode rain', () => {
     }
     const texts = PROGRAMS.flat().map((instruction) => instruction.text);
     assert.ok(seen && texts.includes(seen), String(seen));
+  });
+});
+
+describe('city defense', () => {
+  it('aims where a counter-missile meets the missile, not where the missile is', () => {
+    const missile = { x: 300, y: 0, vx: 0.2, vy: 0.5 };
+    const at = intercept(600, GROUND - 9, missile);
+    const t = (at.y - missile.y) / missile.vy;
+    assert.ok(Math.abs(Math.hypot(at.x - 600, at.y - (GROUND - 9)) / 4.2 - t) <= 1.5);
+    assert.ok(at.y > 0 && at.y < GROUND - 20);
+  });
+
+  it('stands its cities and bases along the foot, clear of the name', () => {
+    const { layer } = run(citydefense, 0);
+    assert.equal(find(layer, 'masthead-citydefense-city').length, CITIES.length);
+    assert.equal(find(layer, 'masthead-citydefense-base').length, BASES.length);
+    assert.ok(GROUND > 290);
+  });
+
+  it('fires back, bursts, and loses a city now and then, rebuilding when most are gone', () => {
+    const { layer, art } = run(citydefense, 0, { seed: 3 });
+    let bursts = 0, fell = false, rebuilt = false;
+    for (let i = 1; i <= 20000 && !rebuilt; i++) {
+      art.step(i, i * 40);
+      bursts = Math.max(bursts, find(layer, 'masthead-citydefense-burst').length);
+      const rubble = find(layer, 'masthead-citydefense-rubble').length;
+      if (rubble > 0) fell = true;
+      if (fell && rubble === 0) rebuilt = true;
+    }
+    assert.ok(bursts > 0 && fell && rebuilt);
+  });
+});
+
+describe('the lander', () => {
+  // The lander's own physics, flown by its pilot until it's down.
+  function fly(seed) {
+    let r = seed;
+    const rand = () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000);
+    const land = ground(rand, 1200), mid = (land.pad.x1 + land.pad.x2) / 2;
+    const s = { x: mid + (seed % 2 ? 1 : -1) * 320, y: 12, vx: 0, vy: 0.1 };
+    for (let i = 0; i < 4000; i++) {
+      const burn = pilot(s, land.pad);
+      s.vy += GRAVITY - (burn.main ? THRUST : 0);
+      s.vx += (burn.left ? SIDE : 0) - (burn.right ? SIDE : 0);
+      s.x += s.vx; s.y += s.vy;
+      if (s.y >= land.pad.y - 5) return { s, land, steps: i };
+    }
+    return null;
+  }
+
+  it('makes flat ground for its pad among jagged hills', () => {
+    let r = 4;
+    const land = ground(() => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000), 1200);
+    assert.ok(land.pad.x2 - land.pad.x1 >= 60);
+    assert.ok(land.points.every(([, y]) => y >= 250 && y <= 310));
+  });
+
+  it('comes down gently on the pad, every time', () => {
+    for (const seed of [1, 2, 3, 7, 42, 99, 123, 555]) {
+      const flown = fly(seed);
+      assert.ok(flown, `seed ${seed} never came down`);
+      const { s, land } = flown;
+      assert.ok(s.x > land.pad.x1 && s.x < land.pad.x2, `seed ${seed}: x ${s.x.toFixed(1)}`);
+      assert.ok(s.vy < 0.2 && Math.abs(s.vx) < 0.3, `seed ${seed}: ${s.vx.toFixed(2)}, ${s.vy.toFixed(2)}`);
+    }
+  });
+});
+
+describe('rocks', () => {
+  it('draws ragged rocks, and splits one the ship hits into two smaller', () => {
+    let r = 9;
+    assert.match(outline(() => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000), SIZES[0]), /^M.*Z$/);
+    const { layer, art } = run(rocks, 0, { seed: 5 });
+    const count = () => find(layer, 'masthead-rocks-rock').length;
+    const start = count();
+    let more = false, shots = false;
+    for (let i = 1; i <= 3000 && !more; i++) {
+      art.step(i, i * 40);
+      if (find(layer, 'masthead-rocks-shot').length) shots = true;
+      if (count() > start) more = true;
+    }
+    assert.ok(shots && more);
+  });
+});
+
+describe('paddles', () => {
+  it('knows where the ball will reach a paddle, off the walls', () => {
+    assert.equal(landing({ x: 600, y: 100, vx: 5, vy: 0 }, RIGHT), 100);
+    // Down 280 over the crossing: to the bottom (310) and back up.
+    const y = landing({ x: 600, y: 100, vx: 5, vy: 2.5 }, RIGHT);
+    assert.ok(Math.abs(y - (310 - (100 + 280 - 310))) < 1e-9, String(y));
+  });
+
+  it('rallies, and now and then a point is won', () => {
+    const { layer, art } = run(paddles, 0);
+    const score = () => find(layer, 'masthead-paddles-score').map((t) => t.textContent).join(':');
+    const first = score();
+    let changed = false;
+    const ball = find(layer, 'masthead-paddles-ball')[0];
+    for (let i = 1; i <= 15000 && !changed; i++) {
+      art.step(i, i * 40);
+      const x = Number(/translate\((-?[\d.]+)/.exec(ball.attrs.transform)[1]);
+      assert.ok(x >= LEFT - 10 && x <= RIGHT + 10);
+      changed = score() !== first;
+    }
+    assert.ok(changed);
+  });
+});
+
+describe('grass', () => {
+  it('leans with the wind, more where a gust is passing', () => {
+    const calm = grassWind(600, 0, []);
+    assert.ok(calm > 0);
+    assert.ok(grassWind(600, 0, [{ x: 600, strength: 0.2 }]) > calm + 0.15);
+    assert.ok(grassWind(600, 0, [{ x: 1500, strength: 0.4 }]) < calm + 0.01);
+  });
+
+  it('grows along the foot of the masthead and sways', () => {
+    const { layer, art } = run(grass, 0);
+    const blades = find(layer, 'masthead-grass-blades');
+    assert.equal(blades.length, 3);
+    const first = blades[2].attrs.d;
+    const tips = [...first.matchAll(/ (-?[\d.]+) (-?[\d.]+)M|(-?[\d.]+)$/g)];
+    assert.ok(tips.length > 50);
+    for (let i = 1; i <= 20; i++) art.step(i, i * 50);
+    assert.notEqual(blades[2].attrs.d, first);
+  });
+});
+
+describe('the wind farm', () => {
+  it('stands its turbines along the foot, the ones behind the name small and far', () => {
+    let r = 6;
+    const turbines = farm(() => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000), 1200);
+    assert.ok(turbines.length >= 6);
+    for (const t of turbines.filter((t) => Math.abs(t.x - 600) < 260)) assert.ok(t.depth <= 0.3);
+  });
+
+  it('turns faster as a gust reaches it', () => {
+    assert.ok(farmWind(300, 0, [{ x: 300, strength: 0.6 }]) > farmWind(300, 0, []) + 0.5);
+  });
+
+  it('turns its rotors, keeping their shape however the masthead is stretched', () => {
+    const { layer, art } = run(windfarm, 0, { stretch: 1.5 });
+    const turbine = find(layer, 'masthead-windfarm-turbine')[0];
+    assert.match(turbine.attrs.transform, /scale\(0\.6667 1\)$/);
+    const rotor = turbine.children[1];
+    const before = rotor.attrs.transform;
+    art.step(1, 40);
+    assert.notEqual(rotor.attrs.transform, before);
   });
 });
 

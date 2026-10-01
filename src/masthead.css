@@ -65,6 +65,16 @@
 .masthead-bytecode-head { fill: var(--_accent); filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--_accent) 70%, transparent)); }
 .masthead-bytecode-note { fill: var(--_accent); font-size: 14px; font-weight: 500; }
 
+/* City defense: trails from the top, rings where counter-missiles burst, cities along the foot. */
+.masthead-citydefense { fill: none; }
+.masthead-citydefense-ground { stroke: color-mix(in srgb, var(--_accent) 50%, var(--_border)); stroke-width: 1.2; }
+.masthead-citydefense-base { stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.3; }
+.masthead-citydefense-city { fill: color-mix(in srgb, var(--_accent) 30%, var(--_bg)); stroke: var(--_accent); stroke-width: 1; }
+.masthead-citydefense-rubble { fill: none; opacity: 0.6; }
+.masthead-citydefense-trail { stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1; }
+.masthead-citydefense-counter { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; stroke-dasharray: 3 3; }
+.masthead-citydefense-burst { fill: url(#masthead-pulse); stroke: var(--_accent); stroke-width: 1.2; }
+
 /* Ghostrider: a wireframe road toward a high horizon, hills along it. */
 .masthead-ghostrider { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .masthead-ghostrider-edge { stroke: color-mix(in srgb, var(--_accent) 80%, var(--_bg)); stroke-width: 1.4; }
@@ -74,6 +84,33 @@
 .masthead-ghostrider-hills { stroke: color-mix(in srgb, var(--_accent) 50%, var(--_border)); stroke-width: 1.1; }
 .masthead-ghostrider-horizon { stroke: color-mix(in srgb, var(--_accent) 35%, var(--_border)); stroke-width: 1; opacity: 0.6; }
 
+/* Grass: three depths of blade, the nearest strongest. */
+.masthead-grass { fill: none; stroke-linecap: round; }
+.masthead-grass-blades { stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); }
+.masthead-grass-depth-0 { stroke-width: 0.9; opacity: 0.45; }
+.masthead-grass-depth-1 { stroke-width: 1.1; opacity: 0.7; }
+.masthead-grass-depth-2 { stroke-width: 1.4; }
+.masthead-grass-heads { stroke: var(--_accent); stroke-width: 2; }
+
+/* Lander: jagged ground, its pad, and the lander with its flame. */
+.masthead-lander { fill: none; stroke-linejoin: round; }
+.masthead-lander-ground { stroke: color-mix(in srgb, var(--_accent) 60%, var(--_border)); stroke-width: 1.2; }
+.masthead-lander-pad { stroke: var(--_accent); stroke-width: 2.5; }
+.masthead-lander-ship { stroke: var(--_accent); stroke-width: 1.3; }
+.masthead-lander-flame { stroke: color-mix(in srgb, var(--_accent) 60%, var(--_bg)); stroke-width: 1.2; }
+
+/* Paddles: the net, two paddles, the ball, the scores. */
+.masthead-paddles-net { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 2; }
+.masthead-paddles-paddle, .masthead-paddles-ball { fill: var(--_accent); }
+.masthead-paddles-score { fill: color-mix(in srgb, var(--_accent) 60%, var(--_bg)); font: 700 28px var(--masthead-mono, ui-monospace, monospace); }
+
+/* Rocks: outlines drifting, the ship, its shots and the dust of a broken rock. */
+.masthead-rocks { fill: none; stroke-linejoin: round; }
+.masthead-rocks-rock { stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1.3; }
+.masthead-rocks-ship { stroke: var(--_accent); stroke-width: 1.4; }
+.masthead-rocks-shot { stroke: var(--_accent); stroke-width: 1.6; stroke-linecap: round; }
+.masthead-rocks-dust { fill: var(--_accent); }
+
 /* Train: ASCII art along a track at the foot of the masthead, trailing smoke. */
 .masthead-train { font: 600 12px var(--masthead-mono, ui-monospace, monospace); }
 .masthead-train-cars { fill: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); }
@@ -82,6 +119,13 @@
 
 /* Water: lines across a surface, nearer ones stronger. */
 .masthead-water-line { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; }
+
+/* Wind farm: low hills, towers, and turning rotors. */
+.masthead-windfarm { fill: none; }
+.masthead-windfarm-hills { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_border)); stroke-width: 1.2; }
+.masthead-windfarm-tower { fill: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); }
+.masthead-windfarm-blade { fill: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 80%, var(--_bg)); stroke-width: 0.9; }
+.masthead-windfarm-hub { fill: var(--_accent); }
 
 /* ?ambientDebug=1 names the running animation and its seed in the masthead's corner. */
 .masthead-debug {
