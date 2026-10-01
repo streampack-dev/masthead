@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import { variants } from '../src/variants.js';
 import { SEASONS, inSeason } from '../src/runner.js';
-import bats, { bat } from '../src/variants/bats.js';
+import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
-import ghosts, { sheet } from '../src/variants/ghosts.js';
+import ghosts, { round, sheet } from '../src/variants/ghosts.js';
 import graveyard, { tree } from '../src/variants/graveyard.js';
 import pumpkins, { FACES } from '../src/variants/pumpkins.js';
 import spider, { spider as spiderShape, web } from '../src/variants/spider.js';
@@ -388,16 +388,40 @@ describe('october', () => {
     assert.notEqual(sheet(0, 60), sheet(1, 60));
     assert.match(sheet(0, 60), /^M.*Z$/);
     const { layer, art } = run(ghosts, 0);
-    assert.equal(find(layer, 'masthead-ghosts-ghost').length, 1);
-    let came = false, went = false, before = 1;
+    assert.equal(find(layer, 'masthead-ghosts-ghost').length, 2);
+    let came = false, went = false, before = 2, most = 0;
     for (let i = 1; i <= 4000; i++) {
       art.step(i, i * 40);
       const now = find(layer, 'masthead-ghosts-ghost').length;
       if (now > before) came = true;
       if (now < before) went = true;
       before = now;
+      most = Math.max(most, now);
     }
-    assert.ok(came && went);
+    assert.ok(came && went && most >= 4 && most <= 6, String(most));
+  });
+
+  // The words: the date, the name and the tagline, roughly, in the art's units.
+  const behindWords = (x, top, bottom) => Math.abs(x - 600) < 260 && bottom > 85 && top < 235;
+
+  it('dances its ghosts round the name, seldom behind the words', () => {
+    let behind = 0, total = 0;
+    for (let a = 0; a < Math.PI * 2; a += 0.01) {
+      const at = round(a, 450, 114, 1200);
+      // Weighted by how long a ghost lingers there: quicker across the top and bottom.
+      const weight = 1 / (1 + (1 - Math.abs(Math.cos(a))) * 1.6);
+      total += weight;
+      if (behindWords(at.x, at.y - 40, at.y)) behind += weight;
+    }
+    assert.ok(behind / total < 0.1, String(behind / total));
+  });
+
+  it('flies its bats above and below the name, bowing away as they pass', () => {
+    for (const base of [50, 75, 250, 275]) {
+      for (let x = 0; x <= 1200; x += 20) assert.ok(!behindWords(x, flight(x, base, 1200) - 12, flight(x, base, 1200) + 12), `${base} at ${x}`);
+    }
+    assert.ok(flight(600, 60, 1200) < flight(100, 60, 1200));
+    assert.ok(flight(600, 260, 1200) > flight(100, 260, 1200));
   });
 
   it('flickers a row of carved pumpkins along the foot', () => {
@@ -427,15 +451,20 @@ describe('october', () => {
     assert.ok(longest > 60 && shortened);
   });
 
-  it('sets a graveyard under the moon, a bat crossing it now and then', () => {
+  it('sets a graveyard under the moon, a bat crossing it and a ghost peeking now and then', () => {
     let r = 3;
     assert.match(tree(() => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000), 100), /^M/);
     const { layer, art } = run(graveyard, 0);
     assert.ok(find(layer, 'masthead-graveyard-stone').length >= 8);
     const batEl = find(layer, 'masthead-graveyard-bat')[0];
-    let crossed = false;
-    for (let i = 1; i <= 1500 && !crossed; i++) { art.step(i, i * 50); crossed = batEl.attrs.opacity === '1'; }
-    assert.ok(crossed);
+    const peeker = find(layer, 'masthead-graveyard-ghost')[0];
+    let crossed = false, peeked = false;
+    for (let i = 1; i <= 1500 && !(crossed && peeked); i++) {
+      art.step(i, i * 50);
+      crossed = crossed || batEl.attrs.opacity === '1';
+      peeked = peeked || peeker.attrs.opacity === '1';
+    }
+    assert.ok(crossed && peeked);
   });
 });
 

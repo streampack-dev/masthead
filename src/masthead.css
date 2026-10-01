@@ -158,6 +158,8 @@
 .masthead-graveyard-hill, .masthead-graveyard-tree { fill: none; stroke: color-mix(in srgb, var(--_accent) 65%, var(--_bg)); stroke-width: 1.2; stroke-linecap: round; }
 .masthead-graveyard-stone { fill: color-mix(in srgb, var(--_accent) 15%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.1; }
 .masthead-graveyard-bat { fill: var(--_accent); }
+.masthead-graveyard-sheet { fill: color-mix(in srgb, var(--_accent) 12%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 80%, var(--_bg)); stroke-width: 1; }
+.masthead-graveyard-eyes { fill: var(--_accent); }
 /* Pumpkins: outlined bodies and stems, faces lit from inside. */
 .masthead-pumpkins-body { fill: color-mix(in srgb, var(--_accent) 18%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; }
 .masthead-pumpkins-stem { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_border)); stroke-width: 1.4; }

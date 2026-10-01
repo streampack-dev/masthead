@@ -1,6 +1,7 @@
 /* Graveyard: a full moon to one side of the name, thin clouds drifting across it, and along the
    foot of the masthead a low hill of headstones and bare trees with fog curling between them; now
-   and then a bat crosses the moon. The scene comes from the seed, so ?ambientSeed=<n> replays it.
+   and then a bat crosses the moon, and a little ghost rises from behind a headstone, looks about
+   over the top, and sinks back. The scene comes from the seed, so ?ambientSeed=<n> replays it.
    An October animation. */
 
 /* A small bat against the moon, its wings at [flap] (-1 down to 1 up). */
@@ -49,9 +50,20 @@ export default function graveyard(layer, m) {
   var line = [];
   for (var x = 0; x <= W; x += 12) line.push((x ? 'L' : 'M') + x + ' ' + hill(x).toFixed(1));
   m.el('path', { 'class': 'masthead-graveyard-hill', d: line.join('') });
+  // The little ghost: behind the stones, and hidden below the ground, so it rises from behind one.
+  var ground = ['M0 0H' + W];
+  for (var gx = W; gx >= 0; gx -= 12) ground.push('L' + gx + ' ' + (hill(gx) + 3).toFixed(1));
+  var defs = m.el('defs');
+  m.el('path', { d: ground.join('') + 'Z' }, m.el('clipPath', { id: 'masthead-graveyard-ground' }, defs));
+  var peekLayer = m.el('g', { 'clip-path': 'url(#masthead-graveyard-ground)' });
+  var peeker = m.el('g', { 'class': 'masthead-graveyard-ghost', opacity: 0 }, peekLayer);
+  m.el('path', { 'class': 'masthead-graveyard-sheet', d: 'M-8 -16A8 8 0 0 1 8 -16L9 0Q7 3 4.5 0Q2 3 0 0Q-2 3 -4.5 0Q-7 3 -9 0Z' }, peeker);
+  var peekEyes = m.el('path', { 'class': 'masthead-graveyard-eyes' }, peeker);
+  var headstones = [];
+
   var sx = 40 + rand() * 40;
   while (sx < W - 40) {
-    var y = hill(sx) + 3, h = 14 + rand() * 12, w = 10 + rand() * 6, kind = rand();
+    var y = hill(sx) + 3, h = 16 + rand() * 12, w = 12 + rand() * 6, kind = rand();
     var d = kind < 0.6
       // A rounded headstone, leaning a little.
       ? 'M' + (-w / 2) + ' 0V' + (-h + w / 2).toFixed(1) + 'A' + (w / 2) + ' ' + (w / 2) + ' 0 0 1 ' + (w / 2) + ' ' + (-h + w / 2).toFixed(1) + 'V0'
@@ -62,6 +74,7 @@ export default function graveyard(layer, m) {
         : 'M' + (-w * 0.7) + ' 0V-7H' + (w * 0.7) + 'V0';
     var g = m.el('g', { transform: 'translate(' + sx.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + ((rand() - 0.5) * 10).toFixed(1) + ')' });
     m.el('path', { 'class': 'masthead-graveyard-stone', d: d }, g);
+    if (kind < 0.6) headstones.push({ x: sx, y: y, h: h });
     sx += 45 + rand() * 70;
   }
   [W / 2 + side * -(300 + rand() * 120), W / 2 + side * (180 + rand() * 60)].forEach(function (tx) {
@@ -77,6 +90,21 @@ export default function graveyard(layer, m) {
 
   var batEl = m.el('path', { 'class': 'masthead-graveyard-bat', opacity: 0 });
   var flight = null, nextBat = 200;
+  var peek = null, nextPeek = 80 + Math.floor(rand() * 120), RISE = 30, LOOK = 110;
+
+  /* The little ghost: rising from the ground behind its stone until its head clears the top,
+     glancing one way and the other, then sinking back. */
+  function drawPeek(n) {
+    if (!peek) { peeker.setAttribute('opacity', 0); return; }
+    var t = peek.age, total = RISE * 2 + LOOK;
+    var up = t < RISE ? t / RISE : t < RISE + LOOK ? 1 : Math.max(0, (total - t) / RISE);
+    up = (1 - Math.cos(Math.PI * up)) / 2;
+    var hem = peek.stone.y + 26 - up * (peek.stone.h + 14);
+    peeker.setAttribute('opacity', 1);
+    peeker.setAttribute('transform', 'translate(' + (peek.stone.x + peek.side * 3).toFixed(1) + ' ' + hem.toFixed(1) + ') scale(' + (1 / m.stretch()).toFixed(4) + ' 1)');
+    var look = t > RISE && t < RISE + LOOK ? Math.round(Math.sin((t - RISE) * 0.06) * 2) : 0;
+    peekEyes.setAttribute('d', 'M' + (-3.2 + look) + ' -16a1.3 1.9 0 1 0 0.1 0zM' + (3.2 + look) + ' -16a1.3 1.9 0 1 0 0.1 0z');
+  }
 
   function wisp(o, wave) {
     var d = 'M' + o.x.toFixed(1) + ' ' + o.y.toFixed(1);
@@ -107,6 +135,12 @@ export default function graveyard(layer, m) {
         if (o.speed > 0 && o.x > W + 20) o.x = -o.w - 20;
         if (o.speed < 0 && o.x + o.w < -20) o.x = W + 20;
       });
+      // Now and then the little ghost peeks over a headstone.
+      if (!peek && headstones.length && --nextPeek <= 0) {
+        peek = { stone: headstones[Math.floor(rand() * headstones.length)], age: 0, side: rand() < 0.5 ? -1 : 1 };
+      }
+      if (peek && ++peek.age > RISE * 2 + LOOK) { peek = null; nextPeek = 150 + Math.floor(rand() * 300); }
+      drawPeek(n);
       // Now and then a bat crosses the moon.
       if (!flight && --nextBat <= 0) {
         var dir = rand() < 0.5 ? 1 : -1;
