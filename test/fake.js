@@ -31,12 +31,13 @@ export function context(layer, opts) {
   };
 }
 
-/* The variant drawn, then stepped n times at its interval; returns the layer and what make gave. */
+/* The variant drawn, then stepped n times at its interval (if it steps); returns the layer and
+   what make gave. */
 export function run(make, n, opts) {
   const layer = element('g');
   const art = make(layer, context(layer, opts));
   const interval = (art && art.interval) || 24;
-  for (let i = 1; i <= n; i++) art.step(i, i * interval);
+  for (let i = 1; art && i <= n; i++) art.step(i, i * interval);
   return { layer, art };
 }
 

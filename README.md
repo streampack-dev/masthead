@@ -13,7 +13,7 @@ only puts the art on its page and starts the runner.
 
 | Name | What it is |
 |---|---|
-| `circuit` | Fireflies running a circuit board. It lives in `art.svg` and moves by SVG alone, so it shows without script; it's also what reduced motion gets, still. |
+| `circuit` | Fireflies running the traces of a circuit board, moving by SVG alone. |
 | `boids` | Sixteen fireflies flocking. |
 | `fractal` | A branching growth tracing round the name, resting when grown, then starting again. |
 | `life` | Conway's Game of Life, reseeded when it settles. |
@@ -29,9 +29,12 @@ title names the seed) and `?ambientDebug=1` logs the choice.
 1. **Get the files.** The package is `src/`. A Node front end depends on a tag:
    `"@streampack-dev/masthead": "github:streampack-dev/masthead#v0.1.1"`. A front end serving
    static files copies `src/` from a release.
-2. **Put the art in the page,** inside the masthead, from `art.svg`. Rendering it on the server
-   means the circuit shows before (or without) script. The art fills its container, so the host
-   places it: a positioned masthead with the art behind its text.
+2. **Put the art in the page,** inside the masthead, from `art.svg`: a blank SVG holding only the
+   shared glow. The runner draws the chosen animation into it once that animation has loaded, so
+   nothing shows first and is swapped out, and only the chosen animation's file is fetched.
+   Without script, with reduced motion, or if the animation fails, the masthead stays blank. The
+   art fills its container, so the host places it: a positioned masthead with the art behind its
+   text.
 3. **Load `masthead.css`, and give it your theme** on the masthead or any ancestor:
 
    ```css

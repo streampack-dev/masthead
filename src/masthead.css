@@ -23,7 +23,7 @@
   opacity: var(--masthead-strength, 0.55);
 }
 
-/* The circuit, drawn in art.svg. */
+/* The circuit. #masthead-pulse, the glow, is art.svg's; #masthead-fade is the circuit's own. */
 .masthead-circuit-traces { fill: none; stroke: url(#masthead-fade); stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
 .masthead-circuit-nodes circle { fill: color-mix(in srgb, var(--_accent) 18%, var(--_bg)); opacity: 0.5; }
 .masthead-glow { stop-color: var(--_accent); }

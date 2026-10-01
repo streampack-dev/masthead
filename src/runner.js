@@ -1,8 +1,8 @@
-/* Runs a masthead animation in an art SVG (art.svg, drawn by the host so the circuit shows and
-   moves without script). It picks a variant at random from the circuit and the variants it's
-   given (?ambient=<name> picks one; ?ambientDebug=1 logs the choice), loads only that variant,
-   and runs it. It pauses while the tab is hidden or the host says so, and with
-   prefers-reduced-motion the circuit stays, still.
+/* Runs a masthead animation in an art SVG (art.svg, drawn blank by the host). It picks a variant
+   at random from those it's given (?ambient=<name> picks one; ?ambientDebug=1 logs the choice),
+   loads only that one, and runs it, so the masthead stays blank until the chosen animation is
+   ready and nothing is swapped out. It pauses while the tab is hidden or the host says so. With
+   prefers-reduced-motion, or if the variant fails, the masthead stays blank.
 
    Hosts call startMasthead(svg, options) once the art is in the page, and stop() on the handle
    when it leaves. Nothing here knows about any framework.
@@ -22,7 +22,7 @@ function randomSeed() { return Math.floor(Math.random() * 0x7fffffff); }
 /* options, all optional:
      variants: { name: () => Promise<module with default make(layer, m)> }. index.js gives the
        built-in ones by default; a host serving the files itself (with fingerprinted addresses,
-       say) passes its own loaders. With none, only the circuit runs.
+       say) passes its own loaders. With none, the masthead stays blank.
      name: the variant to run; else ?ambient=<name> if it's one, else one at random.
      seed: the run's seed; else ?ambientSeed=<n>, else random.
      search: the query string read for ambient, ambientSeed and ambientDebug (location.search).
@@ -46,17 +46,16 @@ export function startMasthead(svg, options) {
 
   var loaders = options.variants || {};
   var frameEl = options.frame || svg.parentElement || svg;
-  var circuit = svg.querySelector('.masthead-circuit');
   var reduced = options.reducedMotion !== undefined ? options.reducedMotion
     : !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var names = ['circuit'].concat(Object.keys(loaders));
+  var names = Object.keys(loaders);
   var asked = options.name !== undefined ? options.name : params.get('ambient');
-  var name = reduced ? 'circuit'
+  var name = reduced || names.length === 0 ? 'none'
     : names.indexOf(asked) >= 0 ? asked
     : names[Math.floor(Math.random() * names.length)];
   var seedAsked = parseInt(params.get('ambientSeed') || '', 10);
   var seed = options.seed !== undefined ? options.seed : isFinite(seedAsked) ? seedAsked : randomSeed();
-  var label = 'Animation: ' + name + (name === 'circuit' ? '' : ' · seed ' + seed);
+  var label = name === 'none' ? 'Animation: none' : 'Animation: ' + name + ' · seed ' + seed;
 
   frameEl.setAttribute('data-masthead', name);
   svg.setAttribute('data-masthead', name);
@@ -71,15 +70,10 @@ export function startMasthead(svg, options) {
     tag.textContent = label;
     frameEl.appendChild(tag);
   }
-  log(reduced ? 'reduced motion: the circuit, still' : label, { from: names });
+  log(reduced ? 'reduced motion: none' : label, { from: names });
 
   var handle = { name: name, seed: seed, label: label, update: function () {}, stop: function () {} };
-  if (reduced) {
-    // Land on a frame with every firefly on its way, and stay there.
-    svg.setCurrentTime(10);
-    svg.pauseAnimations();
-    return handle;
-  }
+  if (name === 'none') return handle;
 
   var art = null;
   var layer = null;
@@ -100,10 +94,9 @@ export function startMasthead(svg, options) {
       try {
         art.step(step, time);
       } catch (e) {
-        log('the variant failed; keeping the circuit', e);
+        log('the variant failed; leaving the masthead blank', e);
         art = null;
         if (layer) layer.remove();
-        if (circuit) circuit.style.display = '';
         return;
       }
     }
@@ -148,24 +141,21 @@ export function startMasthead(svg, options) {
     try {
       result = make(layer, m);
     } catch (e) {
-      log('the variant failed to start; keeping the circuit', e);
+      log('the variant failed to start; leaving the masthead blank', e);
       return;
     }
-    if (circuit) circuit.style.display = 'none';
     svg.appendChild(layer);
     art = result && typeof result.step === 'function' ? result : null;
     update();
   }
 
-  if (name !== 'circuit') {
-    loaders[name]().then(function (module) {
-      var make = module && (module.default || module);
-      if (typeof make === 'function') start(make);
-      else log(name + ' has no default export; keeping the circuit');
-    }, function (e) {
-      log('could not load ' + name + '; keeping the circuit', e);
-    });
-  }
+  loaders[name]().then(function (module) {
+    var make = module && (module.default || module);
+    if (typeof make === 'function') start(make);
+    else log(name + ' has no default export; leaving the masthead blank');
+  }, function (e) {
+    log('could not load ' + name + '; leaving the masthead blank', e);
+  });
 
   document.addEventListener('visibilitychange', update);
   update();

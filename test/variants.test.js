@@ -4,6 +4,7 @@ import { readdirSync } from 'node:fs';
 import { variants } from '../src/variants.js';
 import { find, run, serialize } from './fake.js';
 import boids from '../src/variants/boids.js';
+import circuit from '../src/variants/circuit.js';
 import fractal from '../src/variants/fractal.js';
 import life from '../src/variants/life.js';
 import signalnoise from '../src/variants/signalnoise.js';
@@ -11,6 +12,7 @@ import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/so
 import terrainflight from '../src/variants/terrainflight.js';
 
 const all = { boids, fractal, life, signalnoise, solari, terrainflight };
+const stepping = Object.keys(all);
 
 describe('every variant', () => {
   it('is listed, and every listing has its file', async () => {
@@ -23,7 +25,8 @@ describe('every variant', () => {
     }
   });
 
-  for (const [name, make] of Object.entries(all)) {
+  for (const name of stepping) {
+    const make = all[name];
     it(`${name} draws and runs a thousand steps`, () => {
       const { layer, art } = run(make, 1000);
       assert.ok(layer.children.length > 0);
@@ -38,6 +41,25 @@ describe('every variant', () => {
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
     });
   }
+});
+
+describe('the circuit', () => {
+  it('draws its board and four fireflies that move by SVG alone, so it takes no steps', () => {
+    const { layer, art } = run(circuit, 0);
+    assert.equal(art, undefined);
+    assert.equal(find(layer, 'masthead-circuit-traces')[0].children.length, 9);
+    assert.equal(find(layer, 'masthead-circuit-nodes')[0].children.length, 12);
+    const runs = find(layer, 'masthead-circuit-fireflies')[0].children.map((g) => g.children[2].attrs);
+    assert.equal(runs.length, 4);
+    // Each is already on its way, so none waits at the board's corner for its turn.
+    assert.ok(runs.every((a) => parseFloat(a.begin) <= 0 && a.repeatCount === 'indefinite'));
+  });
+
+  it('brings its own fade for the traces', () => {
+    const defs = run(circuit, 0).layer.children[0];
+    assert.equal(defs.tag, 'defs');
+    assert.equal(defs.children[0].attrs.id, 'masthead-fade');
+  });
 });
 
 describe('the solari board', () => {

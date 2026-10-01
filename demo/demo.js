@@ -2,7 +2,7 @@
 import { startMasthead, variants } from '../src/index.js';
 
 var BLURBS = {
-  circuit: 'Fireflies running a circuit board. Drawn by the art itself, so it shows without script.',
+  circuit: 'Fireflies running the traces of a circuit board.',
   boids: 'Sixteen fireflies flocking.',
   fractal: 'A branching growth tracing round the name, resting when grown, then starting again.',
   life: "Conway's Game of Life, reseeded when it settles.",
@@ -82,7 +82,7 @@ function specimen(name, art) {
   figure.innerHTML =
     '<figcaption class="specimen-head"><div><h2></h2><p class="specimen-blurb"></p></div>' +
     '<div class="specimen-tools"><span class="specimen-seed"></span>' +
-    (name === 'circuit' ? '' : '<button type="button" data-act="replay">Replay</button><button type="button" data-act="seed">New seed</button>') +
+    '<button type="button" data-act="replay">Replay</button><button type="button" data-act="seed">New seed</button>' +
     '</div></figcaption>' +
     '<div class="stage"><div class="stage-text"><p class="stage-date"></p>' +
     '<p class="stage-name">bytecode<span>.</span>news</p>' +
@@ -109,7 +109,7 @@ function specimen(name, art) {
       reducedMotion: reducedAsked && !playAnyway
     });
     s.seed = s.handle.seed;
-    seedLabel.textContent = name === 'circuit' ? '' : 'seed ' + s.seed;
+    seedLabel.textContent = 'seed ' + s.seed;
   };
 
   figure.addEventListener('click', function (e) {
@@ -144,7 +144,7 @@ if (reducedAsked) {
 fetch(new URL('../src/art.svg', import.meta.url))
   .then(function (r) { return r.text(); })
   .then(function (art) {
-    ['circuit'].concat(Object.keys(variants)).forEach(function (name) {
+    Object.keys(variants).forEach(function (name) {
       var s = specimen(name, art);
       watcher.observe(s.stage);
       s.start();
