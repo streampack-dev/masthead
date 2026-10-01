@@ -20,5 +20,8 @@
     "test": "node --test test/*.test.js",
     "demo": "python3 -m http.server 8642"
   },
-  "repository": "github:streampack-dev/masthead"
+  "repository": "github:streampack-dev/masthead",
+  "publishConfig": {
+    "registry": "https://nexus.streampack.dev/repository/npm-hosted/"
+  }
 }

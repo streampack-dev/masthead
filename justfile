@@ -9,9 +9,10 @@ test:
 demo:
     npm run demo
 
-# Release: bump package.json's version (patch, minor or major; an X.Y.Z-SNAPSHOT releases as
-# X.Y.Z), point the README's install line at it, commit, tag vX.Y.Z, and push main and the tag
-# together. Front ends move to it with their own update (ui-pudl: just update-masthead).
+# Bumps package.json's version (patch, minor or major; an X.Y.Z-SNAPSHOT releases as X.Y.Z),
+# points the README's install line at it, commits, tags vX.Y.Z, pushes main and the tag together,
+# and publishes to Nexus. Front ends move to it with their own update.
+# Release: bump, commit, tag, push and publish
 release level="patch":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -61,7 +62,7 @@ release level="patch":
     echo "Releasing $current -> $next"
     trap 'status=$?; if [[ $status -ne 0 && -z "${committed:-}" ]]; then git checkout -- "${files[@]}"; echo "Release failed; package.json restored to $current." >&2; fi' EXIT
     npm version "$next" --no-git-tag-version >/dev/null
-    perl -0pi -e 's#(masthead/archive/refs/tags/v)[0-9]+\.[0-9]+\.[0-9]+#${1}'"$next"'#g' README.md
+    perl -0pi -e 's#("@streampack-dev/masthead": "\^)[0-9]+\.[0-9]+\.[0-9]+#${1}'"$next"'#g' README.md
     git commit -q -m "updating release version" -- "${files[@]}"
     committed=1
     git tag -a "v$next" -m "masthead $next"
@@ -70,3 +71,49 @@ release level="patch":
       exit 1
     fi
     echo "Released $next: pushed main and v$next."
+    just publish "$next"
+
+# Publishes from a clean export of the tag, so front ends can depend on
+# "@streampack-dev/masthead": "^X.Y.Z" through npm-group. just release runs this; run it by hand to
+# retry a publish that failed. Credentials: NEXUS_USERNAME/NEXUS_PASSWORD, else
+# DOCKER_USERNAME/DOCKER_PASSWORD, else the Maven server nexus-streampack in ~/.m2/settings.xml.
+# Publish a tagged release to Nexus's npm-hosted
+publish version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version="{{version}}"
+    version="${version#v}"
+    registry="https://nexus.streampack.dev/repository/npm-hosted/"
+
+    username="${NEXUS_USERNAME:-${DOCKER_USERNAME:-}}"
+    password="${NEXUS_PASSWORD:-${DOCKER_PASSWORD:-}}"
+    if [[ -z "$username" || -z "$password" ]]; then
+      settings="${MAVEN_SETTINGS:-$HOME/.m2/settings.xml}"
+      server_id="${MAVEN_NEXUS_SERVER_ID:-nexus-streampack}"
+      if [[ ! -f "$settings" ]] || ! command -v xmllint >/dev/null 2>&1; then
+        echo "Set NEXUS_USERNAME and NEXUS_PASSWORD (no $settings, or no xmllint to read it)." >&2
+        exit 1
+      fi
+      field() { xmllint --xpath "string(/*[local-name()='settings']/*[local-name()='servers']/*[local-name()='server'][*[local-name()='id']='$server_id']/*[local-name()='$1'])" "$settings"; }
+      username="$(field username)"
+      password="$(field password)"
+      if [[ -z "$username" || -z "$password" || "$password" == \{* ]]; then
+        echo "No usable credentials for Maven server '$server_id' in $settings; set NEXUS_USERNAME and NEXUS_PASSWORD." >&2
+        exit 1
+      fi
+    fi
+
+    git fetch -q --tags origin
+    if ! git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+      echo "v$version isn't tagged." >&2
+      exit 1
+    fi
+    work="$(mktemp -d)"
+    trap 'rm -rf "$work"' EXIT
+    mkdir "$work/package"
+    git archive "v$version" | tar -x -C "$work/package"
+    # The credentials live outside the package, so they can't end up in it.
+    auth="$(printf '%s:%s' "$username" "$password" | base64 | tr -d '\n')"
+    printf '//nexus.streampack.dev/repository/npm-hosted/:_auth=%s\n' "$auth" > "$work/npmrc"
+    (cd "$work/package" && npm publish --registry "$registry" --userconfig "$work/npmrc")
+    echo "Published @streampack-dev/masthead@$version to $registry"

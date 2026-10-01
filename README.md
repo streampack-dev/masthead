@@ -26,10 +26,11 @@ title names the seed) and `?ambientDebug=1` logs the choice.
 
 ## Using it in a front end
 
-1. **Get the files.** The package is `src/`. A Node front end depends on a release's tarball,
-   which installs without git (unlike a `github:` dependency):
-   `"@streampack-dev/masthead": "https://github.com/streampack-dev/masthead/archive/refs/tags/v0.2.1.tar.gz"`.
-   A front end serving static files copies `src/` from a release.
+1. **Get the files.** The package is `src/`. Releases are published to streampack's Nexus, which
+   anyone can read. A Node front end routes the scope there in its `.npmrc`,
+   `@streampack-dev:registry=https://nexus.streampack.dev/repository/npm-group/`, and depends on
+   `"@streampack-dev/masthead": "^0.2.1"`. A front end serving static files copies `src/` from a
+   release (ui-pudl's `just update-masthead` takes the GitHub tag).
 2. **Put the art in the page,** inside the masthead, from `art.svg`: a blank SVG holding only the
    shared glow. (A host may draw the same `<svg class="masthead-art">` itself, empty; the runner
    adds the glow when it's missing.) The runner draws the chosen animation into it once that animation has loaded, so
@@ -100,6 +101,7 @@ just demo      # the demo page at http://localhost:8642
 ```
 
 `just release` (or `just release minor`, `just release major`) bumps the version in
-`package.json`, points the install line above at it, commits, tags `vX.Y.Z` and pushes `main` and
-the tag together. A front end moves to a release when it's ready; a change to what `m` offers or
-what `startMasthead` takes is a minor version before 1.0, and front ends follow it in turn.
+`package.json`, commits, tags `vX.Y.Z`, pushes `main` and the tag together, and publishes the tag
+to Nexus (`just publish X.Y.Z` retries a publish). A front end moves to a release when it's
+ready; a change to what `m` offers or what `startMasthead` takes is a minor version before 1.0,
+and front ends follow it in turn.
