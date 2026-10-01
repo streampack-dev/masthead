@@ -89,7 +89,7 @@ export default function chase(layer, m) {
     // Running, legs blur: the canine's front pair and back pair each a whirl of their own, the
     // bird's trailing behind it. Walking, the canine's step.
     f.legs.setAttribute('d', f.mode === 'run'
-      ? (isDog ? whirl(-11, -9, 9, n) + whirl(13, -9, 9, n + 1.7) : whirl(-10, -15, 15, n))
+      ? (isDog ? whirl(-26, -11, 13, n) + whirl(-2, -11, 13, n + 1.7) : whirl(-22, -15, 16, n))
       : isDog ? (f.mode === 'walk' && n % 4 < 2 ? DOG_STEP : DOG_LEGS) : BIRD_LEGS);
     // Noticing: a "!" over its head, for a beat; skidding: leaning back hard.
     f.alarm.setAttribute('opacity', f.mode === 'look' ? 1 : 0);
