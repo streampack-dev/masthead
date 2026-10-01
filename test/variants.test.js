@@ -4,6 +4,7 @@ import { readdirSync } from 'node:fs';
 import { variants } from '../src/variants.js';
 import { find, run, serialize } from './fake.js';
 import boids from '../src/variants/boids.js';
+import bytecode, { PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
 import circuit from '../src/variants/circuit.js';
 import fractal from '../src/variants/fractal.js';
 import life from '../src/variants/life.js';
@@ -11,7 +12,7 @@ import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
 import terrainflight from '../src/variants/terrainflight.js';
 
-const all = { boids, fractal, life, signalnoise, solari, terrainflight };
+const all = { boids, bytecode, fractal, life, signalnoise, solari, terrainflight };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -35,7 +36,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['boids', 'fractal', 'life', 'terrainflight']) {
+  for (const name of ['boids', 'bytecode', 'fractal', 'life', 'terrainflight']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -59,6 +60,57 @@ describe('the circuit', () => {
     const defs = run(circuit, 0).layer.children[0];
     assert.equal(defs.tag, 'defs');
     assert.equal(defs.children[0].attrs.id, 'masthead-fade');
+  });
+});
+
+describe('the bytecode rain', () => {
+  const glyphs = (layer) => find(layer, 'masthead-bytecode-glyph');
+
+  it('rains real instructions, in hex, a class file header among them', () => {
+    assert.deepEqual(STREAMS[0].slice(0, 4).map((b) => b.hex), ['CA', 'FE', 'BA', 'BE']);
+    assert.equal(STREAMS[0][0].text, '0xCAFEBABE');
+    // Every instruction's first byte carries how javap shows it; its operands don't.
+    for (const program of PROGRAMS) {
+      for (const instruction of program) assert.ok(instruction.bytes.length >= 1 && instruction.text);
+    }
+    const shown = new Set(glyphs(run(bytecode, 200).layer).map((t) => t.textContent).filter(Boolean));
+    assert.ok([...shown].every((hex) => /^[0-9A-F]{2}$/.test(hex)), [...shown].join(' '));
+  });
+
+  it('is raining from the first frame, with a bright head in each running column', () => {
+    const { layer } = run(bytecode, 0);
+    assert.ok(glyphs(layer).filter((t) => Number(t.attrs['fill-opacity']) > 0).length > 100);
+    const columns = find(layer, 'masthead-bytecode-column').length;
+    // Most columns are mid-run at first; the rest are above or below the screen.
+    assert.ok(find(layer, 'masthead-bytecode-head').length > columns / 2);
+  });
+
+  it('is faint behind the name', () => {
+    const { layer } = run(bytecode, 300);
+    const cols = find(layer, 'masthead-bytecode-column');
+    // The middle column's middle rows, over a run.
+    const middle = cols[Math.floor(cols.length / 2)].children.slice(6, 10).map((t) => Number(t.attrs['fill-opacity']));
+    assert.ok(middle.every((o) => o <= 0.3), middle.join(' '));
+  });
+
+  it('keeps its glyphs in shape however the masthead is stretched, in as many columns as fit', () => {
+    const wide = find(run(bytecode, 0, { stretch: 1.5 }).layer, 'masthead-bytecode-column');
+    assert.match(wide[0].attrs.transform, /scale\(0\.6667 1\)$/);
+    assert.equal(wide.length, 50);
+    // A phone's masthead is narrower than the art: fewer columns, so they don't crowd.
+    assert.equal(find(run(bytecode, 0, { stretch: 0.65 }).layer, 'masthead-bytecode-column').length, 22);
+  });
+
+  it('decodes an instruction beside its column now and then', () => {
+    const { layer, art } = run(bytecode, 0);
+    const note = find(layer, 'masthead-bytecode-note')[0];
+    let seen = null;
+    for (let i = 1; i <= 120 && !seen; i++) {
+      art.step(i, i * 60);
+      if (Number(note.attrs.opacity) > 0) seen = note.children[0].textContent;
+    }
+    const texts = PROGRAMS.flat().map((instruction) => instruction.text);
+    assert.ok(seen && texts.includes(seen), String(seen));
   });
 });
 

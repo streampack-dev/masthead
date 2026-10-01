@@ -4,6 +4,7 @@ import { startMasthead, variants } from '../src/index.js';
 var BLURBS = {
   circuit: 'Fireflies running the traces of a circuit board.',
   boids: 'Sixteen fireflies flocking.',
+  bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded.',
   fractal: 'A branching growth tracing round the name, resting when grown, then starting again.',
   life: "Conway's Game of Life, reseeded when it settles.",
   signalnoise: 'Faint scanlines and a rolling band, with brief bursts of interference.',
@@ -33,6 +34,7 @@ var strength = document.getElementById('strength');
 var strengthOut = document.getElementById('strength-out');
 var accent = document.getElementById('accent');
 var withText = document.getElementById('text');
+var shape = document.getElementById('shape');
 
 function applyTheme() {
   if (theme.value === 'auto') page.removeAttribute('data-theme');
@@ -50,6 +52,8 @@ function toHex(color) {
 theme.value = read('theme') || 'auto';
 strength.value = read('strength') || '1';
 withText.checked = read('text') === '1';
+shape.value = read('shape') || 'art';
+body.classList.toggle('site-shape', shape.value === 'site');
 body.classList.toggle('with-text', withText.checked);
 if (read('accent')) {
   accent.value = read('accent');
@@ -63,6 +67,10 @@ strength.addEventListener('input', function () { keep('strength', strength.value
 accent.addEventListener('input', function () {
   keep('accent', accent.value);
   body.style.setProperty('--accent-picked', accent.value);
+});
+shape.addEventListener('change', function () {
+  keep('shape', shape.value);
+  body.classList.toggle('site-shape', shape.value === 'site');
 });
 withText.addEventListener('change', function () {
   keep('text', withText.checked ? '1' : '');

@@ -59,6 +59,12 @@
 .masthead-solari-hinge { stroke: var(--_border); stroke-width: 0.6; }
 .masthead-solari-glyph { fill: var(--_accent); }
 
+/* Bytecode: hex in the accent, its heads brightest, and an instruction decoded now and then. */
+.masthead-bytecode { font: 600 16px var(--masthead-mono, ui-monospace, monospace); }
+.masthead-bytecode-glyph { fill: color-mix(in srgb, var(--_accent) 72%, var(--_bg)); }
+.masthead-bytecode-head { fill: var(--_accent); filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--_accent) 70%, transparent)); }
+.masthead-bytecode-note { fill: var(--_accent); font-size: 14px; font-weight: 500; }
+
 /* ?ambientDebug=1 names the running animation and its seed in the masthead's corner. */
 .masthead-debug {
   position: absolute;

@@ -94,6 +94,11 @@ h1 { margin: 0 0 0.5rem; font-size: clamp(1.75rem, 5vw, 2.75rem); letter-spacing
   border-top: 3px solid var(--accent);
   border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
 }
+/* The sites' mastheads are wider and shorter than the art, so it's drawn stretched there. */
+.site-shape .stage { height: 13rem; }
+@media (max-width: 40rem) {
+  .site-shape .stage { height: 9rem; }
+}
 .stage-text { display: none; text-align: center; padding: 1rem; }
 .with-text .stage-text { display: block; }
 .stage-date, .stage-tagline { margin: 0; font: 0.6875rem var(--mono); letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); text-shadow: 0 0 3px var(--bg), 0 0 6px var(--bg); }

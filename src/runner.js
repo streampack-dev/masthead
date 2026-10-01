@@ -97,6 +97,17 @@ export function startMasthead(svg, options) {
   var last = 0;
   var stopped = false;
 
+  /* How many times wider than tall one unit of the art is drawn: 1 at the art's own 1200 x 320,
+     more on a wide, short masthead. Kept current as the masthead is resized. */
+  var stretch = 1;
+  function measure() {
+    var box = svg.getBoundingClientRect();
+    if (box.width > 0 && box.height > 0) stretch = (box.width / WIDTH) / (box.height / HEIGHT);
+  }
+  measure();
+  var resizes = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+  if (resizes) resizes.observe(svg);
+
   function paused() { return document.hidden || !!(options.paused && options.paused()); }
 
   function tick(time) {
@@ -144,6 +155,7 @@ export function startMasthead(svg, options) {
       height: HEIGHT,
       pulse: 'url(#masthead-pulse)',
       seed: function () { return seed; },
+      stretch: function () { return stretch; },
       deks: function () { return options.deks ? options.deks() : []; },
       el: function (tag, attrs, parent) {
         var e = document.createElementNS(NS, tag);
@@ -182,6 +194,7 @@ export function startMasthead(svg, options) {
     if (frame) cancelAnimationFrame(frame);
     frame = null;
     document.removeEventListener('visibilitychange', update);
+    if (resizes) resizes.disconnect();
     log('stopped');
   };
   return handle;

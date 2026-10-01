@@ -21,6 +21,7 @@ export function context(layer, opts) {
     height: 320,
     pulse: 'url(#masthead-pulse)',
     seed: () => (opts.seed === undefined ? 7 : opts.seed),
+    stretch: () => opts.stretch || 1,
     deks: () => opts.deks || [],
     el(tag, attrs, parent) {
       const e = element(tag);

@@ -7,6 +7,11 @@ export type MastheadContext = {
   pulse: string;
   /** The run's seed, the same on every call. */
   seed(): number;
+  /**
+   * How many times wider than tall one unit of the art is drawn: 1 at the art's own 1200 x 320,
+   * more on a wide, short masthead. Text drawn with scale(1 / stretch(), 1) keeps its shape.
+   */
+  stretch(): number;
   /** The front page's other posts' deks, as the host gives them. Maybe none. */
   deks(): string[];
   /** Makes an SVG element in parent (the layer by default). */
