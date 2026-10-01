@@ -75,6 +75,13 @@
 .masthead-citydefense-counter { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; stroke-dasharray: 3 3; }
 .masthead-citydefense-burst { fill: url(#masthead-pulse); stroke: var(--_accent); stroke-width: 1.2; }
 
+/* Deadline: flat cutout pieces, outlined, with a paper-pale fill; the writer's limbs as strokes. */
+.masthead-deadline-piece { fill: color-mix(in srgb, var(--_accent) 14%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.4; stroke-linejoin: round; }
+.masthead-deadline-limb { fill: none; stroke: var(--_accent); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.masthead-deadline-hair, .masthead-deadline-eye { fill: var(--_accent); }
+.masthead-deadline-screen { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.6; stroke-linecap: round; }
+.masthead-deadline-bang { fill: none; stroke: var(--_accent); stroke-width: 2; stroke-linecap: round; }
+
 /* Duel: two fencers on the ground line, their blades, and the spark where they meet. */
 .masthead-duel-ground { fill: none; stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1.2; }
 .masthead-duel-body { fill: none; stroke: var(--_accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }

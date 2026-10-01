@@ -6,6 +6,7 @@ export var variants = {
   bytecode: function () { return import('./variants/bytecode.js'); },
   circuit: function () { return import('./variants/circuit.js'); },
   citydefense: function () { return import('./variants/citydefense.js'); },
+  deadline: function () { return import('./variants/deadline.js'); },
   duel: function () { return import('./variants/duel.js'); },
   eyes: function () { return import('./variants/eyes.js'); },
   fractal: function () { return import('./variants/fractal.js'); },

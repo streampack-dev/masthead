@@ -18,6 +18,7 @@ only puts the art on its page and starts the runner.
 | `bytecode` | The code rain in JVM bytecode: real instructions in hex, now and then one decoded. |
 | `circuit` | Fireflies running the traces of a circuit board, moving by SVG alone. |
 | `citydefense` | Missile defense playing itself, slowly: trails from above, counter-missiles bursting into rings, cities falling and rebuilt. |
+| `deadline` | A writer at a desk on the left, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard. |
 | `duel` | Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth: no touches, no winner. |
 | `eyes` | October: eyes in the dark, opening, blinking, glancing about, and closing again. |
 | `fractal` | A branching growth tracing round the name, resting when grown, then starting again. |

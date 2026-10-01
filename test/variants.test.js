@@ -6,6 +6,7 @@ import { SEASONS, inSeason } from '../src/runner.js';
 import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
 import duel, { POSES, crossing, figure, mixPose } from '../src/variants/duel.js';
+import deadline, { POSES as DESK_POSES, SCENES, writer } from '../src/variants/deadline.js';
 import ghosts, { round, sheet } from '../src/variants/ghosts.js';
 import graveyard, { tree } from '../src/variants/graveyard.js';
 import pumpkins, { FACES } from '../src/variants/pumpkins.js';
@@ -31,7 +32,7 @@ import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple } from '../src/variants/water.js';
 
-const all = { bats, boids, bytecode, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, boids, bytecode, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -55,7 +56,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'boids', 'bytecode', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'boids', 'bytecode', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -466,6 +467,38 @@ describe('october', () => {
       peeked = peeked || peeker.attrs.opacity === '1';
     }
     assert.ok(crossed && peeked);
+  });
+});
+
+describe('deadline', () => {
+  it('types with both hands on the keyboard, and rests its head on it in despair', () => {
+    for (const name of ['typeA', 'typeB']) {
+      const w = writer(DESK_POSES[name]);
+      for (const hand of [w.near[2], w.far[2]]) assert.ok(hand[0] >= 48 && hand[0] <= 94 && hand[1] >= -34 && hand[1] <= -22, `${name}: ${hand}`);
+    }
+    const slump = writer(DESK_POSES.slump);
+    assert.ok(slump.head[0] > 50 && slump.head[0] < 94 && slump.head[1] > -48, String(slump.head));
+    // Hands rest on the desk, never through it.
+    for (const pose of Object.values(DESK_POSES)) {
+      const w = writer(pose);
+      for (const hand of [w.near[2], w.far[2]]) assert.ok(hand[1] <= -22, String(hand));
+    }
+  });
+
+  it('snaps from pose to pose, holding each, and despairs now and then', () => {
+    let r = 4;
+    const rand = () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000);
+    assert.equal(SCENES.despair(rand).filter((b) => b[2] === 'bang').length >= 2, true);
+    const { layer, art } = run(deadline, 0, { seed: 6 });
+    const bang = find(layer, 'masthead-deadline-bang')[0];
+    const screen = find(layer, 'masthead-deadline-screen')[0];
+    let banged = false, wrote = false;
+    for (let i = 1; i <= 4000 && !(banged && wrote); i++) {
+      art.step(i, i * 90);
+      banged = banged || bang.attrs.opacity === '1';
+      wrote = wrote || (screen.attrs.d || '').length > 0;
+    }
+    assert.ok(banged && wrote);
   });
 });
 
