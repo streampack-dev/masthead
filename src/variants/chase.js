@@ -1,0 +1,267 @@
+/* Chase: a fast, long-legged bird and the scruffy canine forever after it, along the foot of the
+   masthead, in the snapping style of cutout animation. Mostly the bird blurs past in a puff of
+   dust and the canine scrambles after; sometimes the bird stops dead and the canine skids past;
+   sometimes the bird runs out of the frame and the canine, following, smacks into its edge; and
+   sometimes the canine, stopped to catch its breath, meets an anvil from above or the train
+   along its track. It always pops back up. The acts come from the seed, so ?ambientSeed=<n>
+   replays them. */
+
+/* The canine, facing right, from its feet: a body, a long-snouted head with an ear, a tail. Its
+   legs are drawn apart: standing, or a whirl when it runs. */
+var DOG = 'M-24 -24a24 11 0 1 0 48 0a24 11 0 1 0 -48 0z' +
+  'M16 -34q2 -12 14 -10l16 6q2 4 -2 6l-14 2q-10 2 -14 -4z' +
+  'M20 -42l-2 -14l9 10z' +
+  'M-23 -27q-12 -2 -18 -14q8 6 18 8z';
+var DOG_LEGS = 'M-14 -15L-16 0M-6 -15L-6 0M10 -15L10 0M16 -15L19 0';
+/* The bird, facing right, from its feet: a body, a long neck, a crested head with a beak, a tail. */
+var BIRD = 'M-12 -40a12 7 0 1 0 24 0a12 7 0 1 0 -24 0z' +
+  'M8 -44L14 -60M11 -66a5 5 0 1 0 10 0a5 5 0 1 0 -10 0z' +
+  'M21 -66L33 -63L21 -61z' +
+  'M14 -70l-6 -8M16 -71l-2 -9M18 -70l2 -8' +
+  'M-12 -41l-18 -8M-12 -39l-18 -2M-11 -37l-16 5';
+var BIRD_LEGS = 'M-2 -33L-4 0h6M4 -33L6 0h6';
+
+/* Legs in a blur: spokes round a hub, turned a little each frame. */
+export function whirl(cx, cy, r, frame) {
+  var d = '';
+  for (var k = 0; k < 6; k++) {
+    var a = frame * 0.9 + k * Math.PI / 3;
+    d += 'M' + cx + ' ' + cy + 'l' + (Math.cos(a) * r).toFixed(1) + ' ' + (Math.sin(a) * r).toFixed(1);
+  }
+  return d;
+}
+
+/* A short train, as the train animation draws it, coming along the track. */
+var TRAIN = [
+  ' _______            ||  ',
+  '|  [ ]  |___________||__ ',
+  '|       |               |\\',
+  '|       |   BYTECODE    | \\',
+  '|_______|_______________|__>',
+  '  (o)(o)   (O)=(O)=(O)     '
+];
+var ANVIL_PATH = 'M-30 0H30V-6H16V-16H36V-28H-34Q-46 -26 -56 -21Q-45 -18 -34 -16H-16V-6H-30Z';
+var ACTS = ['chase', 'chase', 'chase', 'chase', 'skid', 'skid', 'edge', 'edge', 'anvil', 'train'];
+
+export default function chase(layer, m) {
+  var W = m.width, H = m.height, ground = H - 6;
+  var rs = (m.seed() >>> 0) || 1;
+  function rand() { rs = (Math.imul(rs, 1664525) + 1013904223) >>> 0; return rs / 0x100000000; }
+  function solid(line) { return line.replace(/ /g, ' '); }
+
+  var dustLayer = m.el('g', { 'class': 'masthead-chase-dust' });
+  function figure(cls, body) {
+    var g = m.el('g', { 'class': 'masthead-chase-' + cls, opacity: 0 });
+    var inner = m.el('g', {}, g);
+    m.el('path', { 'class': 'masthead-chase-piece', d: body }, inner);
+    var legs = m.el('path', { 'class': 'masthead-chase-legs' }, inner);
+    m.el('circle', { 'class': 'masthead-chase-eye', cx: cls === 'dog' ? 30 : 17, cy: cls === 'dog' ? -38 : -67, r: 1.8 }, inner);
+    // A cartoon "!" over its head, when it notices what's coming.
+    var alarm = m.el('path', { 'class': 'masthead-chase-alarm', d: 'M28 -78v-14M28 -70v0', opacity: 0 }, inner);
+    return { g: g, inner: inner, legs: legs, alarm: alarm, x: 0, dir: 1, sx: 1, sy: 1, mode: 'hidden' };
+  }
+  var bird = figure('bird', BIRD), dog = figure('dog', DOG);
+  var stars = m.el('path', { 'class': 'masthead-chase-stars', opacity: 0 });
+  var anvil = m.el('path', { 'class': 'masthead-chase-anvil', d: ANVIL_PATH, opacity: 0 });
+  var train = m.el('g', { 'class': 'masthead-chase-train', opacity: 0 });
+  TRAIN.forEach(function (line, r) { m.el('text', { x: 0, y: (r - TRAIN.length + 1) * 12 }, train).textContent = solid(line); });
+  var trainWidth = TRAIN[4].length * 7.2;
+
+  var dust = [], act = null, frame = 0, rest = 10;
+
+  function puff(x, size) {
+    dust.push({ el: m.el('circle', { cx: x.toFixed(1), cy: (ground - 6).toFixed(1), r: size }, dustLayer), age: 0, size: size });
+  }
+
+  function place(f, n) {
+    var squeeze = 1 / m.stretch();
+    f.g.setAttribute('opacity', f.mode === 'hidden' ? 0 : 1);
+    f.g.setAttribute('transform', 'translate(' + f.x.toFixed(1) + ' ' + ground + ') scale(' + (f.dir * f.sx * squeeze).toFixed(4) + ' ' + f.sy.toFixed(3) + ')');
+    var isDog = f === dog;
+    f.legs.setAttribute('d', f.mode === 'run' ? whirl(isDog ? 2 : 2, isDog ? -9 : -15, isDog ? 10 : 15, n) : isDog ? DOG_LEGS : BIRD_LEGS);
+    // Noticing: a "!" over its head, for a beat; skidding: leaning back hard.
+    f.alarm.setAttribute('opacity', f.mode === 'look' ? 1 : 0);
+    f.inner.setAttribute('transform', f.mode === 'skid' ? 'rotate(-14)' : '');
+  }
+
+  /* Each act: a function of its frame that moves the cast and says when it's done. */
+  var acts = {
+    chase: function (f, a) {
+      if (f === 0) {
+        a.dir = rand() < 0.5 ? 1 : -1;
+        bird.dir = dog.dir = a.dir; bird.mode = 'run'; dog.mode = 'hidden';
+        bird.x = a.dir > 0 ? -40 : W + 40;
+        a.gap = 12 + Math.floor(rand() * 18);
+      }
+      if (bird.mode === 'run') {
+        bird.x += a.dir * 24;
+        if (f % 3 === 0) puff(bird.x - a.dir * 20, 6 + rand() * 4);
+        if ((a.dir > 0 && bird.x > W + 60) || (a.dir < 0 && bird.x < -60)) { bird.mode = 'hidden'; a.goneAt = f; }
+      }
+      if (a.goneAt !== undefined && f === a.goneAt + a.gap) { dog.mode = 'run'; dog.x = a.dir > 0 ? -50 : W + 50; }
+      if (dog.mode === 'run') {
+        dog.x += a.dir * 13;
+        if (f % 4 === 0) puff(dog.x - a.dir * 26, 4 + rand() * 3);
+        if ((a.dir > 0 && dog.x > W + 70) || (a.dir < 0 && dog.x < -70)) { dog.mode = 'hidden'; return true; }
+      }
+      return false;
+    },
+    skid: function (f, a) {
+      if (f === 0) {
+        a.dir = rand() < 0.5 ? 1 : -1;
+        a.stop = a.dir > 0 ? 260 + rand() * 200 : W - 260 - rand() * 200;
+        bird.dir = dog.dir = a.dir; bird.mode = 'run'; dog.mode = 'hidden';
+        bird.x = a.dir > 0 ? -40 : W + 40; a.stage = 'in';
+      }
+      if (a.stage === 'in') {
+        bird.x += a.dir * 24;
+        if ((a.dir > 0 && bird.x >= a.stop) || (a.dir < 0 && bird.x <= a.stop)) {
+          bird.x = a.stop; bird.mode = 'stand'; a.stage = 'wait'; a.at = f;
+          dog.mode = 'run'; dog.x = a.dir > 0 ? -50 : W + 50;
+        }
+      } else if (a.stage === 'wait') {
+        dog.x += a.dir * 14;
+        if (f % 4 === 0) puff(dog.x - a.dir * 26, 4);
+        if ((a.dir > 0 && dog.x >= bird.x - 10) || (a.dir < 0 && dog.x <= bird.x + 10)) { a.stage = 'skid'; a.speed = 14; dog.mode = 'skid'; }
+      } else if (a.stage === 'skid') {
+        // Too fast to stop: it skids past, raising dust, while the bird is off the other way.
+        dog.x += a.dir * a.speed; a.speed *= 0.86;
+        puff(dog.x - a.dir * 10, 3 + rand() * 4);
+        if (bird.mode === 'stand') { bird.mode = 'run'; bird.dir = -a.dir; }
+        if (a.speed < 0.6) { dog.mode = 'look'; a.stage = 'look'; a.at = f; }
+      } else if (a.stage === 'look') {
+        if (f - a.at > 22) { dog.mode = 'run'; dog.dir = -a.dir; a.stage = 'after'; }
+      } else if (a.stage === 'after') {
+        dog.x -= a.dir * 13;
+        if (f % 4 === 0) puff(dog.x + a.dir * 26, 4);
+      }
+      if (bird.mode === 'run' && a.stage !== 'in') {
+        bird.x += bird.dir * 24;
+        if (bird.x < -60 || bird.x > W + 60) bird.mode = 'hidden';
+      }
+      if (a.stage === 'after' && (dog.x < -70 || dog.x > W + 70)) { dog.mode = 'hidden'; return true; }
+      return false;
+    },
+    edge: function (f, a) {
+      if (f === 0) {
+        a.dir = rand() < 0.5 ? 1 : -1;
+        bird.dir = dog.dir = a.dir; bird.mode = 'run'; dog.mode = 'run';
+        bird.x = a.dir > 0 ? -40 : W + 40; dog.x = bird.x - a.dir * 260; a.stage = 'run';
+        a.edge = a.dir > 0 ? W - 2 : 2;
+      }
+      if (bird.mode === 'run') { bird.x += a.dir * 22; if (bird.x < -60 || bird.x > W + 60) bird.mode = 'hidden'; }
+      if (a.stage === 'run') {
+        dog.x += a.dir * 13;
+        if (f % 4 === 0) puff(dog.x - a.dir * 26, 4);
+        // The bird ran out of the frame; the canine runs into it, nose first.
+        if ((a.dir > 0 && dog.x + 44 >= a.edge) || (a.dir < 0 && dog.x - 44 <= a.edge)) {
+          a.stage = 'splat'; a.at = f; dog.mode = 'stand'; dog.sx = 0.25; dog.x = a.edge - a.dir * 11;
+        }
+      } else if (a.stage === 'splat') {
+        if (f - a.at > 16) { a.stage = 'dizzy'; a.at = f; dog.sx = 1; dog.x = a.edge - a.dir * 48; }
+      } else if (a.stage === 'dizzy') {
+        stars.setAttribute('opacity', 1);
+        var sx = dog.x + a.dir * 24, sy = ground - 58, d = '';
+        for (var k = 0; k < 3; k++) {
+          var ang = (f - a.at) * 0.35 + k * 2.1;
+          var px = sx + Math.cos(ang) * 16, py = sy + Math.sin(ang) * 5;
+          d += 'M' + (px - 3).toFixed(1) + ' ' + py.toFixed(1) + 'h6M' + px.toFixed(1) + ' ' + (py - 3).toFixed(1) + 'v6';
+        }
+        stars.setAttribute('d', d);
+        if (f - a.at > 30) { stars.setAttribute('opacity', 0); a.stage = 'back'; dog.dir = -a.dir; dog.mode = 'walk'; }
+      } else if (a.stage === 'back') {
+        // Trudging back the way it came, a little unsteady.
+        dog.x -= a.dir * 4;
+        dog.sy = 1 + (f % 6 < 3 ? 0.04 : -0.04);
+        if (dog.x < -70 || dog.x > W + 70) { dog.mode = 'hidden'; dog.sy = 1; return true; }
+      }
+      return false;
+    },
+    anvil: function (f, a) {
+      if (f === 0) {
+        a.dir = rand() < 0.5 ? 1 : -1; dog.dir = a.dir; dog.mode = 'run'; bird.mode = 'hidden';
+        dog.x = a.dir > 0 ? -50 : W + 50; a.stop = a.dir > 0 ? 200 + rand() * 250 : W - 200 - rand() * 250; a.stage = 'in';
+      }
+      if (a.stage === 'in') {
+        dog.x += a.dir * 13;
+        if (f % 4 === 0) puff(dog.x - a.dir * 26, 4);
+        if ((a.dir > 0 && dog.x >= a.stop) || (a.dir < 0 && dog.x <= a.stop)) { dog.mode = 'stand'; a.stage = 'pant'; a.at = f; }
+      } else if (a.stage === 'pant') {
+        dog.sy = 1 + ((f - a.at) % 8 < 4 ? 0.05 : 0);
+        if (f - a.at > 18) { dog.mode = 'look'; a.stage = 'fall'; a.at = f; }
+      } else if (a.stage === 'fall') {
+        var t = (f - a.at) / 7, top = -40, pile = ground - 8;
+        anvil.setAttribute('opacity', 1);
+        anvil.setAttribute('transform', 'translate(' + dog.x.toFixed(1) + ' ' + (top + (pile - top) * t * t).toFixed(1) + ')');
+        if (t >= 1) { dog.sy = 0.15; dog.mode = 'stand'; a.stage = 'flat'; a.at = f; puff(dog.x - 30, 8); puff(dog.x + 30, 8); }
+      } else if (a.stage === 'flat') {
+        if (f - a.at > 26) { anvil.setAttribute('opacity', 0); a.stage = 'pop'; a.at = f; }
+      } else if (a.stage === 'pop') {
+        dog.sy = [1.25, 0.9, 1][Math.min(2, f - a.at)];
+        if (f - a.at > 6) { a.stage = 'limp'; dog.mode = 'walk'; }
+      } else if (a.stage === 'limp') {
+        dog.x += a.dir * 3;
+        dog.sy = f % 6 < 3 ? 0.94 : 1;
+        if (dog.x < -70 || dog.x > W + 70) { dog.mode = 'hidden'; dog.sy = 1; return true; }
+      }
+      return false;
+    },
+    train: function (f, a) {
+      if (f === 0) {
+        dog.dir = 1; dog.mode = 'run'; bird.mode = 'hidden';
+        dog.x = W + 50; dog.dir = -1; a.stop = W * 0.3 + rand() * W * 0.35; a.stage = 'in';
+      }
+      var squeeze = 1 / m.stretch();
+      if (a.stage === 'in') {
+        dog.x -= 13;
+        if (f % 4 === 0) puff(dog.x + 26, 4);
+        if (dog.x <= a.stop) { dog.mode = 'stand'; a.stage = 'pant'; a.at = f; }
+      } else if (a.stage === 'pant') {
+        dog.sy = 1 + ((f - a.at) % 8 < 4 ? 0.05 : 0);
+        // It turns to see the train coming from behind.
+        if (f - a.at > 14) { dog.mode = 'look'; a.stage = 'train'; a.tx = -trainWidth * squeeze - 20; }
+      } else if (a.stage === 'train' || a.stage === 'flat') {
+        // The train comes from behind, along the track, and doesn't stop.
+        a.tx += 9;
+        train.setAttribute('opacity', 1);
+        train.setAttribute('transform', 'translate(' + a.tx.toFixed(1) + ' ' + ground + ') scale(' + squeeze.toFixed(4) + ' 1)');
+        if (a.stage === 'train' && a.tx + trainWidth * squeeze >= dog.x - 20) { dog.sy = 0.12; dog.mode = 'stand'; a.stage = 'flat'; }
+        if (a.tx > W + 20) { train.setAttribute('opacity', 0); a.stage = 'peel'; a.at = f; }
+      } else if (a.stage === 'peel') {
+        dog.sy = [0.3, 0.6, 1.2, 0.95, 1][Math.min(4, f - a.at)];
+        if (f - a.at > 8) { a.stage = 'limp'; dog.mode = 'walk'; dog.dir = 1; }
+      } else if (a.stage === 'limp') {
+        dog.x += 3;
+        dog.sy = f % 6 < 3 ? 0.94 : 1;
+        if (dog.x > W + 70) { dog.mode = 'hidden'; dog.sy = 1; return true; }
+      }
+      return false;
+    }
+  };
+
+  function draw(n) {
+    place(bird, n);
+    place(dog, n);
+    dust = dust.filter(function (p) {
+      p.age += 1;
+      if (p.age > 16) { dustLayer.removeChild(p.el); return false; }
+      p.el.setAttribute('r', (p.size + p.age * 0.6).toFixed(1));
+      p.el.setAttribute('fill-opacity', (0.5 * (1 - p.age / 16)).toFixed(2));
+      return true;
+    });
+  }
+  draw(0);
+
+  return {
+    interval: 60,
+    step: function (n) {
+      if (!act) {
+        if (--rest > 0) { draw(n); return; }
+        act = { name: ACTS[Math.floor(rand() * ACTS.length)] };
+        frame = 0;
+      }
+      if (acts[act.name](frame++, act)) { act = null; rest = 20 + Math.floor(rand() * 50); }
+      draw(n);
+    }
+  };
+}

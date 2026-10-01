@@ -65,6 +65,15 @@
 .masthead-bytecode-head { fill: var(--_accent); filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--_accent) 70%, transparent)); }
 .masthead-bytecode-note { fill: var(--_accent); font-size: 14px; font-weight: 500; }
 
+/* Chase: the bird and the canine as cutouts, their legs, the dust behind them, and what befalls
+   the canine (stars, an anvil, the train). */
+.masthead-chase-piece { fill: color-mix(in srgb, var(--_accent) 14%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.4; stroke-linejoin: round; }
+.masthead-chase-legs, .masthead-chase-alarm, .masthead-chase-stars { fill: none; stroke: var(--_accent); stroke-width: 2.2; stroke-linecap: round; }
+.masthead-chase-eye { fill: var(--_accent); }
+.masthead-chase-dust { fill: color-mix(in srgb, var(--_accent) 35%, var(--_border)); }
+.masthead-chase-anvil { fill: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.6; stroke-linejoin: round; }
+.masthead-chase-train { fill: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); font: 600 12px var(--masthead-mono, ui-monospace, monospace); }
+
 /* City defense: trails from the top, rings where counter-missiles burst, cities along the foot. */
 .masthead-citydefense { fill: none; }
 .masthead-citydefense-ground { stroke: color-mix(in srgb, var(--_accent) 50%, var(--_border)); stroke-width: 1.2; }

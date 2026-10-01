@@ -16,6 +16,7 @@ only puts the art on its page and starts the runner.
 | `bats` | October: bats flapping across in loose, wavering flight, now and then a little flock. |
 | `boids` | Sixteen fireflies flocking. |
 | `bytecode` | The code rain in JVM bytecode: real instructions in hex, now and then one decoded. |
+| `chase` | A fast bird and a canine forever after it along the foot of the masthead: skids, a smack into the frame's edge, an anvil, the train. It always pops back up. |
 | `circuit` | Fireflies running the traces of a circuit board, moving by SVG alone. |
 | `citydefense` | Missile defense playing itself, slowly: trails from above, counter-missiles bursting into rings, cities falling and rebuilt. |
 | `deadline` | A writer at a desk on the left, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard. |

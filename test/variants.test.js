@@ -15,6 +15,7 @@ import { find, run, serialize } from './fake.js';
 import boids from '../src/variants/boids.js';
 import bytecode, { OCTOBER, PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
 import circuit from '../src/variants/circuit.js';
+import chase, { whirl } from '../src/variants/chase.js';
 import citydefense, { BASES, CITIES, GROUND, intercept } from '../src/variants/citydefense.js';
 import grass, { wind as grassWind } from '../src/variants/grass.js';
 import lander, { GRAVITY, SIDE, THRUST, ground, pilot } from '../src/variants/lander.js';
@@ -32,7 +33,7 @@ import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple } from '../src/variants/water.js';
 
-const all = { bats, boids, bytecode, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, boids, bytecode, chase, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -56,7 +57,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'boids', 'bytecode', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -467,6 +468,33 @@ describe('october', () => {
       peeked = peeked || peeker.attrs.opacity === '1';
     }
     assert.ok(crossed && peeked);
+  });
+});
+
+describe('the chase', () => {
+  it('blurs running legs, turning them each frame', () => {
+    assert.notEqual(whirl(0, -9, 10, 1), whirl(0, -9, 10, 2));
+  });
+
+  it('plays every act, the canine always popping back to its own shape', () => {
+    const { layer, art } = run(chase, 0, { seed: 3 });
+    const dog = find(layer, 'masthead-chase-dog')[0];
+    const seen = { flat: false, splat: false, alarm: false, train: false, anvil: false };
+    const train = find(layer, 'masthead-chase-train')[0], anvil = find(layer, 'masthead-chase-anvil')[0];
+    const alarm = dog.children[0].children.find((c) => (c.attrs.class || '').includes('alarm'));
+    for (let i = 1; i <= 40000; i++) {
+      art.step(i, i * 60);
+      const scale = /scale\((-?[\d.]+) (-?[\d.]+)\)/.exec(dog.attrs.transform);
+      const sx = Math.abs(Number(scale[1])), sy = Number(scale[2]);
+      if (sy < 0.2) seen.flat = true;
+      if (sx < 0.3) seen.splat = true;
+      if (alarm.attrs.opacity === '1') seen.alarm = true;
+      if (train.attrs.opacity === '1') seen.train = true;
+      if (anvil.attrs.opacity === '1') seen.anvil = true;
+      // Whenever it's out of sight it's back to its own shape.
+      if (dog.attrs.opacity === '0') assert.ok(Math.abs(sy - 1) < 1e-9 && Math.abs(sx - 1) < 1e-9, `step ${i}`);
+    }
+    assert.deepEqual(seen, { flat: true, splat: true, alarm: true, train: true, anvil: true });
   });
 });
 

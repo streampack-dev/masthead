@@ -4,6 +4,7 @@ export var variants = {
   bats: function () { return import('./variants/bats.js'); },
   boids: function () { return import('./variants/boids.js'); },
   bytecode: function () { return import('./variants/bytecode.js'); },
+  chase: function () { return import('./variants/chase.js'); },
   circuit: function () { return import('./variants/circuit.js'); },
   citydefense: function () { return import('./variants/citydefense.js'); },
   deadline: function () { return import('./variants/deadline.js'); },
