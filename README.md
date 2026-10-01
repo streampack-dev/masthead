@@ -23,9 +23,11 @@ only puts the art on its page and starts the runner.
 | `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
 | `life` | Conway's Game of Life, reseeded when it settles. |
 | `paddles` | Two paddles and a ball, playing itself at an easy pace, scores ticking up to eleven. |
+| `pongwars` | Two sides of a field of squares and a ball each, every square a ball touches coming over to its side; the border wanders forever. |
 | `rocks` | Rocks drifting and turning; a small ship turns, fires, and splits them. |
 | `signalnoise` | Faint scanlines and a rolling band, with brief bursts of interference. |
 | `solari` | A split-flap board showing the front page's other deks, riffling to the next every so often. |
+| `stix` | The C64 claim-the-field game playing itself: a marker cuts into the field, claiming the side without the wandering Stix, hatched. |
 | `terrainflight` | Ridgelines rolling toward you from the horizon. |
 | `train` | An ASCII-art train running along a track at the foot of the masthead, trailing smoke. |
 | `water` | A still surface seen from just above; drops land and their rings spread and cross. |

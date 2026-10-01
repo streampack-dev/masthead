@@ -104,12 +104,25 @@
 .masthead-paddles-paddle, .masthead-paddles-ball { fill: var(--_accent); }
 .masthead-paddles-score { fill: color-mix(in srgb, var(--_accent) 60%, var(--_bg)); font: 700 28px var(--masthead-mono, ui-monospace, monospace); }
 
+/* Pong wars: one side a faint wash of the accent, the other the page; a ball of each. */
+.masthead-pongwars-cell { fill: color-mix(in srgb, var(--_accent) 22%, var(--_bg)); }
+.masthead-pongwars-ball-1 { fill: var(--_accent); }
+.masthead-pongwars-ball-0 { fill: var(--_bg); stroke: var(--_accent); stroke-width: 1.5; }
+
 /* Rocks: outlines drifting, the ship, its shots and the dust of a broken rock. */
 .masthead-rocks { fill: none; stroke-linejoin: round; }
 .masthead-rocks-rock { stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1.3; }
 .masthead-rocks-ship { stroke: var(--_accent); stroke-width: 1.4; }
 .masthead-rocks-shot { stroke: var(--_accent); stroke-width: 1.6; stroke-linecap: round; }
 .masthead-rocks-dust { fill: var(--_accent); }
+
+/* Stix: claimed ground hatched, the field's border, the cut, the Stix and its fading copies. */
+.masthead-stix { fill: none; }
+.masthead-stix-hatching { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_bg)); stroke-width: 1; }
+.masthead-stix-border { stroke: color-mix(in srgb, var(--_accent) 60%, var(--_border)); stroke-width: 1.2; }
+.masthead-stix-cut { stroke: var(--_accent); stroke-width: 1.6; stroke-linejoin: round; }
+.masthead-stix-line { stroke: var(--_accent); stroke-width: 1.3; }
+.masthead-stix-marker { fill: var(--_accent); }
 
 /* Train: ASCII art along a track at the foot of the masthead, trailing smoke. */
 .masthead-train { font: 600 12px var(--masthead-mono, ui-monospace, monospace); }

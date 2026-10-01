@@ -11,6 +11,8 @@ import grass, { wind as grassWind } from '../src/variants/grass.js';
 import lander, { GRAVITY, SIDE, THRUST, ground, pilot } from '../src/variants/lander.js';
 import paddles, { LEFT, RIGHT, landing } from '../src/variants/paddles.js';
 import rocks, { SIZES, outline } from '../src/variants/rocks.js';
+import pongwars, { COLS as WAR_COLS, ROWS as WAR_ROWS, bounce } from '../src/variants/pongwars.js';
+import stix, { GH, GW, claim, field, route } from '../src/variants/stix.js';
 import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
 import fractal from '../src/variants/fractal.js';
 import ghostrider, { DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
@@ -21,7 +23,7 @@ import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple } from '../src/variants/water.js';
 
-const all = { boids, bytecode, citydefense, fractal, ghostrider, grass, lander, paddles, rocks, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { boids, bytecode, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -45,7 +47,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['boids', 'bytecode', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'rocks', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['boids', 'bytecode', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -269,6 +271,56 @@ describe('the wind farm', () => {
     const before = rotor.attrs.transform;
     art.step(1, 40);
     assert.notEqual(rotor.attrs.transform, before);
+  });
+});
+
+describe('pong wars', () => {
+  it('brings a square it touches over to its side, and bounces off it', () => {
+    const cells = new Uint8Array(WAR_COLS * WAR_ROWS);
+    const ball = { side: 1, x: 45, y: 45, vx: 3, vy: 0 };
+    cells[1 * WAR_COLS + 1] = 0;
+    bounce(ball, cells, 30, 30, 1200, 330);
+    assert.ok(cells.some((c) => c === 1));
+  });
+
+  it('never lets either side win: both hold ground after a long while', () => {
+    const { layer, art } = run(pongwars, 0, { seed: 4 });
+    for (let i = 1; i <= 12000; i++) art.step(i, i * 40);
+    const shown = find(layer, 'masthead-pongwars-cell').filter((r) => Number(r.attrs['fill-opacity']) > 0).length;
+    const share = shown / (WAR_COLS * WAR_ROWS);
+    assert.ok(share > 0.2 && share < 0.8, String(share));
+  });
+});
+
+describe('stix', () => {
+  it('claims the side of a closed cut without the Stix', () => {
+    const cells = field();
+    // A cut straight down the field at column 30, from the top border to the bottom.
+    for (let y = 1; y < GH - 1; y++) cells[y * GW + 30] = 2;
+    claim(cells, 80, 16);
+    assert.equal(cells[16 * GW + 10], 1);
+    assert.equal(cells[16 * GW + 80], 0);
+    assert.equal(cells[16 * GW + 30], 1);
+  });
+
+  it('finds its way along the claimed ground', () => {
+    const cells = field();
+    const path = route(cells, (GH - 1) * GW + 60, GW + 0);
+    assert.ok(path && path.every((i) => cells[i] === 1));
+  });
+
+  it('cuts, claims, and starts again when the field is mostly claimed', () => {
+    const { layer, art } = run(stix, 0, { seed: 7 });
+    const ground = find(layer, 'masthead-stix-claimed')[0];
+    let grew = 0, cleared = false, last = ground.attrs.d;
+    for (let i = 1; i <= 20000 && !cleared; i++) {
+      art.step(i, i * 40);
+      if (ground.attrs.d !== last) {
+        if (ground.attrs.d.length < last.length / 3) cleared = true; else grew++;
+        last = ground.attrs.d;
+      }
+    }
+    assert.ok(grew > 5 && cleared, `${grew} ${cleared}`);
   });
 });
 
