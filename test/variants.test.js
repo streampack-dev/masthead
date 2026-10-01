@@ -68,8 +68,9 @@ describe('every variant', () => {
 describe('a poke', () => {
   const poking = Object.keys(all).filter((name) => run(all[name], 0).art && run(all[name], 0).art.poke);
 
-  it('is taken by boids, circuit, fractal, ghostrider, life and water', () => {
-    for (const name of ['boids', 'circuit', 'fractal', 'ghostrider', 'life', 'water']) assert.ok(poking.includes(name), name);
+  it('is taken by the first eleven animations', () => {
+    const first = ['boids', 'bytecode', 'circuit', 'fractal', 'ghostrider', 'life', 'signalnoise', 'solari', 'terrainflight', 'train', 'water'];
+    for (const name of first) assert.ok(poking.includes(name), name);
   });
 
   for (const name of poking) {
@@ -156,6 +157,71 @@ describe('a poke', () => {
     for (let i = 11; i <= 600; i++) art.step(i, i * 40);
   });
 
+  it('blows the train whistle, or calls the next train in when the track is empty', () => {
+    const { layer, art } = run(train, 0);
+    const smoke = find(layer, 'masthead-train-smoke')[0];
+    for (let i = 1; i <= 20; i++) art.step(i, i * 40);
+    art.poke(600, 300, 20, 800);
+    assert.ok(smoke.children.some((p) => p.textContent.includes('TOOT!')));
+    const cars = find(layer, 'masthead-train-cars')[0];
+    let i = 21;
+    for (; i <= 2000 && cars.attrs.opacity !== '0'; i++) art.step(i, i * 40);
+    art.poke(600, 300, i, i * 40);
+    art.step(i + 1, (i + 1) * 40);
+    art.step(i + 2, (i + 2) * 40);
+    assert.equal(cars.attrs.opacity, '1');
+  });
+
+  it('riffles the solari board on to the next dek now, in a wave from the flap clicked', () => {
+    const deks = ['Beside the lead', 'The second story'];
+    const { layer, art } = run(solari, 40, { deks });
+    const cells = () => find(layer, 'masthead-solari-glyph').map((t) => t.textContent);
+    const before = cells();
+    art.poke(80, 110, 40, 40 * 58);
+    art.step(41, 41 * 58);
+    art.step(42, 42 * 58);
+    const riffling = cells();
+    assert.notEqual(riffling[0], before[0]);
+    assert.equal(riffling[COLS * ROWS - 1], before[COLS * ROWS - 1]);
+    for (let i = 43; i <= 120; i++) art.step(i, i * 58);
+    const shown = rowsOf(cells());
+    assert.ok(shown.join(' ').includes('STORY') || shown.join(' ').includes('LEAD'), shown.join('|'));
+    assert.notDeepEqual(cells(), before);
+  });
+
+  it('bursts the bytecode rain from it, and decodes the instruction there', () => {
+    const { layer, art } = run(bytecode, 50);
+    art.poke(60, 40, 50, 3000);
+    const note = find(layer, 'masthead-bytecode-note')[0];
+    assert.ok(Number(note.attrs.opacity) > 0);
+    assert.ok(PROGRAMS.flat().some((ins) => ins.text === note.children[0].textContent));
+    const head = find(layer, 'masthead-bytecode-head');
+    assert.ok(head.length > 0);
+  });
+
+  it('tears the signal round the height clicked, the band jumping there', () => {
+    const { layer, art } = run(signalnoise, 0);
+    art.poke(600, 250, 0, 0);
+    assert.equal(Number(find(layer, 'masthead-noise-band')[0].attrs.y), 232);
+    const lines = find(layer, 'masthead-noise-line').map((r) => Number(r.attrs.y));
+    assert.ok(lines.length >= 3 && lines.every((y) => y >= 200 && y <= 314), lines.join(' '));
+    for (let i = 1; i <= 20; i++) art.step(i, i * 70);
+    assert.equal(find(layer, 'masthead-noise-burst')[0].children.length, 0);
+  });
+
+  it('banks the terrain toward the side clicked, then levels out', () => {
+    const { layer, art } = run(terrainflight, 0);
+    const view = find(layer, 'masthead-terrain-view')[0];
+    art.poke(1000, 160, 0, 0);
+    for (let i = 1; i <= 55; i++) art.step(i, i * 32);
+    assert.ok(Number(/rotate\((-?[\d.]+)/.exec(view.attrs.transform)[1]) < -5);
+    art.poke(100, 160, 55, 55 * 32);
+    for (let i = 56; i <= 110; i++) art.step(i, i * 32);
+    assert.ok(Number(/rotate\((-?[\d.]+)/.exec(view.attrs.transform)[1]) > 5);
+    for (let i = 111; i <= 200; i++) art.step(i, i * 32);
+    assert.equal(view.attrs.transform, '');
+  });
+
   it('skips a stone across the water, shorter and lighter each time, toward the open side', () => {
     const from = skips(10, 30);
     assert.ok(from.length >= 3 && from.every((s) => s.x > 10 && s.y < 30));
@@ -167,6 +233,8 @@ describe('a poke', () => {
     assert.ok(skips(60, 4).length === 0);
   });
 });
+
+const rowsOf = (cells) => Array.from({ length: ROWS }, (_, r) => cells.slice(r * COLS, (r + 1) * COLS).join('').trim()).filter(Boolean);
 
 describe('the circuit', () => {
   it('draws its board and four fireflies that move by SVG alone, its steps idle until a surge', () => {

@@ -4,7 +4,7 @@ import { startMasthead, variants } from '../src/index.js';
 var BLURBS = {
   bats: 'October: bats flapping across in loose, wavering flight, now and then a little flock.',
   boids: 'Sixteen fireflies flocking. Click to send a hawk among them.',
-  bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded.',
+  bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded. Click to burst it.',
   chase: 'A fast bird and the canine forever after it: skids, a smack into the frame, an anvil, the train. It always pops back up.',
   circuit: 'Fireflies running the traces of a circuit board. Click to send a surge through it.',
   citydefense: 'Missile Command, playing itself, slowly: trails from above, rings bursting, cities falling and rebuilt.',
@@ -22,12 +22,12 @@ var BLURBS = {
   pongwars: 'Pong Wars: two sides of a field of squares, a ball each, the border between them wandering forever.',
   pumpkins: "October: a row of jack-o'-lanterns, their candles flickering.",
   rocks: 'Asteroids, playing itself: rocks drifting and turning, splitting when the ship hits them.',
-  signalnoise: 'Faint scanlines and a rolling band, with brief bursts of interference.',
-  solari: "A split-flap board showing the front page's deks, riffling to the next every so often.",
+  signalnoise: 'Faint scanlines and a rolling band, with brief bursts of interference. Click to tear the signal.',
+  solari: "A split-flap board showing the front page's deks, riffling to the next every so often. Click to riffle it on.",
   spider: 'October: a spider letting itself down on its thread, dangling, and climbing back up; a cobweb in the corner.',
   stix: 'Stix (the C64 Qix), playing itself: cuts into the field, claimed ground hatched, the Stix wandering.',
-  terrainflight: 'Ridgelines rolling toward you from the horizon.',
-  train: 'An ASCII train along the foot of the masthead, trailing smoke; then the empty track.',
+  terrainflight: 'Ridgelines rolling toward you from the horizon. Click to bank.',
+  train: 'An ASCII train along the foot of the masthead, trailing smoke; then the empty track. Click to blow the whistle, or call a train.',
   water: 'A still surface, seen from just above, that drops land on now and then. Click to skip a stone.',
   windfarm: 'Turbines along low hills, each turning at its own pace in a wind that rises and falls.'
 };

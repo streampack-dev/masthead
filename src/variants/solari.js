@@ -2,7 +2,8 @@
    bytecode.news. It shows the deks of the front page's other posts (ui-pudl #81), as a board
    would: in capitals from a small alphabet, cut to one board. It starts blank, riffles up the
    first dek, and moves on to the next, in order, each time it riffles (ui-pudl #125). With no
-   dek to show, it keeps its own lines. */
+   dek to show, it keeps its own lines. A click riffles it on to the next dek now, the flaps
+   turning in a wave out from where you clicked. */
 // It rests long enough to read a board, then moves on to the next dek (ui-pudl #125).
 export var FRAME_MS = 58, RECYCLE_MS = 9000, FIRST_MS = 900, CYCLE = 12;
 export var COLS = 26, ROWS = 5;
@@ -75,11 +76,19 @@ export default function solari(layer, m) {
     });
   });
 
-  /* Every flap riffles, row by row, settling from the left; frame < 0 shows the board settled. */
+  /* How many frames after the riffle starts each flap starts: row by row, or, from a click, by
+     how far it is from the flap clicked. */
+  function delay(row, col) {
+    return origin ? Math.round(Math.hypot(row - origin[0], (col - origin[1]) / 2)) : row;
+  }
+
+  /* Every flap riffles, its delay after the start, settling from the left; frame < 0 shows the
+     board settled. A flap the riffle hasn't reached yet keeps what it shows. */
   function show(frame) {
     target.forEach(function (chars, row) {
-      var f = Math.max(0, frame - row);
       chars.forEach(function (settled, i) {
+        var f = frame - delay(row, i);
+        if (frame >= 0 && f < 0) return;
         var settleAt = CYCLE - Math.min(6, Math.floor(i / 2));
         glyphs[row][i].textContent = frame < 0 || f >= settleAt ? settled
           : GLYPHS[(i * 13 + f * 7 + Math.floor(Math.random() * GLYPHS.length)) % GLYPHS.length];
@@ -87,9 +96,18 @@ export default function solari(layer, m) {
     });
   }
 
-  var startedAt = null, cycleAt = null, lastFrame = 0, frame = -1;
+  var startedAt = null, cycleAt = null, lastFrame = 0, frame = -1, origin = null, spread = ROWS;
   return {
     interval: FRAME_MS,
+    poke: function (x, y, n, now) {
+      if (frame >= 0) return;
+      var row = Math.max(0, Math.min(ROWS - 1, Math.floor((y - boardY) / ch)));
+      var col = Math.max(0, Math.min(COLS - 1, Math.floor((x - boardX) / cw)));
+      origin = [row, col];
+      spread = 1 + Math.max(delay(0, 0), delay(0, COLS - 1), delay(ROWS - 1, 0), delay(ROWS - 1, COLS - 1));
+      if (startedAt === null) startedAt = now;
+      cycleAt = now;
+    },
     step: function (n, now) {
       if (startedAt === null) { startedAt = now; cycleAt = now + FIRST_MS; }
       if (frame < 0) {
@@ -106,9 +124,11 @@ export default function solari(layer, m) {
       if (now - lastFrame < FRAME_MS) return;
       lastFrame = now;
       frame += 1;
-      if (frame >= CYCLE + ROWS) {
+      if (frame >= CYCLE + spread) {
         show(-1);
         frame = -1;
+        origin = null;
+        spread = ROWS;
         cycleAt = now + RECYCLE_MS;
         return;
       }
