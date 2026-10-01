@@ -1,6 +1,6 @@
 {
   "name": "@streampack-dev/masthead",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "The masthead animations for bytecode.news, for any front end",
   "license": "MIT",
   "type": "module",
