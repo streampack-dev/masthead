@@ -26,9 +26,10 @@ title names the seed) and `?ambientDebug=1` logs the choice.
 
 ## Using it in a front end
 
-1. **Get the files.** The package is `src/`. A Node front end depends on a tag:
-   `"@streampack-dev/masthead": "github:streampack-dev/masthead#v0.2.1"`. A front end serving
-   static files copies `src/` from a release.
+1. **Get the files.** The package is `src/`. A Node front end depends on a release's tarball,
+   which installs without git (unlike a `github:` dependency):
+   `"@streampack-dev/masthead": "https://github.com/streampack-dev/masthead/archive/refs/tags/v0.2.1.tar.gz"`.
+   A front end serving static files copies `src/` from a release.
 2. **Put the art in the page,** inside the masthead, from `art.svg`: a blank SVG holding only the
    shared glow. (A host may draw the same `<svg class="masthead-art">` itself, empty; the runner
    adds the glow when it's missing.) The runner draws the chosen animation into it once that animation has loaded, so

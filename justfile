@@ -61,7 +61,7 @@ release level="patch":
     echo "Releasing $current -> $next"
     trap 'status=$?; if [[ $status -ne 0 && -z "${committed:-}" ]]; then git checkout -- "${files[@]}"; echo "Release failed; package.json restored to $current." >&2; fi' EXIT
     npm version "$next" --no-git-tag-version >/dev/null
-    perl -0pi -e 's#(github:streampack-dev/masthead\#v)[0-9]+\.[0-9]+\.[0-9]+#${1}'"$next"'#g' README.md
+    perl -0pi -e 's#(masthead/archive/refs/tags/v)[0-9]+\.[0-9]+\.[0-9]+#${1}'"$next"'#g' README.md
     git commit -q -m "updating release version" -- "${files[@]}"
     committed=1
     git tag -a "v$next" -m "masthead $next"
