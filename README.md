@@ -30,7 +30,8 @@ title names the seed) and `?ambientDebug=1` logs the choice.
    `"@streampack-dev/masthead": "github:streampack-dev/masthead#v0.2.0"`. A front end serving
    static files copies `src/` from a release.
 2. **Put the art in the page,** inside the masthead, from `art.svg`: a blank SVG holding only the
-   shared glow. The runner draws the chosen animation into it once that animation has loaded, so
+   shared glow. (A host may draw the same `<svg class="masthead-art">` itself, empty; the runner
+   adds the glow when it's missing.) The runner draws the chosen animation into it once that animation has loaded, so
    nothing shows first and is swapped out, and only the chosen animation's file is fetched.
    Without script, with reduced motion, or if the animation fails, the masthead stays blank. The
    art fills its container, so the host places it: a positioned masthead with the art behind its

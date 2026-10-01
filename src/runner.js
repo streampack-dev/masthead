@@ -57,6 +57,21 @@ export function startMasthead(svg, options) {
   var seed = options.seed !== undefined ? options.seed : isFinite(seedAsked) ? seedAsked : randomSeed();
   var label = name === 'none' ? 'Animation: none' : 'Animation: ' + name + ' · seed ' + seed;
 
+  // The glow the variants fill with (m.pulse). art.svg has it; a host drawing its own empty SVG
+  // needn't.
+  if (!svg.querySelector('#masthead-pulse')) {
+    var defs = svg.appendChild(document.createElementNS(NS, 'defs'));
+    var pulse = defs.appendChild(document.createElementNS(NS, 'radialGradient'));
+    pulse.setAttribute('id', 'masthead-pulse');
+    pulse.setAttribute('r', '70%');
+    [['0%', '0.95'], ['38%', '0.42'], ['100%', '0']].forEach(function (s) {
+      var stop = pulse.appendChild(document.createElementNS(NS, 'stop'));
+      stop.setAttribute('offset', s[0]);
+      stop.setAttribute('class', 'masthead-glow');
+      stop.setAttribute('stop-opacity', s[1]);
+    });
+  }
+
   frameEl.setAttribute('data-masthead', name);
   svg.setAttribute('data-masthead', name);
   var title = svg.querySelector(':scope > title');
