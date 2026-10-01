@@ -29,7 +29,8 @@ function randomSeed() { return Math.floor(Math.random() * 0x7fffffff); }
      frame: the element given data-masthead="<name>" and .masthead-paused, for host CSS (the
        SVG's parent by default).
      reducedMotion: overrides prefers-reduced-motion.
-     debug: overrides ?ambientDebug=1.
+     debug: overrides ?ambientDebug=1, which logs the choice and shows the label in a
+       p.masthead-debug in the frame.
    Returns { name, seed, label, update(), stop() }. */
 export function startMasthead(svg, options) {
   options = options || {};
@@ -59,6 +60,14 @@ export function startMasthead(svg, options) {
   var title = svg.querySelector(':scope > title');
   if (!title) title = svg.insertBefore(document.createElementNS(NS, 'title'), svg.firstChild);
   title.textContent = label;
+  if (debug) {
+    // ?ambientDebug=1 names the run in the masthead's corner too (ui-pudl #97).
+    var tag = document.createElement('p');
+    tag.className = 'masthead-debug';
+    tag.setAttribute('aria-hidden', 'true');
+    tag.textContent = label;
+    frameEl.appendChild(tag);
+  }
   log(reduced ? 'reduced motion: the circuit, still' : label, { from: names });
 
   var handle = { name: name, seed: seed, label: label, update: function () {}, stop: function () {} };

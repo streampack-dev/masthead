@@ -27,7 +27,7 @@ title names the seed) and `?ambientDebug=1` logs the choice.
 ## Using it in a front end
 
 1. **Get the files.** The package is `src/`. A Node front end depends on a tag:
-   `"@streampack-dev/masthead": "github:streampack-dev/masthead#v0.1.0"`. A front end serving
+   `"@streampack-dev/masthead": "github:streampack-dev/masthead#v0.1.1"`. A front end serving
    static files copies `src/` from a release.
 2. **Put the art in the page,** inside the masthead, from `art.svg`. Rendering it on the server
    means the circuit shows before (or without) script. The art fills its container, so the host
