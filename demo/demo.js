@@ -6,6 +6,7 @@ var BLURBS = {
   boids: 'Sixteen fireflies flocking.',
   bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded.',
   fractal: 'A branching growth tracing round the name, resting when grown, then starting again.',
+  ghostrider: 'A wireframe road ahead, bending and rising gently, the hills sliding aside on the bends. For Neil Peart.',
   life: "Conway's Game of Life, reseeded when it settles.",
   signalnoise: 'Faint scanlines and a rolling band, with brief bursts of interference.',
   solari: "A split-flap board showing the front page's deks, riffling to the next every so often.",

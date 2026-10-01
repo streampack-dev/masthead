@@ -65,6 +65,15 @@
 .masthead-bytecode-head { fill: var(--_accent); filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--_accent) 70%, transparent)); }
 .masthead-bytecode-note { fill: var(--_accent); font-size: 14px; font-weight: 500; }
 
+/* Ghostrider: a wireframe road toward a high horizon, hills along it. */
+.masthead-ghostrider { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.masthead-ghostrider-edge { stroke: color-mix(in srgb, var(--_accent) 80%, var(--_bg)); stroke-width: 1.4; }
+.masthead-ghostrider-rumble { stroke: var(--_accent); stroke-width: 2; }
+.masthead-ghostrider-dash { stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.2; }
+.masthead-ghostrider-post { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1.2; }
+.masthead-ghostrider-hills { stroke: color-mix(in srgb, var(--_accent) 50%, var(--_border)); stroke-width: 1.1; }
+.masthead-ghostrider-horizon { stroke: color-mix(in srgb, var(--_accent) 35%, var(--_border)); stroke-width: 1; opacity: 0.6; }
+
 /* Train: ASCII art along a track at the foot of the masthead, trailing smoke. */
 .masthead-train { font: 600 12px var(--masthead-mono, ui-monospace, monospace); }
 .masthead-train-cars { fill: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); }

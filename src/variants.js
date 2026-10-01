@@ -5,6 +5,7 @@ export var variants = {
   bytecode: function () { return import('./variants/bytecode.js'); },
   circuit: function () { return import('./variants/circuit.js'); },
   fractal: function () { return import('./variants/fractal.js'); },
+  ghostrider: function () { return import('./variants/ghostrider.js'); },
   life: function () { return import('./variants/life.js'); },
   signalnoise: function () { return import('./variants/signalnoise.js'); },
   solari: function () { return import('./variants/solari.js'); },

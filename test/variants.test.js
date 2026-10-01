@@ -7,6 +7,7 @@ import boids from '../src/variants/boids.js';
 import bytecode, { PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
 import circuit from '../src/variants/circuit.js';
 import fractal from '../src/variants/fractal.js';
+import ghostrider, { DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
 import life from '../src/variants/life.js';
 import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
@@ -14,7 +15,7 @@ import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple } from '../src/variants/water.js';
 
-const all = { boids, bytecode, fractal, life, signalnoise, solari, terrainflight, train, water };
+const all = { boids, bytecode, fractal, ghostrider, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -38,7 +39,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['boids', 'bytecode', 'fractal', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['boids', 'bytecode', 'fractal', 'ghostrider', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -113,6 +114,59 @@ describe('the bytecode rain', () => {
     }
     const texts = PROGRAMS.flat().map((instruction) => instruction.text);
     assert.ok(seen && texts.includes(seen), String(seen));
+  });
+});
+
+describe('ghostrider', () => {
+  const road = (curve, height = () => 0) => ({ curve: () => curve, height });
+  const seeded = (seed) => () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 0x100000000);
+
+  it('runs a straight road to the middle of the horizon, narrowing as it goes', () => {
+    const segs = project(road(0), 0.5, 1200);
+    // All but the few nearer than the screen's foot.
+    assert.ok(segs.length > DRAW - 6);
+    assert.ok(segs.every((s) => s.x === 600 && !s.hidden));
+    for (let k = 1; k < segs.length; k++) {
+      assert.ok(segs[k].y < segs[k - 1].y && segs[k].w < segs[k - 1].w);
+    }
+    // It vanishes just under the horizon, a quarter of the way down, clear of the name.
+    assert.ok(segs.at(-1).y < 90);
+  });
+
+  it('bends the far road aside, the near road staying ahead of you', () => {
+    const segs = project(road(MAX_CURVE), 3.2, 1200);
+    const near = segs.find((s) => s.y <= 320);
+    assert.ok(Math.abs(near.x - 600) < 10, String(near.x));
+    assert.ok(segs.at(-1).x > 800);
+    // A sweep, not a hook at the horizon: by the name's height it has already moved aside.
+    const atName = segs.find((s) => s.y < 170);
+    assert.ok(atName.x > 610, String(atName.x));
+  });
+
+  it("hides what's beyond a rise", () => {
+    // Up, then down beyond segment 20.
+    const segs = project(road(0, (i) => (i < 40 ? i * 0.01 : 0.4 - (i - 40) * 0.015)), 0, 1200);
+    assert.ok(segs.some((s) => s.hidden));
+  });
+
+  it('drives smoothly: the far road moves a little each step, never jumps', () => {
+    const r = course(seeded(5));
+    let last = project(r, 0, 1200);
+    for (let cz = SPEED; cz < 600; cz += SPEED) {
+      const now = project(r, cz, 1200);
+      // The same segment, a step on.
+      const s = now.find((x) => x.i === last.at(-2).i);
+      assert.ok(s && Math.abs(s.x - last.at(-2).x) < 12, `at ${cz.toFixed(2)}`);
+      last = now;
+    }
+  });
+
+  it('keeps its bends gentle and its course the same for the same seed', () => {
+    const a = course(seeded(9)), b = course(seeded(9));
+    for (let i = 0; i < 2000; i++) {
+      assert.ok(Math.abs(a.curve(i)) <= MAX_CURVE);
+      assert.equal(a.curve(i), b.curve(i));
+    }
   });
 });
 
