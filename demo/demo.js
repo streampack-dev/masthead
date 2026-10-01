@@ -3,7 +3,7 @@ import { startMasthead, variants } from '../src/index.js';
 
 var BLURBS = {
   bats: 'October: bats flapping across in loose, wavering flight, now and then a little flock.',
-  boids: 'Sixteen fireflies flocking.',
+  boids: 'Sixteen fireflies flocking. Click to send a hawk among them.',
   bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded.',
   chase: 'A fast bird and the canine forever after it: skids, a smack into the frame, an anvil, the train. It always pops back up.',
   circuit: 'Fireflies running the traces of a circuit board.',
@@ -17,7 +17,7 @@ var BLURBS = {
   grass: 'A field of grass, the wind moving through it in slow swells and passing gusts.',
   graveyard: 'October: a full moon with clouds passing, headstones and bare trees, fog, and a bat crossing the moon.',
   lander: 'Lunar Lander, flown by its autopilot: a slow descent, short burns, a gentle landing on the pad.',
-  life: "Conway's Game of Life, reseeded when it settles.",
+  life: "Conway's Game of Life, reseeded when it settles. Click to plant a pattern.",
   paddles: 'Pong, playing itself at an easy pace, scores ticking up to eleven.',
   pongwars: 'Pong Wars: two sides of a field of squares, a ball each, the border between them wandering forever.',
   pumpkins: "October: a row of jack-o'-lanterns, their candles flickering.",
@@ -28,7 +28,7 @@ var BLURBS = {
   stix: 'Stix (the C64 Qix), playing itself: cuts into the field, claimed ground hatched, the Stix wandering.',
   terrainflight: 'Ridgelines rolling toward you from the horizon.',
   train: 'An ASCII train along the foot of the masthead, trailing smoke; then the empty track.',
-  water: 'A still surface, seen from just above, that drops land on now and then.',
+  water: 'A still surface, seen from just above, that drops land on now and then. Click to skip a stone.',
   windfarm: 'Turbines along low hills, each turning at its own pace in a wind that rises and falls.'
 };
 

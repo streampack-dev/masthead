@@ -1,5 +1,24 @@
 /* Life: Conway's Game of Life across the masthead, reseeded when it settles, as on bytecode.news.
-   ?ambientSeed=<n> replays a board. */
+   ?ambientSeed=<n> replays a board. A click clears a patch and plants one of PLANTS there, each
+   click the next. */
+
+/* What a click plants, as rows of live (O) and dead cells around the click: four gliders flying
+   out from it, an acorn and an R-pentomino, the last two long-lived methuselahs. */
+export var PLANTS = [
+  [
+    'OOO.......OOO',
+    'O...........O',
+    '.O.........O.',
+    '.............',
+    '.O.........O.',
+    'O...........O',
+    'OOO.......OOO'
+  ],
+  ['.O.....', '...O...', 'OO..OOO'],
+  ['.OO', 'OO.', '.O.']
+];
+var CLEAR = 9;
+
 export default function life(layer, m) {
   var COLUMNS = 200, ROWS = 53, DENSITY = 0.28, MIN_LIVE = 80, MAX_GENERATIONS = 520;
   function unit(seed, index) {
@@ -30,9 +49,25 @@ export default function life(layer, m) {
     path.setAttribute('d', d.join(''));
   }
   draw();
+  var planted = 0;
 
   return {
     interval: 145,
+    poke: function (x, y) {
+      var c0 = Math.floor(x / (m.width / COLUMNS)), r0 = Math.floor(y / (m.height / ROWS));
+      var plant = PLANTS[planted++ % PLANTS.length];
+      var cells = life.cells;
+      function at(r, c) { return ((r % ROWS) + ROWS) % ROWS * COLUMNS + ((c % COLUMNS) + COLUMNS) % COLUMNS; }
+      for (var dr = -CLEAR; dr <= CLEAR; dr++) {
+        for (var dc = -CLEAR * 2; dc <= CLEAR * 2; dc++) cells[at(r0 + dr, c0 + dc)] = 0;
+      }
+      var top = r0 - Math.floor(plant.length / 2), left = c0 - Math.floor(plant[0].length / 2);
+      plant.forEach(function (row, r) {
+        for (var c = 0; c < row.length; c++) if (row[c] === 'O') cells[at(top + r, left + c)] = 1;
+      });
+      life.generation = 0;
+      draw();
+    },
     step: function () {
       var cells = life.cells, next = new Uint8Array(cells.length), changed = 0, live = 0;
       for (var r = 0; r < ROWS; r++) {
