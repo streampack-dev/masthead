@@ -16,6 +16,30 @@ var STEP_MS = 24;
 export var WIDTH = 1200;
 export var HEIGHT = 320;
 
+/* The seasonal animations, and the months (1 to 12) they're picked in, in the visitor's own
+   time. Out of season they aren't picked at random, but ?ambient=<name> still runs one. An
+   animation not listed runs all year. */
+export var SEASONS = {
+  bats: [10],
+  eyes: [10],
+  ghosts: [10],
+  graveyard: [10],
+  pumpkins: [10],
+  spider: [10]
+};
+
+/* The animations [names] that may be picked at random on [date]. */
+export function inSeason(names, date) {
+  var month = date.getMonth() + 1;
+  return names.filter(function (name) { return !SEASONS[name] || SEASONS[name].indexOf(month) >= 0; });
+}
+
+/* ?ambientDate=YYYY-MM-DD, as a local date, or null. */
+function dateAsked(value) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12) : null;
+}
+
 /* One seed for the whole run, so the label can say how to see this run again (ui-pudl #97). */
 function randomSeed() { return Math.floor(Math.random() * 0x7fffffff); }
 
@@ -25,6 +49,7 @@ function randomSeed() { return Math.floor(Math.random() * 0x7fffffff); }
        say) passes its own loaders. With none, the masthead stays blank.
      name: the variant to run; else ?ambient=<name> if it's one, else one at random.
      seed: the run's seed; else ?ambientSeed=<n>, else random.
+     date: the day to pick for (seasonal animations); else ?ambientDate=YYYY-MM-DD, else today.
      search: the query string read for ambient, ambientSeed and ambientDebug (location.search).
      deks: () => string[], the front page's other posts' deks, for the variants that show them.
      paused: () => boolean, true while the host covers the masthead; call update() when it
@@ -48,11 +73,14 @@ export function startMasthead(svg, options) {
   var frameEl = options.frame || svg.parentElement || svg;
   var reduced = options.reducedMotion !== undefined ? options.reducedMotion
     : !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var names = Object.keys(loaders);
+  var all = Object.keys(loaders);
+  var date = options.date || dateAsked(params.get('ambientDate')) || new Date();
+  // Any animation can be asked for by name; a random pick is from those in season.
+  var names = inSeason(all, date);
   var asked = options.name !== undefined ? options.name : params.get('ambient');
-  var name = reduced || names.length === 0 ? 'none'
-    : names.indexOf(asked) >= 0 ? asked
-    : names[Math.floor(Math.random() * names.length)];
+  var name = reduced || all.length === 0 ? 'none'
+    : all.indexOf(asked) >= 0 ? asked
+    : names.length ? names[Math.floor(Math.random() * names.length)] : 'none';
   var seedAsked = parseInt(params.get('ambientSeed') || '', 10);
   var seed = options.seed !== undefined ? options.seed : isFinite(seedAsked) ? seedAsked : randomSeed();
   var label = name === 'none' ? 'Animation: none' : 'Animation: ' + name + ' · seed ' + seed;
@@ -156,6 +184,7 @@ export function startMasthead(svg, options) {
       pulse: 'url(#masthead-pulse)',
       seed: function () { return seed; },
       stretch: function () { return stretch; },
+      date: function () { return new Date(date.getTime()); },
       deks: function () { return options.deks ? options.deks() : []; },
       el: function (tag, attrs, parent) {
         var e = document.createElementNS(NS, tag);

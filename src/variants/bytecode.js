@@ -42,8 +42,12 @@ function stream(program) {
 }
 export var STREAMS = PROGRAMS.map(stream);
 
+/* In October, the rain also runs to 0xDEADBEEF, the hex that has marked dead memory for decades. */
+export var OCTOBER = stream([op([0xde, 0xad, 0xbe, 0xef], '0xDEADBEEF'), op([0xde, 0xad, 0xbe, 0xef], '0xDEADBEEF')]);
+
 export default function bytecode(layer, m) {
   var W = m.width, H = m.height;
+  var streams = m.date && m.date().getMonth() === 9 ? STREAMS.concat([OCTOBER, OCTOBER]) : STREAMS;
   var rs = (m.seed() >>> 0) || 1;
   function rand() { rs = (Math.imul(rs, 1664525) + 1013904223) >>> 0; return rs / 0x100000000; }
 
@@ -93,8 +97,8 @@ export default function bytecode(layer, m) {
   function start(col, first) {
     col.speed = 0.16 + rand() * 0.3;
     col.length = 6 + Math.floor(rand() * 10);
-    col.program = Math.floor(rand() * STREAMS.length);
-    col.at = Math.floor(rand() * STREAMS[col.program].length);
+    col.program = Math.floor(rand() * streams.length);
+    col.at = Math.floor(rand() * streams[col.program].length);
     // At first the screen is already raining; later a column waits a little before its next run.
     col.head = first ? rand() * (ROWS + col.length) - col.length : -1 - rand() * 4;
     col.wait = first ? 0 : Math.floor(rand() * 30);
@@ -102,7 +106,7 @@ export default function bytecode(layer, m) {
 
   /* The column's next byte, running on through its program and round again. */
   function next(col) {
-    var bytes = STREAMS[col.program];
+    var bytes = streams[col.program];
     var b = bytes[col.at];
     col.at = (col.at + 1) % bytes.length;
     if (b.text) col.last = b.text;
@@ -147,7 +151,7 @@ export default function bytecode(layer, m) {
     // Now and then a byte in the trail flickers to another.
     if (rand() < 0.04) {
       var flick = Math.floor(col.head - rand() * col.length);
-      if (flick >= 0 && flick < ROWS) col.cells[flick].el.textContent = STREAMS[Math.floor(rand() * STREAMS.length)][0].hex;
+      if (flick >= 0 && flick < ROWS) col.cells[flick].el.textContent = streams[Math.floor(rand() * streams.length)][0].hex;
     }
     if (col.head - col.length > ROWS) start(col, false);
   }

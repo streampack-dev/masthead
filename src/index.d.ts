@@ -12,6 +12,8 @@ export type MastheadContext = {
    * more on a wide, short masthead. Text drawn with scale(1 / stretch(), 1) keeps its shape.
    */
   stretch(): number;
+  /** The day the run was picked for: today, or ?ambientDate=YYYY-MM-DD. */
+  date(): Date;
   /** The front page's other posts' deks, as the host gives them. Maybe none. */
   deks(): string[];
   /** Makes an SVG element in parent (the layer by default). */
@@ -29,6 +31,8 @@ export type MastheadOptions = {
   variants?: MastheadLoaders;
   name?: string;
   seed?: number;
+  /** The day to pick for; seasonal animations are picked only in their months. */
+  date?: Date;
   search?: string;
   deks?: () => string[];
   paused?: () => boolean;
@@ -49,4 +53,7 @@ export type MastheadHandle = {
 export const WIDTH: number;
 export const HEIGHT: number;
 export const variants: MastheadLoaders;
+/** The seasonal animations and the months (1 to 12) they're picked in. */
+export const SEASONS: Record<string, number[]>;
+export function inSeason(names: string[], date: Date): string[];
 export function startMasthead(svg: SVGSVGElement, options?: MastheadOptions): MastheadHandle;

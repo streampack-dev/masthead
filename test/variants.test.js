@@ -2,9 +2,16 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import { variants } from '../src/variants.js';
+import { SEASONS, inSeason } from '../src/runner.js';
+import bats, { bat } from '../src/variants/bats.js';
+import eyes, { openness } from '../src/variants/eyes.js';
+import ghosts, { sheet } from '../src/variants/ghosts.js';
+import graveyard, { tree } from '../src/variants/graveyard.js';
+import pumpkins, { FACES } from '../src/variants/pumpkins.js';
+import spider, { spider as spiderShape, web } from '../src/variants/spider.js';
 import { find, run, serialize } from './fake.js';
 import boids from '../src/variants/boids.js';
-import bytecode, { PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
+import bytecode, { OCTOBER, PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
 import circuit from '../src/variants/circuit.js';
 import citydefense, { BASES, CITIES, GROUND, intercept } from '../src/variants/citydefense.js';
 import grass, { wind as grassWind } from '../src/variants/grass.js';
@@ -23,7 +30,7 @@ import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple } from '../src/variants/water.js';
 
-const all = { boids, bytecode, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, boids, bytecode, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -47,7 +54,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['boids', 'bytecode', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'boids', 'bytecode', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -74,7 +81,37 @@ describe('the circuit', () => {
   });
 });
 
+describe('the seasons', () => {
+  const names = Object.keys(variants);
+
+  it('keeps the October animations to October, and the rest to all year', () => {
+    const october = inSeason(names, new Date(2026, 9, 31));
+    const may = inSeason(names, new Date(2026, 4, 1));
+    for (const name of ['bats', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider']) {
+      assert.ok(october.includes(name) && !may.includes(name), name);
+    }
+    assert.ok(may.includes('boids') && october.includes('boids'));
+    assert.equal(october.length, names.length);
+  });
+
+  it('lists only animations there are', () => {
+    for (const name of Object.keys(SEASONS)) assert.ok(names.includes(name), name);
+  });
+});
+
 describe('the bytecode rain', () => {
+  it('runs to 0xDEADBEEF in October, and not otherwise', () => {
+    assert.deepEqual(OCTOBER.slice(0, 4).map((b) => b.hex), ['DE', 'AD', 'BE', 'EF']);
+    const shown = (date) => {
+      const { layer } = run(bytecode, 2000, { date, seed: 11 });
+      return find(layer, 'masthead-bytecode-glyph').map((t) => t.textContent).join(' ');
+    };
+    // No other program has a 0xDE byte, so DE on the board is the dead beef.
+    assert.ok(PROGRAMS.flat().every((instruction) => !instruction.bytes.includes(0xde)));
+    assert.match(shown(new Date(2026, 9, 15)), /\bDE\b/);
+    assert.doesNotMatch(shown(new Date(2026, 4, 15)), /\bDE\b/);
+  });
+
   const glyphs = (layer) => find(layer, 'masthead-bytecode-glyph');
 
   it('rains real instructions, in hex, a class file header among them', () => {
@@ -321,6 +358,84 @@ describe('stix', () => {
       }
     }
     assert.ok(grew > 5 && cleared, `${grew} ${cleared}`);
+  });
+});
+
+describe('october', () => {
+  it('opens eyes, blinks them, and closes them', () => {
+    assert.equal(openness(0, 100, []), 0);
+    assert.equal(openness(50, 100, []), 1);
+    assert.equal(openness(50, 100, [50]), 0);
+    assert.equal(openness(101, 100, []), 0);
+    const { layer, art } = run(eyes, 0);
+    const open = () => find(layer, 'masthead-eyes-pair').filter((p) => p.attrs.opacity === '1').length;
+    assert.ok(open() >= 1);
+    let changed = false;
+    for (let i = 1; i <= 600 && !changed; i++) { const before = open(); art.step(i, i * 40); changed = open() !== before; }
+    assert.ok(changed);
+  });
+
+  it('flaps bats across, wings up and down', () => {
+    assert.notEqual(bat(1), bat(-1));
+    const { layer, art } = run(bats, 0);
+    assert.ok(find(layer, 'masthead-bats-bat').length >= 1);
+    let most = 0;
+    for (let i = 1; i <= 2000; i++) { art.step(i, i * 40); most = Math.max(most, find(layer, 'masthead-bats-bat').length); }
+    assert.ok(most >= 2 && most <= 6);
+  });
+
+  it('ripples a ghost\'s hem, fades ghosts in and away', () => {
+    assert.notEqual(sheet(0, 60), sheet(1, 60));
+    assert.match(sheet(0, 60), /^M.*Z$/);
+    const { layer, art } = run(ghosts, 0);
+    assert.equal(find(layer, 'masthead-ghosts-ghost').length, 1);
+    let came = false, went = false, before = 1;
+    for (let i = 1; i <= 4000; i++) {
+      art.step(i, i * 40);
+      const now = find(layer, 'masthead-ghosts-ghost').length;
+      if (now > before) came = true;
+      if (now < before) went = true;
+      before = now;
+    }
+    assert.ok(came && went);
+  });
+
+  it('flickers a row of carved pumpkins along the foot', () => {
+    assert.equal(FACES.length, 4);
+    const { layer, art } = run(pumpkins, 0);
+    const faces = find(layer, 'masthead-pumpkins-face');
+    assert.ok(faces.length >= 5);
+    const before = faces.map((f) => f.attrs['fill-opacity']).join();
+    art.step(1, 50);
+    assert.notEqual(faces.map((f) => f.attrs['fill-opacity']).join(), before);
+  });
+
+  it('lets a spider down from its web and up again', () => {
+    // Eight legs.
+    assert.equal(spiderShape(0).split('M').length - 1, 8);
+    assert.match(web(0, 1), /^M/);
+    const { layer, art } = run(spider, 0);
+    const thread = find(layer, 'masthead-spider-thread')[0];
+    const length = () => Number(/V(-?[\d.]+)/.exec(thread.attrs.d)[1]);
+    let longest = 0, shortened = false;
+    for (let i = 1; i <= 2000; i++) {
+      art.step(i, i * 40);
+      const l = length();
+      if (l < longest - 20) shortened = true;
+      longest = Math.max(longest, l);
+    }
+    assert.ok(longest > 60 && shortened);
+  });
+
+  it('sets a graveyard under the moon, a bat crossing it now and then', () => {
+    let r = 3;
+    assert.match(tree(() => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000), 100), /^M/);
+    const { layer, art } = run(graveyard, 0);
+    assert.ok(find(layer, 'masthead-graveyard-stone').length >= 8);
+    const batEl = find(layer, 'masthead-graveyard-bat')[0];
+    let crossed = false;
+    for (let i = 1; i <= 1500 && !crossed; i++) { art.step(i, i * 50); crossed = batEl.attrs.opacity === '1'; }
+    assert.ok(crossed);
   });
 });
 

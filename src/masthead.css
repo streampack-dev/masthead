@@ -140,6 +140,33 @@
 .masthead-windfarm-blade { fill: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 80%, var(--_bg)); stroke-width: 0.9; }
 .masthead-windfarm-hub { fill: var(--_accent); }
 
+/* October. */
+/* Bats: dark wings against the masthead. */
+.masthead-bats-bat { fill: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke: var(--_accent); stroke-width: 0.6; }
+/* Eyes: pale whites with dark pupils, in the accent. */
+.masthead-eyes-white { fill: color-mix(in srgb, var(--_accent) 30%, var(--_bg)); stroke: var(--_accent); stroke-width: 1; }
+.masthead-eyes-pupil { fill: var(--_accent); }
+/* Ghosts: pale sheets, outlined, with dark eyes and mouths. */
+.masthead-ghosts-sheet { fill: color-mix(in srgb, var(--_accent) 12%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 80%, var(--_bg)); stroke-width: 1.2; }
+.masthead-ghosts-face { fill: var(--_accent); }
+/* Graveyard: the moon, wisps of cloud and fog, the hill, its stones and trees. */
+.masthead-graveyard-face { fill: color-mix(in srgb, var(--_accent) 18%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.2; }
+.masthead-graveyard-halo { opacity: 0.35; }
+.masthead-graveyard-crater { fill: none; stroke: color-mix(in srgb, var(--_accent) 45%, var(--_bg)); stroke-width: 0.9; }
+.masthead-graveyard-cloud, .masthead-graveyard-fog { fill: none; stroke: color-mix(in srgb, var(--_accent) 40%, var(--_border)); stroke-width: 1.4; stroke-linecap: round; }
+.masthead-graveyard-fog { opacity: 0.6; }
+.masthead-graveyard-hill, .masthead-graveyard-tree { fill: none; stroke: color-mix(in srgb, var(--_accent) 65%, var(--_bg)); stroke-width: 1.2; stroke-linecap: round; }
+.masthead-graveyard-stone { fill: color-mix(in srgb, var(--_accent) 15%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.1; }
+.masthead-graveyard-bat { fill: var(--_accent); }
+/* Pumpkins: outlined bodies and stems, faces lit from inside. */
+.masthead-pumpkins-body { fill: color-mix(in srgb, var(--_accent) 18%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; }
+.masthead-pumpkins-stem { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_border)); stroke-width: 1.4; }
+.masthead-pumpkins-face { fill: var(--_accent); }
+/* Spider: its web, its thread, and the spider. */
+.masthead-spider-web, .masthead-spider-thread { fill: none; stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 0.8; }
+.masthead-spider-body { fill: var(--_accent); }
+.masthead-spider-legs { fill: none; stroke: var(--_accent); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; }
+
 /* ?ambientDebug=1 names the running animation and its seed in the masthead's corner. */
 .masthead-debug {
   position: absolute;
