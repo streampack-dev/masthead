@@ -6,7 +6,7 @@ import { SEASONS, inSeason } from '../src/runner.js';
 import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
 import duel, { POSES, crossing, figure, mixPose } from '../src/variants/duel.js';
-import deadline, { POSES as DESK_POSES, SCENES, writer } from '../src/variants/deadline.js';
+import deadline, { ANVIL, POSES as DESK_POSES, SCENES, anvilAt, writer } from '../src/variants/deadline.js';
 import ghosts, { round, sheet } from '../src/variants/ghosts.js';
 import graveyard, { tree } from '../src/variants/graveyard.js';
 import pumpkins, { FACES } from '../src/variants/pumpkins.js';
@@ -499,6 +499,31 @@ describe('deadline', () => {
       wrote = wrote || (screen.attrs.d || '').length > 0;
     }
     assert.ok(banged && wrote);
+  });
+});
+
+describe('deadline\'s anvil', () => {
+  it('falls faster and faster, flattens everything, and lets it pop back up', () => {
+    const ys = [0, 1, 2, 3, 4, 5, 6].map((f) => anvilAt(f).y);
+    for (let k = 2; k < ys.length; k++) assert.ok(ys[k] - ys[k - 1] > ys[k - 1] - ys[k - 2]);
+    const landed = anvilAt(ANVIL.fall);
+    assert.ok(landed.impact && landed.height === ANVIL.squash);
+    assert.equal(anvilAt(ANVIL.fall + ANVIL.flat).shown, false);
+    assert.equal(anvilAt(ANVIL.fall + ANVIL.flat + ANVIL.pop.length), null);
+    assert.equal(ANVIL.pop.at(-1), 1);
+  });
+
+  it('drops now and then, flattening the desk and the writer, and they come back as they were', () => {
+    const { layer, art } = run(deadline, 0, { seed: 6 });
+    const world = layer.children[0].children[0];
+    let flattened = false, restored = false;
+    for (let i = 1; i <= 20000 && !restored; i++) {
+      art.step(i, i * 70);
+      const t = world.attrs.transform || '';
+      if (t.includes('scale(1 ' + ANVIL.squash + ')')) flattened = true;
+      if (flattened && t === '') restored = true;
+    }
+    assert.ok(flattened && restored);
   });
 });
 

@@ -3,6 +3,8 @@
    between. The writer types in frantic bursts (the screen filling line by line), stops to think,
    leans back, sips coffee, and now and then brings their head down on the keyboard, a few times,
    the monitor jumping and gibberish appearing on the screen. The screen clears when it's full.
+   Once in a while the writer looks up just in time to see an anvil fall and flatten everything,
+   which, after a moment, pops back up as if nothing happened.
    The routine comes from the seed, so ?ambientSeed=<n> replays it. */
 
 /* Poses: how far the body leans forward and the head tilts (degrees), how open the jaw is, and
@@ -15,8 +17,23 @@ export var POSES = {
   slump: { lean: 40, head: 70, near: [30, 15], far: [22, 15], jaw: 6 },
   rear: { lean: -6, head: -18, near: [12, -34], far: [6, -30], jaw: 8 },
   back: { lean: -18, head: -10, near: [-8, -34], far: [-14, -28], jaw: 0 },
-  sip: { lean: 2, head: -10, near: [16, -8], far: [40, 26], jaw: 2 }
+  sip: { lean: 2, head: -10, near: [16, -8], far: [40, 26], jaw: 2 },
+  lookUp: { lean: -8, head: -38, near: [14, -38], far: [6, -34], jaw: 9 }
 };
+
+/* The anvil's fall and what follows, in frames: where its foot is (scene units, the floor at 50),
+   and how tall everything under it stands (1 as built, flattened at impact, popping back after). */
+export var ANVIL = { start: -330, fall: 7, flat: 32, squash: 0.12, pop: [1.25, 0.9, 1] };
+export function anvilAt(frame) {
+  var floor = 50, pile = floor - 75 * ANVIL.squash - 3;
+  if (frame < ANVIL.fall) {
+    var t = frame / ANVIL.fall;
+    return { y: ANVIL.start + (pile - ANVIL.start) * t * t, height: 1, shown: true };
+  }
+  if (frame < ANVIL.fall + ANVIL.flat) return { y: pile, height: ANVIL.squash, shown: true, impact: frame === ANVIL.fall };
+  var popped = frame - ANVIL.fall - ANVIL.flat;
+  return popped < ANVIL.pop.length ? { y: 0, height: ANVIL.pop[popped], shown: false } : null;
+}
 
 /* The routine's scenes: each a list of [pose, steps held], at a few steps a frame. */
 export var SCENES = {
@@ -69,7 +86,9 @@ export default function deadline(layer, m) {
 
   // The whole scene: a desk with its monitor, keyboard and mug, the chair, and the writer.
   var scene = m.el('g', { 'class': 'masthead-deadline' });
-  var desk = m.el('g', {}, scene);
+  // Everything an anvil can flatten: it squashes against the floor.
+  var world = m.el('g', {}, scene);
+  var desk = m.el('g', {}, world);
   // The desk's top is at -25, a little above the seat; the floor is at 50, the masthead's foot.
   m.el('path', { 'class': 'masthead-deadline-piece', d: 'M38 -25H230V-19H38ZM46 -19V50M222 -19V50' }, desk);
   var monitor = m.el('g', {}, desk);
@@ -78,9 +97,9 @@ export default function deadline(layer, m) {
   var keyboard = m.el('path', { 'class': 'masthead-deadline-piece', d: 'M50 -31h44l-3 6h-44z' }, desk);
   m.el('path', { 'class': 'masthead-deadline-piece', d: 'M196 -27h14v-16h-14zM210 -39q7 0 7 5t-7 5' }, desk);
   // The chair, behind the writer.
-  m.el('path', { 'class': 'masthead-deadline-piece', d: 'M-30 2h50v6h-50zM-28 8v42M14 8v42M-30 2l-8 -70h8l8 66' }, scene);
+  m.el('path', { 'class': 'masthead-deadline-piece', d: 'M-30 2h50v6h-50zM-28 8v42M14 8v42M-30 2l-8 -70h8l8 66' }, world);
 
-  var body = m.el('g', {}, scene);
+  var body = m.el('g', {}, world);
   var farArm = m.el('path', { 'class': 'masthead-deadline-limb' }, body);
   var legs = m.el('path', { 'class': 'masthead-deadline-limb', d: 'M0 0L38 2L42 48L54 50' }, body);
   var torso = m.el('path', { 'class': 'masthead-deadline-piece' }, body);
@@ -91,7 +110,13 @@ export default function deadline(layer, m) {
   m.el('path', { 'class': 'masthead-deadline-hair', d: 'M-13 -22q2 -16 18 -16q10 0 12 8q-6 -4 -12 -2q-8 2 -18 10z' }, headEl);
   var nearArm = m.el('path', { 'class': 'masthead-deadline-limb' }, body);
   var mug = m.el('path', { 'class': 'masthead-deadline-piece', d: 'M-6 -10h12v12h-12zM6 -7q5 0 5 4t-5 4' }, body);
-  var bang = m.el('path', { 'class': 'masthead-deadline-bang', opacity: 0 }, scene);
+  var bang = m.el('path', { 'class': 'masthead-deadline-bang', opacity: 0 }, world);
+  // The anvil, outside what it flattens: a waisted block with a horn.
+  var anvil = m.el('path', { 'class': 'masthead-deadline-anvil', opacity: 0,
+    d: 'M-30 0H30V-6H16V-16H36V-28H-34Q-46 -26 -56 -21Q-45 -18 -34 -16H-16V-6H-30Z' }, scene);
+  var thud = m.el('path', { 'class': 'masthead-deadline-bang', opacity: 0,
+    d: 'M-50 -2l-16 -6M-46 -12l-14 -12M50 -2l16 -6M48 -12l14 -12M-20 -40l-4 -10M20 -40l4 -10' }, scene);
+  var ANVIL_X = 60, dropping = null, thudAge = 99;
 
   var lines = [], plan = [], hold = 0, pose = POSES.typeA, shake = 0, bangAge = 99;
 
@@ -112,7 +137,9 @@ export default function deadline(layer, m) {
 
   function next() {
     if (!plan.length) {
-      var r = rand(), name = r < 0.45 ? 'type' : r < 0.6 ? 'think' : r < 0.75 ? 'despair' : r < 0.88 ? 'back' : 'coffee';
+      var r = rand();
+      if (r < 0.08) { dropping = 0; pose = POSES.lookUp; hold = 99; return; }
+      var name = r < 0.48 ? 'type' : r < 0.62 ? 'think' : r < 0.76 ? 'despair' : r < 0.88 ? 'back' : 'coffee';
       plan = SCENES[name](rand);
     }
     var beat = plan.shift();
@@ -124,6 +151,12 @@ export default function deadline(layer, m) {
 
   function draw() {
     var w = writer(pose), squeeze = 1 / m.stretch();
+    var fall = dropping === null ? null : anvilAt(dropping);
+    world.setAttribute('transform', fall && fall.height !== 1 ? 'translate(0 50) scale(1 ' + fall.height + ') translate(0 -50)' : '');
+    anvil.setAttribute('opacity', fall && fall.shown ? 1 : 0);
+    if (fall && fall.shown) anvil.setAttribute('transform', 'translate(' + ANVIL_X + ' ' + fall.y.toFixed(1) + ')');
+    thud.setAttribute('opacity', thudAge < 8 ? 1 : 0);
+    thud.setAttribute('transform', 'translate(' + ANVIL_X + ' 50)');
     // On the left, standing on the masthead's foot; it keeps its shape however it's stretched.
     scene.setAttribute('transform', 'translate(70 ' + (H - 50) + ') scale(' + squeeze.toFixed(4) + ' 1)');
     var jump = shake > 0 ? (shake % 2 ? -3 : 2) : 0;
@@ -151,11 +184,23 @@ export default function deadline(layer, m) {
   draw();
 
   return {
-    // Cutout animation moves in held frames, a few a second, not smoothly.
-    interval: 90,
+    // Cutout animation moves in held frames, a dozen or so a second, not smoothly.
+    interval: 70,
     step: function () {
       if (shake > 0) shake -= 1;
       bangAge += 1;
+      thudAge += 1;
+      if (dropping !== null) {
+        dropping += 1;
+        var fall = anvilAt(dropping);
+        if (fall && fall.impact) thudAge = 0;
+        // Back up as if nothing happened, with a fresh page.
+        if (fall && !fall.shown && dropping === ANVIL.fall + ANVIL.flat) { lines = []; pose = POSES.typeA; }
+        if (!fall) { dropping = null; hold = 0; plan = []; }
+        draw();
+        if (dropping === null) next();
+        return;
+      }
       if (--hold <= 0) next();
       draw();
     }

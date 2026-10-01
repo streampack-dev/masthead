@@ -81,6 +81,7 @@
 .masthead-deadline-hair, .masthead-deadline-eye { fill: var(--_accent); }
 .masthead-deadline-screen { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.6; stroke-linecap: round; }
 .masthead-deadline-bang { fill: none; stroke: var(--_accent); stroke-width: 2; stroke-linecap: round; }
+.masthead-deadline-anvil { fill: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.6; stroke-linejoin: round; }
 
 /* Duel: two fencers on the ground line, their blades, and the spark where they meet. */
 .masthead-duel-ground { fill: none; stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1.2; }
