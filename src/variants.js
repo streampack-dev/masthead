@@ -8,5 +8,7 @@ export var variants = {
   life: function () { return import('./variants/life.js'); },
   signalnoise: function () { return import('./variants/signalnoise.js'); },
   solari: function () { return import('./variants/solari.js'); },
-  terrainflight: function () { return import('./variants/terrainflight.js'); }
+  terrainflight: function () { return import('./variants/terrainflight.js'); },
+  train: function () { return import('./variants/train.js'); },
+  water: function () { return import('./variants/water.js'); }
 };

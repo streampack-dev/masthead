@@ -65,6 +65,15 @@
 .masthead-bytecode-head { fill: var(--_accent); filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--_accent) 70%, transparent)); }
 .masthead-bytecode-note { fill: var(--_accent); font-size: 14px; font-weight: 500; }
 
+/* Train: ASCII art along a track at the foot of the masthead, trailing smoke. */
+.masthead-train { font: 600 12px var(--masthead-mono, ui-monospace, monospace); }
+.masthead-train-cars { fill: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); }
+.masthead-train-track { fill: none; stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1.2; opacity: 0.7; }
+.masthead-train-smoke { fill: color-mix(in srgb, var(--_accent) 40%, var(--_border)); }
+
+/* Water: lines across a surface, nearer ones stronger. */
+.masthead-water-line { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; }
+
 /* ?ambientDebug=1 names the running animation and its seed in the masthead's corner. */
 .masthead-debug {
   position: absolute;

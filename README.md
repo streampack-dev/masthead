@@ -15,11 +15,14 @@ only puts the art on its page and starts the runner.
 |---|---|
 | `circuit` | Fireflies running the traces of a circuit board, moving by SVG alone. |
 | `boids` | Sixteen fireflies flocking. |
+| `bytecode` | The code rain in JVM bytecode: real instructions in hex, now and then one decoded. |
 | `fractal` | A branching growth tracing round the name, resting when grown, then starting again. |
 | `life` | Conway's Game of Life, reseeded when it settles. |
 | `signalnoise` | Faint scanlines and a rolling band, with brief bursts of interference. |
 | `solari` | A split-flap board showing the front page's other deks, riffling to the next every so often. |
 | `terrainflight` | Ridgelines rolling toward you from the horizon. |
+| `train` | An ASCII-art train running along a track at the foot of the masthead, trailing smoke. |
+| `water` | A still surface seen from just above; drops land and their rings spread and cross. |
 
 On a page running them, `?ambient=<name>` picks one, `?ambientSeed=<n>` replays a run (the art's
 title names the seed) and `?ambientDebug=1` logs the choice.

@@ -9,7 +9,9 @@ var BLURBS = {
   life: "Conway's Game of Life, reseeded when it settles.",
   signalnoise: 'Faint scanlines and a rolling band, with brief bursts of interference.',
   solari: "A split-flap board showing the front page's deks, riffling to the next every so often.",
-  terrainflight: 'Ridgelines rolling toward you from the horizon.'
+  terrainflight: 'Ridgelines rolling toward you from the horizon.',
+  train: 'An ASCII train along the foot of the masthead, trailing smoke; then the empty track.',
+  water: 'A still surface, seen from just above, that drops land on now and then.'
 };
 
 /* What a front page's other posts might say, for Solari. */

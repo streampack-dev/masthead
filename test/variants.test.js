@@ -11,8 +11,10 @@ import life from '../src/variants/life.js';
 import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
 import terrainflight from '../src/variants/terrainflight.js';
+import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
+import water, { GRID_H, GRID_W, drop, ripple } from '../src/variants/water.js';
 
-const all = { boids, bytecode, fractal, life, signalnoise, solari, terrainflight };
+const all = { boids, bytecode, fractal, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -36,7 +38,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['boids', 'bytecode', 'fractal', 'life', 'terrainflight']) {
+  for (const name of ['boids', 'bytecode', 'fractal', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -111,6 +113,68 @@ describe('the bytecode rain', () => {
     }
     const texts = PROGRAMS.flat().map((instruction) => instruction.text);
     assert.ok(seen && texts.includes(seen), String(seen));
+  });
+});
+
+describe('the train', () => {
+  it('is an engine at the front, its cars behind, each with its cargo on its side', () => {
+    const lines = rows(['JVM 21', 'GC']);
+    assert.equal(lines.length, ENGINE.length);
+    assert.ok(lines[3].includes('JVM 21') && lines[3].includes('GC') && lines[3].includes('BYTECODE'));
+    assert.ok(lines[3].indexOf('JVM 21') < lines[3].indexOf('GC'));
+    // Every car is as wide as the next, so the train's rows line up.
+    const sides = car('0xCAFEBABE').slice(2, 5).map((line) => line.trimEnd().replace(/=$/, '').length);
+    assert.deepEqual(sides, [20, 20, 20]);
+    for (const label of CARGO) assert.ok(label.length <= 18, label);
+  });
+
+  it('runs left to right along its track, below the name, trailing smoke', () => {
+    const { layer, art } = run(train, 0);
+    const cars = find(layer, 'masthead-train-cars')[0];
+    const at = () => Number(/translate\((-?[\d.]+) /.exec(cars.attrs.transform)[1]);
+    const y = Number(/translate\(-?[\d.]+ ([\d.]+)\)/.exec(cars.attrs.transform)[1]);
+    const first = at();
+    for (let i = 1; i <= 50; i++) art.step(i, i * 40);
+    assert.ok(at() > first);
+    assert.ok(y > 280, String(y));
+    assert.ok(find(layer, 'masthead-train-smoke')[0].children.length > 0);
+  });
+
+  it('leaves the track empty for a while between trains, then another comes', () => {
+    const { layer, art } = run(train, 0);
+    const cars = find(layer, 'masthead-train-cars')[0];
+    let gone = null, back = null;
+    for (let i = 1; i <= 2000 && back === null; i++) {
+      art.step(i, i * 40);
+      const shown = cars.attrs.opacity !== '0';
+      if (!shown && gone === null) gone = i;
+      if (shown && gone !== null) back = i;
+    }
+    assert.ok(gone !== null && back !== null && (back - gone) * 40 >= 3000, `${gone} ${back}`);
+  });
+});
+
+describe('the water', () => {
+  it('rings out from a drop, and settles', () => {
+    let now = new Float32Array(GRID_W * GRID_H), before = new Float32Array(GRID_W * GRID_H);
+    const mid = 20 * GRID_W + 60;
+    drop(now, 60, 20, 5);
+    assert.ok(now[mid] < 0);
+    for (let i = 0; i < 12; i++) [now, before] = ripple(now, before);
+    // The ring has reached cells the drop didn't touch.
+    assert.notEqual(now[20 * GRID_W + 70], 0);
+    for (let i = 0; i < 1500; i++) [now, before] = ripple(now, before);
+    assert.ok(Math.max(...now.map(Math.abs)) < 0.05);
+  });
+
+  it('draws its lines across the whole surface, moving from the first frame', () => {
+    const { layer, art } = run(water, 0);
+    const lines = find(layer, 'masthead-water-line');
+    assert.equal(lines.length, 18);
+    const first = lines[9].attrs.d;
+    assert.ok(first.startsWith('M0.0 ') && /L1200\.0 /.test(first));
+    art.step(1, 40);
+    assert.notEqual(lines[9].attrs.d, first);
   });
 });
 
