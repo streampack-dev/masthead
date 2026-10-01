@@ -1,0 +1,60 @@
+/* The masthead art's colours, from the host's theme. A host sets these on the masthead (or any
+   ancestor) from its own tokens; the fallbacks are a plain light theme.
+
+     --masthead-accent    the animation's colour
+     --masthead-bg        the page behind it
+     --masthead-border    faint lines and flap edges
+     --masthead-surface   the Solari board's flaps
+     --masthead-mono      the Solari board's font
+     --masthead-strength  the art's opacity: 0.55 sits behind a masthead's text; 1 is full
+
+   The art fills its container, so the host places and sizes the container. */
+.masthead-art {
+  --_accent: var(--masthead-accent, #2563eb);
+  --_bg: var(--masthead-bg, #ffffff);
+  --_border: var(--masthead-border, #d4d4d8);
+  --_surface: var(--masthead-surface, #f4f4f5);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  color: color-mix(in srgb, var(--_accent) 25%, var(--_border));
+  opacity: var(--masthead-strength, 0.55);
+}
+
+/* The circuit, drawn in art.svg. */
+.masthead-circuit-traces { fill: none; stroke: url(#masthead-fade); stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
+.masthead-circuit-nodes circle { fill: color-mix(in srgb, var(--_accent) 18%, var(--_bg)); opacity: 0.5; }
+.masthead-glow { stop-color: var(--_accent); }
+.masthead-spark { fill: var(--_accent); }
+.masthead-trace { fill: none; stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; }
+
+/* The variants. */
+.masthead-boids { opacity: 0.8; }
+.masthead-terrainflight { opacity: 0.78; }
+.masthead-terrain-horizon { fill: none; stroke: color-mix(in srgb, var(--_accent) 54%, var(--_bg)); stroke-width: 1.25; opacity: 0.48; }
+.masthead-terrain-ridge { fill: none; stroke: color-mix(in srgb, var(--_accent) 68%, var(--_bg)); stroke-linecap: round; stroke-linejoin: round; }
+.masthead-terrain-glow { fill: none; stroke: var(--_accent); stroke-linecap: round; stroke-linejoin: round; filter: blur(2px); }
+.masthead-life { opacity: 0.5; }
+.masthead-life-cells { fill: color-mix(in srgb, var(--_accent) 52%, var(--_bg)); shape-rendering: crispEdges; }
+.masthead-signalnoise { fill: color-mix(in srgb, var(--_accent) 66%, var(--_bg)); shape-rendering: crispEdges; }
+.masthead-noise-line { opacity: 0.35; }
+.masthead-noise-scan { opacity: 0.3; }
+.masthead-noise-band { opacity: 0.22; }
+.masthead-fractal { fill: none; stroke: var(--_accent); stroke-linecap: round; stroke-linejoin: round; }
+/* The fractal's lines are fine and the art is squashed to fit, so it's lifted out of the art's
+   fade and its lines are a little heavier (ui-pudl #98). */
+.masthead-art[data-masthead="fractal"] { opacity: max(var(--masthead-strength, 0.55), 0.85); }
+.masthead-fractal-glow { opacity: 0.2; stroke-width: 5; }
+.masthead-fractal-trunk { opacity: 0.8; stroke-width: 2; }
+.masthead-fractal-branches { opacity: 0.66; stroke-width: 1.4; }
+.masthead-fractal-twigs { opacity: 0.5; stroke-width: 1; }
+.masthead-fractal-tips { opacity: 0.82; stroke: none; }
+/* The Solari board, lifted out of the art's fade but kept behind the name: at the usual strength
+   the layer holds it at 0.2, as approved on bytecode.news, rising to 1 at full strength. */
+.masthead-art[data-masthead="solari"] { opacity: 1; }
+.masthead-solari { opacity: clamp(0.2, (var(--masthead-strength, 0.55) - 0.55) / 0.45, 1); font: 700 20px var(--masthead-mono, ui-monospace, monospace); }
+.masthead-solari-cell { fill: var(--_surface); stroke: var(--_border); stroke-width: 0.7; }
+.masthead-solari-hinge { stroke: var(--_border); stroke-width: 0.6; }
+.masthead-solari-glyph { fill: var(--_accent); }

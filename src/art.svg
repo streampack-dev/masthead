@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="masthead-art" viewBox="0 0 1200 320" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="masthead-fade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="currentColor" stop-opacity="0"/>
+      <stop offset="18%" stop-color="currentColor" stop-opacity="0.65"/>
+      <stop offset="82%" stop-color="currentColor" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="masthead-pulse" r="70%">
+      <stop offset="0%" class="masthead-glow" stop-opacity="0.95"/>
+      <stop offset="38%" class="masthead-glow" stop-opacity="0.42"/>
+      <stop offset="100%" class="masthead-glow" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g class="masthead-circuit">
+    <g class="masthead-circuit-traces">
+      <path d="M60 248H216V172H394V126H598V84H856V126H1108"/>
+      <path d="M128 84H332V152H518V210H698V178H902V214H1090"/>
+      <path d="M184 274H308V226H468V266H682V214H874V250H1038"/>
+      <path d="M92 154H246V110H430V154H650V118H842V152H1044"/>
+      <path d="M758 62V252"/>
+      <path d="M468 126V266"/>
+      <path d="M902 126V250"/>
+      <path d="M246 110V248"/>
+      <path d="M1038 214V250"/>
+    </g>
+    <g class="masthead-circuit-nodes">
+      <circle cx="216" cy="172" r="3.2"/><circle cx="394" cy="126" r="3.2"/><circle cx="598" cy="84" r="3.2"/>
+      <circle cx="856" cy="126" r="3.2"/><circle cx="332" cy="152" r="3.2"/><circle cx="518" cy="210" r="3.2"/>
+      <circle cx="698" cy="178" r="3.2"/><circle cx="902" cy="214" r="3.2"/><circle cx="308" cy="226" r="3.2"/>
+      <circle cx="468" cy="266" r="3.2"/><circle cx="682" cy="214" r="3.2"/><circle cx="874" cy="250" r="3.2"/>
+    </g>
+    <g class="masthead-circuit-fireflies">
+      <g><circle r="8.4" fill="url(#masthead-pulse)"/><circle r="2.2" class="masthead-spark"/><animateMotion begin="0s" dur="14s" repeatCount="indefinite" path="M60,248 H216 V172 H394 V126 H598 V84 H856 V126 H1108"/></g>
+      <g><circle r="7.2" fill="url(#masthead-pulse)"/><circle r="1.9" class="masthead-spark"/><animateMotion begin="2.5s" dur="18s" repeatCount="indefinite" path="M128,84 H332 V152 H518 V210 H698 V178 H902 V214 H1090"/></g>
+      <g><circle r="6.8" fill="url(#masthead-pulse)"/><circle r="1.8" class="masthead-spark"/><animateMotion begin="5s" dur="16s" repeatCount="indefinite" path="M184,274 H308 V226 H468 V266 H682 V214 H874 V250 H1038"/></g>
+      <g><circle r="6.5" fill="url(#masthead-pulse)"/><circle r="1.7" class="masthead-spark"/><animateMotion begin="7.5s" dur="20s" repeatCount="indefinite" path="M92,154 H246 V110 H430 V154 H650 V118 H842 V152 H1044"/></g>
+    </g>
+  </g>
+</svg>

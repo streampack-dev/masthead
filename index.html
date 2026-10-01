@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>bytecode.news mastheads</title>
+  <meta name="description" content="The masthead animations for bytecode.news, each running at full strength.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='5' fill='%23a8401c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="src/masthead.css">
+  <link rel="stylesheet" href="demo/demo.css">
+</head>
+<body>
+  <header class="page-head">
+    <h1>bytecode<span class="dot">.</span>news mastheads</h1>
+    <p class="lede">
+      Each animation that can run behind the bytecode.news masthead, at full strength. The sites
+      show them faintly behind the name; the strength slider shows them that way too.
+      Source and how to use them: <a href="https://github.com/streampack-dev/masthead">streampack-dev/masthead</a>.
+    </p>
+    <form class="controls" onsubmit="return false">
+      <label>Theme
+        <select id="theme">
+          <option value="auto">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
+      <label>Strength
+        <input id="strength" type="range" min="0.2" max="1" step="0.05" value="1">
+        <output id="strength-out">1.00</output>
+      </label>
+      <label>Accent
+        <input id="accent" type="color">
+      </label>
+      <label class="check"><input id="text" type="checkbox"> Show the name over it</label>
+    </form>
+    <p id="reduced" class="notice" hidden>
+      Your system asks for reduced motion, so the animations are stopped.
+      <button type="button" id="play-anyway">Play them anyway</button>
+    </p>
+  </header>
+  <main id="specimens"></main>
+  <footer class="page-foot">MIT licensed. Add <code>?ambientDebug=1</code> to log each choice.</footer>
+  <script type="module" src="demo/demo.js"></script>
+</body>
+</html>

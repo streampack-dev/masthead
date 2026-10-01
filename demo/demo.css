@@ -1,0 +1,103 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f2ee;
+  --surface: #fffdfb;
+  --surface-alt: #efe8e1;
+  --text: #1c1917;
+  --text-muted: #6b625b;
+  --border: #ddd3ca;
+  --accent: #a8401c;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #151210;
+    --surface: #1e1a17;
+    --surface-alt: #2a2420;
+    --text: #f2ece6;
+    --text-muted: #a89d94;
+    --border: #3a322c;
+    --accent: #f08a5d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #151210;
+  --surface: #1e1a17;
+  --surface-alt: #2a2420;
+  --text: #f2ece6;
+  --text-muted: #a89d94;
+  --border: #3a322c;
+  --accent: #f08a5d;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 var(--sans);
+  /* The masthead art's colours, from the page's own. */
+  --masthead-accent: var(--accent-picked, var(--accent));
+  --masthead-bg: var(--bg);
+  --masthead-border: var(--border);
+  --masthead-surface: var(--surface-alt);
+  --masthead-mono: var(--mono);
+}
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.9em; }
+
+.page-head, #specimens, .page-foot { max-width: 72rem; margin: 0 auto; padding: 0 16px; }
+.page-head { padding-top: 2.5rem; }
+h1 { margin: 0 0 0.5rem; font-size: clamp(1.75rem, 5vw, 2.75rem); letter-spacing: -0.03em; line-height: 1.05; }
+.dot { color: var(--accent); }
+.lede { margin: 0 0 1.25rem; max-width: 46rem; color: var(--text-muted); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; margin-bottom: 1.5rem; font-size: 0.875rem; }
+.controls label { display: inline-flex; gap: 0.5rem; align-items: center; color: var(--text-muted); }
+.controls select, .controls button { font: inherit; }
+.controls input[type="range"] { width: 8rem; accent-color: var(--accent); }
+.controls output { font-family: var(--mono); min-width: 2.5rem; color: var(--text); }
+.controls input[type="color"] { width: 2.25rem; height: 1.75rem; padding: 0; border: 1px solid var(--border); background: none; }
+.notice { padding: 0.75rem 1rem; border: 1px solid var(--border); background: var(--surface); }
+
+#specimens { display: grid; gap: 2rem; padding-bottom: 3rem; }
+.specimen { margin: 0; }
+.specimen-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.25rem 1rem; margin-bottom: 0.5rem; }
+.specimen h2 { margin: 0; font-size: 1.125rem; }
+.specimen-blurb { margin: 0.125rem 0 0; color: var(--text-muted); font-size: 0.875rem; }
+.specimen-tools { display: flex; gap: 0.5rem; align-items: center; font-size: 0.8125rem; }
+.specimen-seed { font-family: var(--mono); color: var(--text-muted); }
+.specimen-tools button, .notice button {
+  font: inherit;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.specimen-tools button:hover, .notice button:hover { border-color: var(--accent); }
+
+/* The masthead's own shape: the art's 1200 x 320, on the page's surface. */
+.stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  /* The art's 1200 x 320 across the page's width, but never so short the name can't fit. */
+  height: clamp(8rem, (100vw - 32px) * 320 / 1200, 19rem);
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  border-top: 3px solid var(--accent);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+.stage-text { display: none; text-align: center; padding: 1rem; }
+.with-text .stage-text { display: block; }
+.stage-date, .stage-tagline { margin: 0; font: 0.6875rem var(--mono); letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); text-shadow: 0 0 3px var(--bg), 0 0 6px var(--bg); }
+.stage-name { margin: 0.5rem 0; font-size: clamp(1.75rem, 6vw, 4rem); font-weight: 700; line-height: 0.95; letter-spacing: -0.04em; }
+.stage-name span { color: var(--accent); }
+
+.page-foot { padding-bottom: 2.5rem; color: var(--text-muted); font-size: 0.8125rem; }

@@ -1,0 +1,22 @@
+{
+  "name": "@streampack-dev/masthead",
+  "version": "0.1.0",
+  "description": "The masthead animations for bytecode.news, for any front end",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./variants/*": "./src/variants/*",
+    "./art.svg": "./src/art.svg",
+    "./masthead.css": "./src/masthead.css"
+  },
+  "files": ["src"],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "demo": "python3 -m http.server 8642"
+  },
+  "repository": "github:streampack-dev/masthead"
+}
