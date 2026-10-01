@@ -7,6 +7,7 @@ var BLURBS = {
   bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded.',
   circuit: 'Fireflies running the traces of a circuit board.',
   citydefense: 'Missile Command, playing itself, slowly: trails from above, rings bursting, cities falling and rebuilt.',
+  duel: 'Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth, forever: no touches, no winner.',
   eyes: 'October: eyes in the dark, opening, blinking, glancing about, and closing again.',
   fractal: 'A branching growth tracing round the name, resting when grown, then starting again.',
   ghostrider: 'A wireframe road ahead, bending and rising gently, the hills sliding aside on the bends. For Neil Peart.',

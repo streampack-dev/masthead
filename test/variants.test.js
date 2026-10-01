@@ -5,6 +5,7 @@ import { variants } from '../src/variants.js';
 import { SEASONS, inSeason } from '../src/runner.js';
 import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
+import duel, { POSES, crossing, figure, mixPose } from '../src/variants/duel.js';
 import ghosts, { round, sheet } from '../src/variants/ghosts.js';
 import graveyard, { tree } from '../src/variants/graveyard.js';
 import pumpkins, { FACES } from '../src/variants/pumpkins.js';
@@ -30,7 +31,7 @@ import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple } from '../src/variants/water.js';
 
-const all = { bats, boids, bytecode, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, boids, bytecode, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -54,7 +55,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'boids', 'bytecode', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'boids', 'bytecode', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -465,6 +466,59 @@ describe('october', () => {
       peeked = peeked || peeker.attrs.opacity === '1';
     }
     assert.ok(crossed && peeked);
+  });
+});
+
+describe('the duel', () => {
+  // A lunge by a fencer facing right at [attX] against one facing left at [defX].
+  const exchange = (attack, parry, attX, defX) => {
+    const A = figure(POSES[attack]), D = figure(POSES[parry]);
+    const at = (p) => [attX + p[0], p[1]], mirrored = (p) => [defX - p[0], p[1]];
+    return { meet: crossing(at(A.hand), at(A.tip), mirrored(D.hand), mirrored(D.tip)), reach: at(A.tip)[0], body: defX };
+  };
+
+  it('meets a lunge with a parry, blade on blade, high and low', () => {
+    for (const [attack, parry] of [['lungeHigh', 'parryHigh'], ['lungeLow', 'parryLow']]) {
+      const { meet } = exchange(attack, parry, 10, 96);
+      assert.ok(meet, attack);
+    }
+  });
+
+  it('never lands a touch', () => {
+    for (const attack of ['lungeHigh', 'lungeLow']) {
+      const { reach, body } = exchange(attack, 'parryHigh', 10, 96);
+      assert.ok(reach < body - 6, `${attack} reaches ${reach.toFixed(1)}`);
+    }
+  });
+
+  it('keeps its fencers standing: feet on the ground, head above the hips', () => {
+    for (const name of Object.keys(POSES)) {
+      for (const t of [0, 0.5, 1]) {
+        const f = figure(mixPose(POSES.guard, POSES[name], t));
+        assert.ok(f.head[1] < -50 && f.head[1] > -80, name);
+        for (const limb of f.limbs.slice(0, 2)) assert.ok(limb[2][1] <= 0 && limb[2][1] >= -5, name);
+      }
+    }
+  });
+
+  it('fences back and forth across the masthead without either passing the other, and without end', () => {
+    const { layer, art } = run(duel, 0, { seed: 9 });
+    const group = layer.children[1];
+    const fencers = find(layer, 'masthead-duel-fencer');
+    let lo = Infinity, hi = -Infinity, sparks = 0;
+    const spark = find(layer, 'masthead-duel-spark')[0];
+    for (let i = 1; i <= 20000; i++) {
+      art.step(i, i * 40);
+      const mid = Number(/translate\((-?[\d.]+)/.exec(group.attrs.transform)[1]);
+      lo = Math.min(lo, mid); hi = Math.max(hi, mid);
+      if (spark.attrs.opacity === '1.00') sparks++;
+      // The left fencer's head stays left of the right one's.
+      const heads = fencers.map((f) => Number(f.children[1].attrs.cx));
+      assert.ok(heads[0] < heads[1], `step ${i}`);
+    }
+    assert.ok(lo > 60 && hi < 1140, `${lo} ${hi}`);
+    assert.ok(hi - lo > 150, `travels ${lo} to ${hi}`);
+    assert.ok(sparks > 50, String(sparks));
   });
 });
 
