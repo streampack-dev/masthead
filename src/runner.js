@@ -5,8 +5,11 @@
    prefers-reduced-motion the circuit stays, still.
 
    Hosts call startMasthead(svg, options) once the art is in the page, and stop() on the handle
-   when it leaves. Nothing here knows about any framework. */
-import { variants as builtIn } from './variants.js';
+   when it leaves. Nothing here knows about any framework.
+
+   This file imports nothing, so a host serving it at a cached (fingerprinted) address loads it in
+   one request. index.js's startMasthead is this with the built-in variants as the default; a
+   host importing this file directly passes its own. */
 
 var NS = 'http://www.w3.org/2000/svg';
 var STEP_MS = 24;
@@ -17,9 +20,9 @@ export var HEIGHT = 320;
 function randomSeed() { return Math.floor(Math.random() * 0x7fffffff); }
 
 /* options, all optional:
-     variants: { name: () => Promise<module with default make(layer, m)> }; the built-in ones
-       by default. A host serving the files itself (with fingerprinted addresses, say) passes its
-       own loaders.
+     variants: { name: () => Promise<module with default make(layer, m)> }. index.js gives the
+       built-in ones by default; a host serving the files itself (with fingerprinted addresses,
+       say) passes its own loaders. With none, only the circuit runs.
      name: the variant to run; else ?ambient=<name> if it's one, else one at random.
      seed: the run's seed; else ?ambientSeed=<n>, else random.
      search: the query string read for ambient, ambientSeed and ambientDebug (location.search).
@@ -41,7 +44,7 @@ export function startMasthead(svg, options) {
     if (debug) console.info('[masthead] ' + message, detail === undefined ? '' : detail);
   }
 
-  var loaders = options.variants || builtIn;
+  var loaders = options.variants || {};
   var frameEl = options.frame || svg.parentElement || svg;
   var circuit = svg.querySelector('.masthead-circuit');
   var reduced = options.reducedMotion !== undefined ? options.reducedMotion
