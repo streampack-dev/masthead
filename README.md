@@ -27,7 +27,7 @@ title names the seed) and `?ambientDebug=1` logs the choice.
 ## Using it in a front end
 
 1. **Get the files.** The package is `src/`. A Node front end depends on a tag:
-   `"@streampack-dev/masthead": "github:streampack-dev/masthead#v0.1.1"`. A front end serving
+   `"@streampack-dev/masthead": "github:streampack-dev/masthead#v0.1.0"`. A front end serving
    static files copies `src/` from a release.
 2. **Put the art in the page,** inside the masthead, from `art.svg`. Rendering it on the server
    means the circuit shows before (or without) script. The art fills its container, so the host
@@ -90,10 +90,11 @@ and `--_surface`, never fixed values, so they follow each site's theme. Add test
 ## Working on it
 
 ```sh
-npm test       # node:test, no dependencies
-npm run demo   # the demo page at http://localhost:8642
+just test      # node:test, no dependencies
+just demo      # the demo page at http://localhost:8642
 ```
 
-Releases are tags, `vX.Y.Z`, with `package.json`'s version to match. A front end moves to a release
-when it's ready; a change to what `m` offers or what `startMasthead` takes is a minor version
-before 1.0, and front ends follow it in turn.
+`just release` (or `just release minor`, `just release major`) bumps the version in
+`package.json`, points the install line above at it, commits, tags `vX.Y.Z` and pushes `main` and
+the tag together. A front end moves to a release when it's ready; a change to what `m` offers or
+what `startMasthead` takes is a minor version before 1.0, and front ends follow it in turn.
