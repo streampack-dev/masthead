@@ -73,6 +73,7 @@
 .masthead-chase-dust { fill: color-mix(in srgb, var(--_accent) 35%, var(--_border)); }
 .masthead-chase-anvil { fill: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.6; stroke-linejoin: round; }
 .masthead-chase-train { fill: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); font: 600 12px var(--masthead-mono, ui-monospace, monospace); }
+.masthead-chase-words { fill: var(--_accent); font: 700 13px var(--masthead-mono, ui-monospace, monospace); }
 
 /* City defense: trails from the top, rings where counter-missiles burst, cities along the foot. */
 .masthead-citydefense { fill: none; }

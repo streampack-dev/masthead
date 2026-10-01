@@ -472,14 +472,30 @@ describe('october', () => {
 });
 
 describe('the chase', () => {
-  it('blurs running legs, turning them each frame', () => {
+  it('blurs running legs, turning them each frame, two pairs for the canine', () => {
     assert.notEqual(whirl(0, -9, 10, 1), whirl(0, -9, 10, 2));
+    const { layer, art } = run(chase, 0, { seed: 3 });
+    const legs = find(layer, 'masthead-chase-legs');
+    let pairs = 0;
+    for (let i = 1; i <= 400 && !pairs; i++) {
+      art.step(i, i * 60);
+      const d = legs[1].attrs.d || '';
+      // A whirl is six spokes from one hub; the canine's running legs are two of them.
+      if ((d.match(/M/g) || []).length === 12) pairs = 2;
+    }
+    assert.equal(pairs, 2);
+  });
+
+  it('holds up a sign now and then, its words the right way round', () => {
+    const sign = find(run(chase, 0).layer, 'masthead-chase-sign')[0];
+    assert.equal(sign.children[1].textContent, '\u2026not a coyote.');
   });
 
   it('plays every act, the canine always popping back to its own shape', () => {
     const { layer, art } = run(chase, 0, { seed: 3 });
     const dog = find(layer, 'masthead-chase-dog')[0];
-    const seen = { flat: false, splat: false, alarm: false, train: false, anvil: false };
+    const seen = { flat: false, splat: false, alarm: false, train: false, anvil: false, sign: false };
+    const sign = find(layer, 'masthead-chase-sign')[0];
     const train = find(layer, 'masthead-chase-train')[0], anvil = find(layer, 'masthead-chase-anvil')[0];
     const alarm = dog.children[0].children.find((c) => (c.attrs.class || '').includes('alarm'));
     for (let i = 1; i <= 40000; i++) {
@@ -491,10 +507,11 @@ describe('the chase', () => {
       if (alarm.attrs.opacity === '1') seen.alarm = true;
       if (train.attrs.opacity === '1') seen.train = true;
       if (anvil.attrs.opacity === '1') seen.anvil = true;
+      if (sign.attrs.opacity === '1') seen.sign = true;
       // Whenever it's out of sight it's back to its own shape.
       if (dog.attrs.opacity === '0') assert.ok(Math.abs(sy - 1) < 1e-9 && Math.abs(sx - 1) < 1e-9, `step ${i}`);
     }
-    assert.deepEqual(seen, { flat: true, splat: true, alarm: true, train: true, anvil: true });
+    assert.deepEqual(seen, { flat: true, splat: true, alarm: true, train: true, anvil: true, sign: true });
   });
 });
 

@@ -3,8 +3,8 @@
    dust and the canine scrambles after; sometimes the bird stops dead and the canine skids past;
    sometimes the bird runs out of the frame and the canine, following, smacks into its edge; and
    sometimes the canine, stopped to catch its breath, meets an anvil from above or the train
-   along its track. It always pops back up. The acts come from the seed, so ?ambientSeed=<n>
-   replays them. */
+   along its track. It always pops back up. And now and then it walks out, stops, and holds up a
+   sign: "...not a coyote." The acts come from the seed, so ?ambientSeed=<n> replays them. */
 
 /* The canine, facing right, from its feet: a body, a long-snouted head with an ear, a tail. Its
    legs are drawn apart: standing, or a whirl when it runs. */
@@ -13,13 +13,15 @@ var DOG = 'M-24 -24a24 11 0 1 0 48 0a24 11 0 1 0 -48 0z' +
   'M20 -42l-2 -14l9 10z' +
   'M-23 -27q-12 -2 -18 -14q8 6 18 8z';
 var DOG_LEGS = 'M-14 -15L-16 0M-6 -15L-6 0M10 -15L10 0M16 -15L19 0';
+/* Walking: each pair of legs apart, then together. */
+var DOG_STEP = 'M-14 -15L-20 0M-6 -15L-2 0M10 -15L6 0M16 -15L22 0';
 /* The bird, facing right, from its feet: a body, a long neck, a crested head with a beak, a tail. */
 var BIRD = 'M-12 -40a12 7 0 1 0 24 0a12 7 0 1 0 -24 0z' +
   'M8 -44L14 -60M11 -66a5 5 0 1 0 10 0a5 5 0 1 0 -10 0z' +
   'M21 -66L33 -63L21 -61z' +
   'M14 -70l-6 -8M16 -71l-2 -9M18 -70l2 -8' +
   'M-12 -41l-18 -8M-12 -39l-18 -2M-11 -37l-16 5';
-var BIRD_LEGS = 'M-2 -33L-4 0h6M4 -33L6 0h6';
+var BIRD_LEGS = 'M-4 -33L-8 0h6M2 -33L2 0h6';
 
 /* Legs in a blur: spokes round a hub, turned a little each frame. */
 export function whirl(cx, cy, r, frame) {
@@ -41,7 +43,9 @@ var TRAIN = [
   '  (o)(o)   (O)=(O)=(O)     '
 ];
 var ANVIL_PATH = 'M-30 0H30V-6H16V-16H36V-28H-34Q-46 -26 -56 -21Q-45 -18 -34 -16H-16V-6H-30Z';
-var ACTS = ['chase', 'chase', 'chase', 'chase', 'skid', 'skid', 'edge', 'edge', 'anvil', 'train'];
+var ACTS = ['chase', 'chase', 'chase', 'chase', 'skid', 'skid', 'edge', 'edge', 'anvil', 'train', 'sign'];
+/* The canine's best speed, and the bird's. */
+var DOG_RUN = 16, BIRD_RUN = 24;
 
 export default function chase(layer, m) {
   var W = m.width, H = m.height, ground = H - 6;
@@ -66,6 +70,10 @@ export default function chase(layer, m) {
   var train = m.el('g', { 'class': 'masthead-chase-train', opacity: 0 });
   TRAIN.forEach(function (line, r) { m.el('text', { x: 0, y: (r - TRAIN.length + 1) * 12 }, train).textContent = solid(line); });
   var trainWidth = TRAIN[4].length * 7.2;
+  // The sign the canine holds up: a board on a stick, its words never mirrored.
+  var sign = m.el('g', { 'class': 'masthead-chase-sign', opacity: 0 });
+  m.el('path', { 'class': 'masthead-chase-piece', d: 'M-64 -66h128v28h-128zM0 -38v24' }, sign);
+  m.el('text', { 'class': 'masthead-chase-words', x: 0, y: -47, 'text-anchor': 'middle' }, sign).textContent = '\u2026not a coyote.';
 
   var dust = [], act = null, frame = 0, rest = 10;
 
@@ -78,7 +86,11 @@ export default function chase(layer, m) {
     f.g.setAttribute('opacity', f.mode === 'hidden' ? 0 : 1);
     f.g.setAttribute('transform', 'translate(' + f.x.toFixed(1) + ' ' + ground + ') scale(' + (f.dir * f.sx * squeeze).toFixed(4) + ' ' + f.sy.toFixed(3) + ')');
     var isDog = f === dog;
-    f.legs.setAttribute('d', f.mode === 'run' ? whirl(isDog ? 2 : 2, isDog ? -9 : -15, isDog ? 10 : 15, n) : isDog ? DOG_LEGS : BIRD_LEGS);
+    // Running, legs blur: the canine's front pair and back pair each a whirl of their own, the
+    // bird's trailing behind it. Walking, the canine's step.
+    f.legs.setAttribute('d', f.mode === 'run'
+      ? (isDog ? whirl(-11, -9, 9, n) + whirl(13, -9, 9, n + 1.7) : whirl(-10, -15, 15, n))
+      : isDog ? (f.mode === 'walk' && n % 4 < 2 ? DOG_STEP : DOG_LEGS) : BIRD_LEGS);
     // Noticing: a "!" over its head, for a beat; skidding: leaning back hard.
     f.alarm.setAttribute('opacity', f.mode === 'look' ? 1 : 0);
     f.inner.setAttribute('transform', f.mode === 'skid' ? 'rotate(-14)' : '');
@@ -94,13 +106,13 @@ export default function chase(layer, m) {
         a.gap = 12 + Math.floor(rand() * 18);
       }
       if (bird.mode === 'run') {
-        bird.x += a.dir * 24;
+        bird.x += a.dir * BIRD_RUN;
         if (f % 3 === 0) puff(bird.x - a.dir * 20, 6 + rand() * 4);
         if ((a.dir > 0 && bird.x > W + 60) || (a.dir < 0 && bird.x < -60)) { bird.mode = 'hidden'; a.goneAt = f; }
       }
       if (a.goneAt !== undefined && f === a.goneAt + a.gap) { dog.mode = 'run'; dog.x = a.dir > 0 ? -50 : W + 50; }
       if (dog.mode === 'run') {
-        dog.x += a.dir * 13;
+        dog.x += a.dir * DOG_RUN;
         if (f % 4 === 0) puff(dog.x - a.dir * 26, 4 + rand() * 3);
         if ((a.dir > 0 && dog.x > W + 70) || (a.dir < 0 && dog.x < -70)) { dog.mode = 'hidden'; return true; }
       }
@@ -114,15 +126,15 @@ export default function chase(layer, m) {
         bird.x = a.dir > 0 ? -40 : W + 40; a.stage = 'in';
       }
       if (a.stage === 'in') {
-        bird.x += a.dir * 24;
+        bird.x += a.dir * BIRD_RUN;
         if ((a.dir > 0 && bird.x >= a.stop) || (a.dir < 0 && bird.x <= a.stop)) {
           bird.x = a.stop; bird.mode = 'stand'; a.stage = 'wait'; a.at = f;
           dog.mode = 'run'; dog.x = a.dir > 0 ? -50 : W + 50;
         }
       } else if (a.stage === 'wait') {
-        dog.x += a.dir * 14;
+        dog.x += a.dir * (DOG_RUN + 1);
         if (f % 4 === 0) puff(dog.x - a.dir * 26, 4);
-        if ((a.dir > 0 && dog.x >= bird.x - 10) || (a.dir < 0 && dog.x <= bird.x + 10)) { a.stage = 'skid'; a.speed = 14; dog.mode = 'skid'; }
+        if ((a.dir > 0 && dog.x >= bird.x - 10) || (a.dir < 0 && dog.x <= bird.x + 10)) { a.stage = 'skid'; a.speed = DOG_RUN + 1; dog.mode = 'skid'; }
       } else if (a.stage === 'skid') {
         // Too fast to stop: it skids past, raising dust, while the bird is off the other way.
         dog.x += a.dir * a.speed; a.speed *= 0.86;
@@ -132,11 +144,11 @@ export default function chase(layer, m) {
       } else if (a.stage === 'look') {
         if (f - a.at > 22) { dog.mode = 'run'; dog.dir = -a.dir; a.stage = 'after'; }
       } else if (a.stage === 'after') {
-        dog.x -= a.dir * 13;
+        dog.x -= a.dir * DOG_RUN;
         if (f % 4 === 0) puff(dog.x + a.dir * 26, 4);
       }
       if (bird.mode === 'run' && a.stage !== 'in') {
-        bird.x += bird.dir * 24;
+        bird.x += bird.dir * BIRD_RUN;
         if (bird.x < -60 || bird.x > W + 60) bird.mode = 'hidden';
       }
       if (a.stage === 'after' && (dog.x < -70 || dog.x > W + 70)) { dog.mode = 'hidden'; return true; }
@@ -151,7 +163,7 @@ export default function chase(layer, m) {
       }
       if (bird.mode === 'run') { bird.x += a.dir * 22; if (bird.x < -60 || bird.x > W + 60) bird.mode = 'hidden'; }
       if (a.stage === 'run') {
-        dog.x += a.dir * 13;
+        dog.x += a.dir * DOG_RUN;
         if (f % 4 === 0) puff(dog.x - a.dir * 26, 4);
         // The bird ran out of the frame; the canine runs into it, nose first.
         if ((a.dir > 0 && dog.x + 44 >= a.edge) || (a.dir < 0 && dog.x - 44 <= a.edge)) {
@@ -183,7 +195,7 @@ export default function chase(layer, m) {
         dog.x = a.dir > 0 ? -50 : W + 50; a.stop = a.dir > 0 ? 200 + rand() * 250 : W - 200 - rand() * 250; a.stage = 'in';
       }
       if (a.stage === 'in') {
-        dog.x += a.dir * 13;
+        dog.x += a.dir * DOG_RUN;
         if (f % 4 === 0) puff(dog.x - a.dir * 26, 4);
         if ((a.dir > 0 && dog.x >= a.stop) || (a.dir < 0 && dog.x <= a.stop)) { dog.mode = 'stand'; a.stage = 'pant'; a.at = f; }
       } else if (a.stage === 'pant') {
@@ -206,6 +218,26 @@ export default function chase(layer, m) {
       }
       return false;
     },
+    sign: function (f, a) {
+      if (f === 0) {
+        a.dir = rand() < 0.5 ? 1 : -1; dog.dir = a.dir; dog.mode = 'walk'; bird.mode = 'hidden';
+        dog.x = a.dir > 0 ? -50 : W + 50; a.stop = a.dir > 0 ? 220 + rand() * 300 : W - 220 - rand() * 300; a.stage = 'in';
+      }
+      if (a.stage === 'in') {
+        dog.x += a.dir * 6;
+        if ((a.dir > 0 && dog.x >= a.stop) || (a.dir < 0 && dog.x <= a.stop)) { dog.mode = 'stand'; a.stage = 'hold'; a.at = f; }
+      } else if (a.stage === 'hold') {
+        // Up goes the sign, held out in front for the reader, a little unsteadily.
+        var squeeze = 1 / m.stretch();
+        sign.setAttribute('opacity', 1);
+        sign.setAttribute('transform', 'translate(' + (dog.x + a.dir * 96 * squeeze).toFixed(1) + ' ' + (ground + ((f - a.at) % 10 < 5 ? 0 : 1)) + ') scale(' + squeeze.toFixed(4) + ' 1)');
+        if (f - a.at > 60) { sign.setAttribute('opacity', 0); dog.mode = 'walk'; a.stage = 'off'; }
+      } else if (a.stage === 'off') {
+        dog.x += a.dir * 6;
+        if (dog.x < -70 || dog.x > W + 70) { dog.mode = 'hidden'; return true; }
+      }
+      return false;
+    },
     train: function (f, a) {
       if (f === 0) {
         dog.dir = 1; dog.mode = 'run'; bird.mode = 'hidden';
@@ -213,7 +245,7 @@ export default function chase(layer, m) {
       }
       var squeeze = 1 / m.stretch();
       if (a.stage === 'in') {
-        dog.x -= 13;
+        dog.x -= DOG_RUN;
         if (f % 4 === 0) puff(dog.x + 26, 4);
         if (dog.x <= a.stop) { dog.mode = 'stand'; a.stage = 'pant'; a.at = f; }
       } else if (a.stage === 'pant') {
