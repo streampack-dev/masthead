@@ -5,8 +5,8 @@
    touches, no winner. (With a nod to a certain duel atop some cliffs.) The bout comes from the
    seed, so ?ambientSeed=<n> replays it. A click makes the nearer fencer forget its training: a
    huge wind-up and a full-bodied swing, edge first, which the other, unimpressed, parries over
-   its head; and sometimes the swinger's blade snaps, the end of it tumbling away, and it stares
-   at what's left. */
+   its head; and sometimes the swinger's blade snaps, the end of it tumbling away. It stares at
+   what's left, drops it, and draws another from its hip, as if it always carried a spare. */
 
 /* Poses, for a fencer facing right, from its middle at the ground: where each foot is (and how
    high it's lifted), how high the hips are, how far the body leans forward, where the sword hand
@@ -26,6 +26,12 @@ export var POSES = {
   swing: { front: 38, back: -20, lift: 0, backLift: 3, hip: 23, lean: 0.52, hand: [26, -6], blade: -0.55 },
   // Staring at what's left of a broken blade, held up before its face.
   stare: { front: 12, back: -14, lift: 0, backLift: 0, hip: 32, lean: 0.04, hand: [8, -2], blade: -1.3 },
+  // Reaching to the hip for another blade; pulling it out, still pointing back along its scabbard;
+  // and swinging it up over the head and forward. (Its angles go round the back, the long way, so
+  // the swing is overhead rather than through the ground.)
+  reach: { front: 13, back: -15, lift: 0, backLift: 0, hip: 31, lean: 0.14, hand: [-6, 24], blade: 2.4 - 2 * Math.PI },
+  pull: { front: 14, back: -15, lift: 0, backLift: 0, hip: 31, lean: 0.08, hand: [10, 6], blade: 2.7 - 2 * Math.PI },
+  draw: { front: 14, back: -14, lift: 0, backLift: 0, hip: 32, lean: 0.02, hand: [12, -12], blade: -1.0 },
   // The answer to it: the blade held flat over the head.
   parryHead: { front: 10, back: -18, lift: 0, backLift: 0, hip: 28, lean: -0.1, hand: [10, -16], blade: -0.2 }
 };
@@ -103,10 +109,13 @@ export default function duel(layer, m) {
     };
   });
   var spark = m.el('path', { 'class': 'masthead-duel-spark', opacity: 0 }, group);
-  // The broken end of a blade, in the masthead's own coordinates, so it falls where it falls
-  // however the fencers move on.
-  var pieceEl = m.el('path', { 'class': 'masthead-duel-blade masthead-duel-piece', opacity: 0 });
-  var seed = m.seed() >>> 0, pokes = 0, broken = [false, false], piece = null, lastBlades = null, lastMid = 0;
+  // What falls from a broken blade (its end, and then the stub, dropped), in the masthead's own
+  // coordinates, so each falls where it falls however the fencers move on.
+  var pieceEls = [0, 1].map(function () { return m.el('path', { 'class': 'masthead-duel-blade masthead-duel-piece', opacity: 0 }); });
+  var pieces = [null, null];
+  // How much of each fencer's blade there is (1 whole, STUB broken, 0 none in hand), as of the
+  // start of the current key; a key may grow or shrink it on the way (keyed "blades").
+  var seed = m.seed() >>> 0, pokes = 0, bladeFrom = [1, 1], lastBlades = null, lastMid = 0;
 
   // Where each fencer stands (the left one faces right, the other left), and in what pose.
   var state = { a: { x: W / 2 - GAP / 2, pose: POSES.guard }, b: { x: W / 2 + GAP / 2, pose: POSES.guard } };
@@ -167,44 +176,72 @@ export default function duel(layer, m) {
     p = pose('swing', 'parryHead');
     key(6, p[0], a + dir * 10, p[1], b + dir * 4, true, snaps ? { snap: left ? 0 : 1 } : null);
     key(8, p[0], a + dir * 10, p[1], b + dir * 4);
+    var k = left ? 0 : 1;
     if (snaps) {
-      // It looks at what it has left, for a long moment.
+      // It looks at what it has left, for a long moment, lets it drop, and watches it land.
       p = pose('stare', 'guard');
       key(10, p[0], a + dir * 4, p[1], b + dir * 2);
-      key(26, p[0], a + dir * 4, p[1], b + dir * 2);
+      key(18, p[0], a + dir * 4, p[1], b + dir * 2, false, { drop: k });
+      key(20, p[0], a + dir * 4, p[1], b + dir * 2);
+      // A hand to the hip, another blade drawn out of it, and swung up and over into the air.
+      p = pose('reach', 'guard');
+      key(10, p[0], a + dir * 2, p[1], b + dir * 2);
+      p = pose('pull', 'guard');
+      key(10, p[0], a + dir * 2, p[1], b + dir * 2, false, { blades: [1, 1] });
+      p = pose('draw', 'guard');
+      key(10, p[0], a, p[1], b + dir * 2);
     }
     p = pose('stepBack', 'guard');
     key(10, p[0], a - dir * 4, p[1], b + dir * 2);
-    // Back in guard, whole again: a fresh blade, the way cartoons have one.
-    key(14, 'guard', a, 'guard', b, false, { mend: true });
+    key(14, 'guard', a, 'guard', b);
     key(16, 'guard', a, 'guard', b);
+  }
+
+  /* A falling length of blade, [len] long, from [from] to [to] (in the fencers' group), thrown
+     with (vx, vy) and turning by [spin] each step. */
+  function fall(slot, from, to, len, vx, vy, spin) {
+    var squeeze = 1 / m.stretch();
+    var art = function (q) { return [lastMid + q[0] * squeeze, ground + q[1]]; };
+    var f = art(from), t = art(to);
+    pieces[slot] = { x: (f[0] + t[0]) / 2, y: (f[1] + t[1]) / 2, len: len, angle: Math.atan2(to[1] - from[1], to[0] - from[0]), vx: vx, vy: vy, spin: spin, down: false, age: 0 };
   }
 
   /* The [k]th fencer's blade breaks: what's past the stub goes tumbling, up and away from the
      other fencer, turning over as it falls. */
   function snap(k) {
-    broken[k] = true;
-    var squeeze = 1 / m.stretch(), hand = lastBlades[k][0], tip = lastBlades[k][1], facing = k ? -1 : 1;
-    var art = function (q) { return [lastMid + q[0] * squeeze, ground + q[1]]; };
-    var from = art([hand[0] + (tip[0] - hand[0]) * STUB, hand[1] + (tip[1] - hand[1]) * STUB]), to = art(tip);
-    piece = {
-      x: (from[0] + to[0]) / 2, y: (from[1] + to[1]) / 2, len: BLADE * (1 - STUB),
-      angle: Math.atan2(tip[1] - hand[1], tip[0] - hand[0]),
-      vx: -facing * 1.6, vy: -5, spin: 0.38 * facing, down: false, age: 0
-    };
+    bladeFrom[k] = STUB;
+    var hand = lastBlades[k][0], tip = lastBlades[k][1], facing = k ? -1 : 1;
+    fall(0, [hand[0] + (tip[0] - hand[0]) * STUB, hand[1] + (tip[1] - hand[1]) * STUB], tip, BLADE * (1 - STUB), -facing * 1.6, -5, 0.38 * facing);
   }
 
-  function drawPiece() {
-    if (!piece) { pieceEl.setAttribute('opacity', 0); return; }
-    if (!piece.down) {
-      piece.x += piece.vx; piece.y += piece.vy; piece.vy += 0.4; piece.angle += piece.spin;
-      // It lands flat, on the ground, and lies there.
-      if (piece.y >= ground - 1.5) { piece.y = ground - 1.5; piece.angle = 0; piece.down = true; }
-    } else piece.age += 1;
-    if (piece.age > 70) { piece = null; pieceEl.setAttribute('opacity', 0); return; }
-    var squeeze = 1 / m.stretch(), hx = Math.cos(piece.angle) * piece.len / 2 * squeeze, hy = Math.sin(piece.angle) * piece.len / 2;
-    pieceEl.setAttribute('d', 'M' + (piece.x - hx).toFixed(1) + ' ' + (piece.y - hy).toFixed(1) + 'L' + (piece.x + hx).toFixed(1) + ' ' + (piece.y + hy).toFixed(1));
-    pieceEl.setAttribute('opacity', piece.age < 55 ? 1 : (1 - (piece.age - 55) / 15).toFixed(2));
+  /* The [k]th fencer lets the stub go: it drops at its feet, turning a little. */
+  function drop(k) {
+    bladeFrom[k] = 0;
+    var hand = lastBlades[k][0], tip = lastBlades[k][1], facing = k ? -1 : 1;
+    fall(1, hand, [hand[0] + (tip[0] - hand[0]) * STUB, hand[1] + (tip[1] - hand[1]) * STUB], BLADE * STUB, facing * 0.3, 0, 0.12 * facing);
+  }
+
+  function drawPieces() {
+    pieces.forEach(function (piece, k) {
+      var el = pieceEls[k];
+      if (!piece) { el.setAttribute('opacity', 0); return; }
+      if (!piece.down) {
+        piece.x += piece.vx; piece.y += piece.vy; piece.vy += 0.4; piece.angle += piece.spin;
+        // It lands flat, on the ground, and lies there.
+        if (piece.y >= ground - 1.5) { piece.y = ground - 1.5; piece.angle = 0; piece.down = true; }
+      } else piece.age += 1;
+      if (piece.age > 70) { pieces[k] = null; el.setAttribute('opacity', 0); return; }
+      var squeeze = 1 / m.stretch(), hx = Math.cos(piece.angle) * piece.len / 2 * squeeze, hy = Math.sin(piece.angle) * piece.len / 2;
+      el.setAttribute('d', 'M' + (piece.x - hx).toFixed(1) + ' ' + (piece.y - hy).toFixed(1) + 'L' + (piece.x + hx).toFixed(1) + ' ' + (piece.y + hy).toFixed(1));
+      el.setAttribute('opacity', piece.age < 55 ? 1 : (1 - (piece.age - 55) / 15).toFixed(2));
+    });
+  }
+
+  /* How much of each blade there is now, partway through the current key. */
+  function bladeNow(k) {
+    var cur = plan[0];
+    if (!cur || !cur.blades) return bladeFrom[k];
+    return lerp(bladeFrom[k], cur.blades[k], Math.min(1, step / cur.dur));
   }
 
   function draw() {
@@ -219,7 +256,8 @@ export default function duel(layer, m) {
       function pt(p) { return [ox + facing * p[0], p[1]]; }
       var d = fig.limbs.map(function (l) { return l.map(function (p, j) { var q = pt(p); return (j ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(''); }).join('');
       var hand = pt(fig.hand), tip = pt(fig.tip), head = pt(fig.head);
-      if (broken[k]) tip = [hand[0] + (tip[0] - hand[0]) * STUB, hand[1] + (tip[1] - hand[1]) * STUB];
+      var length = bladeNow(k);
+      if (length < 1) tip = [hand[0] + (tip[0] - hand[0]) * length, hand[1] + (tip[1] - hand[1]) * length];
       fencers[k].body.setAttribute('d', d);
       fencers[k].head.setAttribute('cx', head[0].toFixed(1));
       fencers[k].head.setAttribute('cy', head[1].toFixed(1));
@@ -250,8 +288,9 @@ export default function duel(layer, m) {
       var cur = plan[0];
       if (step >= cur.dur) {
         if (cur.clash) sparkAge = 0;
+        if (cur.blades) bladeFrom = cur.blades.slice();
         if (cur.snap !== undefined) snap(cur.snap);
-        if (cur.mend) broken = [false, false];
+        if (cur.drop !== undefined) drop(cur.drop);
         state = { a: cur.a, b: cur.b };
         from = state;
         plan.shift();
@@ -259,15 +298,15 @@ export default function duel(layer, m) {
         if (!plan.length) phrase();
       }
       draw();
-      drawPiece();
+      drawPieces();
     },
     // A click: the fencer nearer it, as drawn, takes its great swing, cutting short the phrase.
     poke: function (x) {
       var now = current(), mid = (now.a.x + now.b.x) / 2, squeeze = 1 / m.stretch();
       var ax = mid + (now.a.x - mid) * squeeze, bx = mid + (now.b.x - mid) * squeeze;
       from = now; state = now; plan = []; step = 0;
-      // A blade broken by the last click is whole again for this one.
-      broken = [false, false];
+      // A blade broken by the last click, cut short, is whole again for this one.
+      bladeFrom = [1, 1];
       haymaker(Math.abs(x - ax) <= Math.abs(x - bx), breaks(seed, pokes++));
     }
   };

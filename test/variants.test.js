@@ -964,34 +964,40 @@ describe('the duel', () => {
     }
   });
 
-  it('breaks the swinger\'s blade on about one wild swing in three: a stub left, the rest on the ground', () => {
+  it('breaks the swinger\'s blade on about one wild swing in three; it drops the stub and draws another', () => {
     const rate = Array.from({ length: 300 }, (_, n) => breaks(9, n)).filter(Boolean).length / 300;
     assert.ok(rate > 0.25 && rate < 0.42, String(rate));
     assert.equal(breaks(9, 2), breaks(9, 2));
 
     const { layer, art } = run(duel, 0, { seed: 9 });
-    const fencers = find(layer, 'masthead-duel-fencer'), piece = find(layer, 'masthead-duel-piece')[0];
+    const fencers = find(layer, 'masthead-duel-fencer'), pieces = find(layer, 'masthead-duel-piece');
     const length = (k) => { const [hx, hy, tx, ty] = fencers[k].children[2].attrs.d.match(/-?[\d.]+/g).slice(0, 4).map(Number); return Math.hypot(tx - hx, ty - hy); };
+    const flat = (el) => { const e = el.attrs.opacity !== '0' && el.attrs.d ? el.attrs.d.match(/-?[\d.]+/g).map(Number) : null; return !!e && Math.abs(e[1] - 310.5) < 0.2 && Math.abs(e[3] - 310.5) < 0.2; };
     let i = 30, seenBreak = false, seenWhole = false;
     for (let k = 1; k <= i; k++) art.step(k, k * 40);
     for (let n = 0; n < 6; n++) {
       art.poke(400, 200, i, 0);
-      let minLength = Infinity, landed = false;
-      for (let k = 0; k < 110; k++) {
+      const lengths = [], landed = [false, false];
+      for (let k = 0; k < 150; k++) {
         i++; art.step(i, i * 40);
-        minLength = Math.min(minLength, length(0));
-        const ends = piece.attrs.opacity !== '0' && piece.attrs.d ? piece.attrs.d.match(/-?[\d.]+/g).map(Number) : null;
-        if (ends && Math.abs(ends[1] - 310.5) < 0.2 && Math.abs(ends[3] - 310.5) < 0.2) landed = true;
+        lengths.push(length(0));
+        pieces.forEach((el, j) => { if (flat(el)) landed[j] = true; });
       }
+      const stub = lengths.findIndex((l) => Math.abs(l - 42 * STUB) < 0.5);
       if (breaks(9, n)) {
         seenBreak = true;
-        assert.ok(Math.abs(minLength - 42 * STUB) < 0.5, `click ${n}: down to ${minLength}`);
-        assert.ok(landed, `click ${n}: the broken end lies flat on the ground`);
+        // A stub, then nothing in hand, then a blade drawn out to full length, growing all the way.
+        const empty = lengths.findIndex((l, j) => j > stub && l < 0.5);
+        const whole = lengths.findIndex((l, j) => j > empty && l > 41.5);
+        assert.ok(stub >= 0 && empty > stub && whole > empty, `click ${n}: stub ${stub}, empty ${empty}, whole ${whole}`);
+        for (let j = empty + 1; j <= whole; j++) assert.ok(lengths[j] >= lengths[j - 1] - 1e-9, `click ${n}: drawn out steadily`);
+        assert.ok(lengths.slice(whole, whole + 3).some((l) => l > 41.5) && whole - empty > 4, `click ${n}: drawn, not popped in`);
+        assert.ok(landed[0] && landed[1], `click ${n}: the broken end and the stub both on the ground`);
       } else {
         seenWhole = true;
-        assert.ok(minLength > 41.5, `click ${n}: whole, ${minLength}`);
+        assert.ok(Math.min(...lengths) > 41.5, `click ${n}: whole, ${Math.min(...lengths)}`);
       }
-      // Back in guard, the blade is whole again.
+      // Back in guard, the blade is whole.
       assert.ok(Math.abs(length(0) - 42) < 0.5, `click ${n}: ${length(0)}`);
     }
     assert.ok(seenBreak && seenWhole);
