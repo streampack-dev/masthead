@@ -15,7 +15,7 @@ import { find, run, serialize } from './fake.js';
 import boids from '../src/variants/boids.js';
 import bytecode, { OCTOBER, PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
 import circuit, { WIRES, along } from '../src/variants/circuit.js';
-import chase, { blurLegs, scramble, SPLAY } from '../src/variants/chase.js';
+import chase, { blurLegs, scramble, SPLAY, TUNNEL_WAIT, tunnelExpires } from '../src/variants/chase.js';
 import citydefense, { BASES, CITIES, GROUND, intercept } from '../src/variants/citydefense.js';
 import grass, { wind as grassWind } from '../src/variants/grass.js';
 import lander, { GRAVITY, SIDE, THRUST, ground, pilot } from '../src/variants/lander.js';
@@ -722,16 +722,32 @@ describe('the chase', () => {
     art.poke(600, 10, 0, 0);
     assert.equal(x(tunnel), 600, 'a second click moves it, and only where along the ground matters');
 
-    let swallowed = false, smacked = false, gone = false;
+    const dustLayer = find(layer, 'masthead-chase-dust')[0];
+    let swallowed = false, smacked = false, gone = false, dust = new Set(dustLayer.children);
     for (let i = 1; i <= 20000 && !gone; i++) {
       // Keep a tunnel there until the canine has smacked into one.
       if (!smacked && tunnel.attrs.opacity === '0') art.poke(600, 0, i, 0);
       const before = bird.attrs.opacity === '1' ? x(bird) : null;
+      // Its nose, 40 ahead of it at full width, wherever it faces.
+      const nose = () => { const k = Number(/scale\((-?[\d.]+)/.exec(dog.attrs.transform)[1]); return x(dog) + 40 * k; };
+      const noseBefore = dog.attrs.opacity === '1' ? nose() : null;
       art.step(i, i * 60);
       // The bird vanishes in the middle of the frame, at the tunnel, not at an edge.
       if (before !== null && bird.attrs.opacity === '0' && Math.abs(before - 600) < 30) swallowed = true;
+      // Once it's in, its dust stops: none new until the canine comes, but the puff at the mouth.
+      const fresh = dustLayer.children.filter((c) => !dust.has(c));
+      if (swallowed && !smacked && dog.attrs.opacity === '0') {
+        for (const c of fresh) assert.ok(Math.abs(Number(c.attrs.cx) - 600) < 1, `step ${i}: dust at ${c.attrs.cx}`);
+      }
+      dust = new Set(dustLayer.children);
       const sx = Math.abs(Number(/scale\((-?[\d.]+)/.exec(dog.attrs.transform)[1]));
-      if (sx < 0.3 && dog.attrs.opacity === '1' && Math.abs(x(dog) - 600) < 60) smacked = true;
+      // It meets the rock at the middle of the tunnel, where the bird went in.
+      if (sx < 0.3 && dog.attrs.opacity === '1' && !smacked) {
+        // Squashed up, its nose to the middle of the tunnel, and got there running, not by a jump.
+        assert.ok(Math.abs(nose() - 600) <= 2, `nose at ${nose()}`);
+        assert.ok(noseBefore !== null && Math.abs(nose() - noseBefore) <= 20, `nose from ${noseBefore} to ${nose()}`);
+        smacked = true;
+      }
       // It never goes in: whenever it's out of sight, it's off the edge of the frame.
       if (dog.attrs.opacity === '0' && x(dog) > 0 && x(dog) < 1200) assert.ok(!smacked || Math.abs(x(dog) - 600) > 100, `step ${i}`);
       if (smacked && tunnel.attrs.opacity === '0') gone = true;
@@ -757,17 +773,11 @@ describe('the chase', () => {
     }
   });
 
-  it('fades a tunnel nothing runs into after 20 seconds or so', () => {
-    // Seed 2 never runs the canine into a tunnel at the left edge, for this long.
-    const { layer, art } = run(chase, 0, { seed: 2 });
-    const tunnel = find(layer, 'masthead-chase-tunnel')[0], dog = find(layer, 'masthead-chase-dog')[0];
-    art.poke(0, 0, 0, 0);
-    for (let i = 1; i <= 360; i++) {
-      art.step(i, i * 60);
-      assert.ok(Math.abs(Number(/scale\((-?[\d.]+)/.exec(dog.attrs.transform)[1])) > 0.3, 'nothing ran into it');
-      if (i === 320) assert.equal(tunnel.attrs.opacity, '1', 'it waits');
-    }
-    assert.equal(tunnel.attrs.opacity, '0');
+  it('fades a tunnel nothing runs into after 20 seconds or so, but never mid-smack', () => {
+    assert.equal(TUNNEL_WAIT * 60 >= 18000 && TUNNEL_WAIT * 60 <= 22000, true);
+    assert.equal(tunnelExpires(TUNNEL_WAIT, false), false);
+    assert.equal(tunnelExpires(TUNNEL_WAIT + 1, false), true);
+    assert.equal(tunnelExpires(TUNNEL_WAIT + 1, true), false);
   });
 
   it('holds up a sign now and then, its words the right way round', () => {

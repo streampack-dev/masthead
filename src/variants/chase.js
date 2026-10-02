@@ -108,8 +108,11 @@ var TUNNEL_ROCK = 'M-46 0V-58Q-48 -100 0 -104Q48 -100 46 -58V0z';
 var TUNNEL_MOUTH = 'M-30 0V-64A30 26 0 0 1 30 -64V0z';
 var TUNNEL_CRACKS = 'M-40 -70l6 4M-38 -40l5 -2M36 -78l-5 5M38 -30l-6 1M-14 -98l3 5M12 -96l-2 6';
 var TUNNEL_HALF = 46;
-/* How long a tunnel waits for someone to run into it before it fades, in steps of 60 ms. */
-var TUNNEL_WAIT = 330;
+/* How long a tunnel waits for someone to run into it before it fades, in steps of 60 ms: a safety
+   net, since one nearly always does first. */
+export var TUNNEL_WAIT = 330;
+/* Whether a tunnel [age] steps old starts to fade, unless the canine is smacking into it now. */
+export function tunnelExpires(age, smacking) { return age > TUNNEL_WAIT && !smacking; }
 var ACTS = ['chase', 'chase', 'chase', 'chase', 'skid', 'skid', 'edge', 'edge', 'anvil', 'train', 'sign'];
 /* The canine's best speed, and the bird's. */
 var DOG_RUN = 16, BIRD_RUN = 24;
@@ -162,6 +165,9 @@ export default function chase(layer, m) {
 
   var dust = [], act = null, frame = 0, rest = 10;
 
+  /* The bird's dust, which stops while it's in the tunnel. */
+  function birdPuff(x, size) { if (!bird.under) puff(x, size); }
+
   function puff(x, size) {
     dust.push({ el: m.el('circle', { cx: x.toFixed(1), cy: (ground - 6).toFixed(1), r: size }, dustLayer), age: 0, size: size });
   }
@@ -202,7 +208,7 @@ export default function chase(layer, m) {
       }
       if (bird.mode === 'run') {
         bird.x += a.dir * BIRD_RUN;
-        if (f % 3 === 0) puff(bird.x - a.dir * 20, 6 + rand() * 4);
+        if (f % 3 === 0) birdPuff(bird.x - a.dir * 20, 6 + rand() * 4);
         if ((a.dir > 0 && bird.x > W + 60) || (a.dir < 0 && bird.x < -60)) { bird.mode = 'hidden'; a.goneAt = f; }
       }
       if (a.goneAt !== undefined && f === a.goneAt + a.gap) { dog.mode = 'run'; dog.x = a.dir > 0 ? -50 : W + 50; }
@@ -338,7 +344,7 @@ export default function chase(layer, m) {
         if (f - a.at === 46) { bird.mode = 'run'; bird.dir = a.dir; bird.x = a.dir > 0 ? -40 : W + 40; }
         if (bird.mode === 'run') {
           bird.x += a.dir * BIRD_RUN;
-          if (f % 2 === 0) puff(bird.x - a.dir * 20, 7 + rand() * 4);
+          if (f % 2 === 0) birdPuff(bird.x - a.dir * 20, 7 + rand() * 4);
           if ((a.dir > 0 && bird.x > dog.x) || (a.dir < 0 && bird.x < dog.x)) { dog.mode = 'look'; a.stage = 'drop'; a.at = f; }
         }
       } else if (a.stage === 'drop' || a.stage === 'after') {
@@ -361,7 +367,8 @@ export default function chase(layer, m) {
     },
     // Not an act the seed picks: the canine, running after the bird, into the tunnel it went into.
     smack: function (f, a) {
-      var squeeze = 1 / m.stretch(), face = a.tx - a.dir * (TUNNEL_HALF * squeeze + 6);
+      // Flat against the painting, nose to the middle of the way in.
+      var squeeze = 1 / m.stretch(), face = a.tx - a.dir * 11 * squeeze;
       if (f === 0) {
         // Whatever act it cut short leaves nothing behind.
         [sign, anvil, train, stars].forEach(function (e) { e.setAttribute('opacity', 0); });
@@ -434,7 +441,7 @@ export default function chase(layer, m) {
   function tunnelStep() {
     if (!tunnel) return;
     tunnel.age += 1;
-    if (tunnel.fading === undefined && tunnel.age > TUNNEL_WAIT && !(act && act.name === 'smack')) tunnel.fading = 0;
+    if (tunnel.fading === undefined && tunnelExpires(tunnel.age, !!(act && act.name === 'smack'))) tunnel.fading = 0;
     if (tunnel.fading !== undefined) {
       if (++tunnel.fading > 20) tunnel = null;
       return;
@@ -443,9 +450,9 @@ export default function chase(layer, m) {
       bird.under = true;
       puff(tunnel.x, 9);
     }
-    var squeeze = 1 / m.stretch(), nose = dog.x + dog.dir * 40 * squeeze, mouth = tunnel.x - dog.dir * TUNNEL_HALF * squeeze;
-    var was = dog.px + dog.dir * 40 * squeeze;
-    if (dog.mode === 'run' && Math.abs(dog.x - dog.px) <= DOG_RUN + 2 && (was - mouth) * (nose - mouth) <= 0 && nose !== was) {
+    // The canine runs at the middle of the tunnel, where the bird went in, and meets rock.
+    var squeeze = 1 / m.stretch(), nose = dog.x + dog.dir * 40 * squeeze, was = dog.px + dog.dir * 40 * squeeze;
+    if (dog.mode === 'run' && Math.abs(dog.x - dog.px) <= DOG_RUN + 2 && (was - tunnel.x) * (nose - tunnel.x) <= 0 && nose !== was) {
       act = { name: 'smack', tx: tunnel.x, dir: dog.dir, tunnel: tunnel };
       frame = 0;
       acts.smack(frame++, act);
