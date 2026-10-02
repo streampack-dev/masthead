@@ -5,7 +5,8 @@
    touches, no winner. (With a nod to a certain duel atop some cliffs.) The bout comes from the
    seed, so ?ambientSeed=<n> replays it. A click makes the nearer fencer forget its training: a
    huge wind-up and a full-bodied swing, edge first, which the other, unimpressed, parries over
-   its head. */
+   its head; and sometimes the swinger's blade snaps, the end of it tumbling away, and it stares
+   at what's left. */
 
 /* Poses, for a fencer facing right, from its middle at the ground: where each foot is (and how
    high it's lifted), how high the hips are, how far the body leans forward, where the sword hand
@@ -23,10 +24,22 @@ export var POSES = {
   // and the follow-through.
   windUp: { front: 16, back: -16, lift: 0, backLift: 0, hip: 31, lean: -0.28, hand: [-6, -14], blade: -2.5 },
   swing: { front: 38, back: -20, lift: 0, backLift: 3, hip: 23, lean: 0.52, hand: [26, -6], blade: -0.55 },
+  // Staring at what's left of a broken blade, held up before its face.
+  stare: { front: 12, back: -14, lift: 0, backLift: 0, hip: 32, lean: 0.04, hand: [8, -2], blade: -1.3 },
   // The answer to it: the blade held flat over the head.
   parryHead: { front: 10, back: -18, lift: 0, backLift: 0, hip: 28, lean: -0.1, hand: [10, -16], blade: -0.2 }
 };
 var THIGH = 19, SHIN = 19, TORSO = 26, UPPER = 13, FORE = 13, BLADE = 42, GAP = 92;
+/* How much of a broken blade is left in the hand. */
+export var STUB = 0.3;
+
+/* Whether the [n]th click's swing breaks the blade, for a run of [seed]: about one in three, the
+   same every time, and apart from the bout's own randomness so a seed replays the same bout. */
+export function breaks(seed, n) {
+  var x = Math.imul(((seed >>> 0) ^ Math.imul(n + 1, 0x9e3779b9)) >>> 0, 2246822519) >>> 0;
+  x = Math.imul(x ^ (x >>> 13), 3266489917) >>> 0;
+  return ((x ^ (x >>> 16)) >>> 0) % 3 === 0;
+}
 
 function lerp(a, b, t) { return a + (b - a) * t; }
 export function mixPose(a, b, t) {
@@ -90,12 +103,20 @@ export default function duel(layer, m) {
     };
   });
   var spark = m.el('path', { 'class': 'masthead-duel-spark', opacity: 0 }, group);
+  // The broken end of a blade, in the masthead's own coordinates, so it falls where it falls
+  // however the fencers move on.
+  var pieceEl = m.el('path', { 'class': 'masthead-duel-blade masthead-duel-piece', opacity: 0 });
+  var seed = m.seed() >>> 0, pokes = 0, broken = [false, false], piece = null, lastBlades = null, lastMid = 0;
 
   // Where each fencer stands (the left one faces right, the other left), and in what pose.
   var state = { a: { x: W / 2 - GAP / 2, pose: POSES.guard }, b: { x: W / 2 + GAP / 2, pose: POSES.guard } };
   var from = state, plan = [], step = 0, sparkAge = 99;
 
-  function key(dur, aPose, aX, bPose, bX, clash) { plan.push({ dur: dur, a: { pose: POSES[aPose], x: aX }, b: { pose: POSES[bPose], x: bX }, clash: clash }); }
+  function key(dur, aPose, aX, bPose, bX, clash, extra) {
+    var k = { dur: dur, a: { pose: POSES[aPose], x: aX }, b: { pose: POSES[bPose], x: bX }, clash: clash };
+    for (var e in extra || {}) k[e] = extra[e];
+    plan.push(k);
+  }
 
   /* The next phrase of the bout: the attacker steps in, lunges high or low, the other parries
      (and maybe ripostes), and they reset. Near an edge, the one with its back to it attacks. */
@@ -138,18 +159,52 @@ export default function duel(layer, m) {
 
   /* The haymaker: [left] (the left fencer, or the right) winds up and swings, the other parries
      over its head, the swinger recoils, and both come back to guard. */
-  function haymaker(left) {
+  function haymaker(left, snaps) {
     var a = state.a.x, b = state.b.x, dir = left ? 1 : -1;
     function pose(attacker, defender) { return left ? [attacker, defender] : [defender, attacker]; }
     var p = pose('windUp', 'guard');
     key(12, p[0], a, p[1], b);
     p = pose('swing', 'parryHead');
-    key(6, p[0], a + dir * 10, p[1], b + dir * 4, true);
+    key(6, p[0], a + dir * 10, p[1], b + dir * 4, true, snaps ? { snap: left ? 0 : 1 } : null);
     key(8, p[0], a + dir * 10, p[1], b + dir * 4);
+    if (snaps) {
+      // It looks at what it has left, for a long moment.
+      p = pose('stare', 'guard');
+      key(10, p[0], a + dir * 4, p[1], b + dir * 2);
+      key(26, p[0], a + dir * 4, p[1], b + dir * 2);
+    }
     p = pose('stepBack', 'guard');
     key(10, p[0], a - dir * 4, p[1], b + dir * 2);
-    key(14, 'guard', a, 'guard', b);
+    // Back in guard, whole again: a fresh blade, the way cartoons have one.
+    key(14, 'guard', a, 'guard', b, false, { mend: true });
     key(16, 'guard', a, 'guard', b);
+  }
+
+  /* The [k]th fencer's blade breaks: what's past the stub goes tumbling, up and away from the
+     other fencer, turning over as it falls. */
+  function snap(k) {
+    broken[k] = true;
+    var squeeze = 1 / m.stretch(), hand = lastBlades[k][0], tip = lastBlades[k][1], facing = k ? -1 : 1;
+    var art = function (q) { return [lastMid + q[0] * squeeze, ground + q[1]]; };
+    var from = art([hand[0] + (tip[0] - hand[0]) * STUB, hand[1] + (tip[1] - hand[1]) * STUB]), to = art(tip);
+    piece = {
+      x: (from[0] + to[0]) / 2, y: (from[1] + to[1]) / 2, len: BLADE * (1 - STUB),
+      angle: Math.atan2(tip[1] - hand[1], tip[0] - hand[0]),
+      vx: -facing * 1.6, vy: -5, spin: 0.38 * facing, down: false, age: 0
+    };
+  }
+
+  function drawPiece() {
+    if (!piece) { pieceEl.setAttribute('opacity', 0); return; }
+    if (!piece.down) {
+      piece.x += piece.vx; piece.y += piece.vy; piece.vy += 0.4; piece.angle += piece.spin;
+      // It lands flat, on the ground, and lies there.
+      if (piece.y >= ground - 1.5) { piece.y = ground - 1.5; piece.angle = 0; piece.down = true; }
+    } else piece.age += 1;
+    if (piece.age > 70) { piece = null; pieceEl.setAttribute('opacity', 0); return; }
+    var squeeze = 1 / m.stretch(), hx = Math.cos(piece.angle) * piece.len / 2 * squeeze, hy = Math.sin(piece.angle) * piece.len / 2;
+    pieceEl.setAttribute('d', 'M' + (piece.x - hx).toFixed(1) + ' ' + (piece.y - hy).toFixed(1) + 'L' + (piece.x + hx).toFixed(1) + ' ' + (piece.y + hy).toFixed(1));
+    pieceEl.setAttribute('opacity', piece.age < 55 ? 1 : (1 - (piece.age - 55) / 15).toFixed(2));
   }
 
   function draw() {
@@ -164,6 +219,7 @@ export default function duel(layer, m) {
       function pt(p) { return [ox + facing * p[0], p[1]]; }
       var d = fig.limbs.map(function (l) { return l.map(function (p, j) { var q = pt(p); return (j ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(''); }).join('');
       var hand = pt(fig.hand), tip = pt(fig.tip), head = pt(fig.head);
+      if (broken[k]) tip = [hand[0] + (tip[0] - hand[0]) * STUB, hand[1] + (tip[1] - hand[1]) * STUB];
       fencers[k].body.setAttribute('d', d);
       fencers[k].head.setAttribute('cx', head[0].toFixed(1));
       fencers[k].head.setAttribute('cy', head[1].toFixed(1));
@@ -171,8 +227,9 @@ export default function duel(layer, m) {
       var gx = Math.sin(f.pose.blade) * 4 * facing, gy = Math.cos(f.pose.blade) * 4;
       fencers[k].blade.setAttribute('d', 'M' + hand[0].toFixed(1) + ' ' + hand[1].toFixed(1) + 'L' + tip[0].toFixed(1) + ' ' + tip[1].toFixed(1) +
         'M' + (hand[0] - gx).toFixed(1) + ' ' + (hand[1] + gy).toFixed(1) + 'L' + (hand[0] + gx).toFixed(1) + ' ' + (hand[1] - gy).toFixed(1));
-      blades.push([hand, tip]);
+      blades.push([hand, pt(fig.tip)]);
     });
+    lastBlades = blades; lastMid = mid;
     if (sparkAge === 0) {
       var at = crossing(blades[0][0], blades[0][1], blades[1][0], blades[1][1]) ||
         [(blades[0][1][0] + blades[1][1][0]) / 2, (blades[0][1][1] + blades[1][1][1]) / 2];
@@ -193,6 +250,8 @@ export default function duel(layer, m) {
       var cur = plan[0];
       if (step >= cur.dur) {
         if (cur.clash) sparkAge = 0;
+        if (cur.snap !== undefined) snap(cur.snap);
+        if (cur.mend) broken = [false, false];
         state = { a: cur.a, b: cur.b };
         from = state;
         plan.shift();
@@ -200,13 +259,16 @@ export default function duel(layer, m) {
         if (!plan.length) phrase();
       }
       draw();
+      drawPiece();
     },
     // A click: the fencer nearer it, as drawn, takes its great swing, cutting short the phrase.
     poke: function (x) {
       var now = current(), mid = (now.a.x + now.b.x) / 2, squeeze = 1 / m.stretch();
       var ax = mid + (now.a.x - mid) * squeeze, bx = mid + (now.b.x - mid) * squeeze;
       from = now; state = now; plan = []; step = 0;
-      haymaker(Math.abs(x - ax) <= Math.abs(x - bx));
+      // A blade broken by the last click is whole again for this one.
+      broken = [false, false];
+      haymaker(Math.abs(x - ax) <= Math.abs(x - bx), breaks(seed, pokes++));
     }
   };
 }

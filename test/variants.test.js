@@ -5,7 +5,7 @@ import { variants } from '../src/variants.js';
 import { SEASONS, inSeason } from '../src/runner.js';
 import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
-import duel, { POSES, crossing, figure, mixPose } from '../src/variants/duel.js';
+import duel, { POSES, STUB, breaks, crossing, figure, mixPose } from '../src/variants/duel.js';
 import deadline, { ANVIL, POSES as DESK_POSES, SCENES, anvilAt, writer } from '../src/variants/deadline.js';
 import ghosts, { round, sheet } from '../src/variants/ghosts.js';
 import graveyard, { tree } from '../src/variants/graveyard.js';
@@ -962,6 +962,39 @@ describe('the duel', () => {
       }
       assert.ok(woundUp && parried && sparked, `${clickX}: wound up ${woundUp}, parried ${parried}, spark ${sparked}`);
     }
+  });
+
+  it('breaks the swinger\'s blade on about one wild swing in three: a stub left, the rest on the ground', () => {
+    const rate = Array.from({ length: 300 }, (_, n) => breaks(9, n)).filter(Boolean).length / 300;
+    assert.ok(rate > 0.25 && rate < 0.42, String(rate));
+    assert.equal(breaks(9, 2), breaks(9, 2));
+
+    const { layer, art } = run(duel, 0, { seed: 9 });
+    const fencers = find(layer, 'masthead-duel-fencer'), piece = find(layer, 'masthead-duel-piece')[0];
+    const length = (k) => { const [hx, hy, tx, ty] = fencers[k].children[2].attrs.d.match(/-?[\d.]+/g).slice(0, 4).map(Number); return Math.hypot(tx - hx, ty - hy); };
+    let i = 30, seenBreak = false, seenWhole = false;
+    for (let k = 1; k <= i; k++) art.step(k, k * 40);
+    for (let n = 0; n < 6; n++) {
+      art.poke(400, 200, i, 0);
+      let minLength = Infinity, landed = false;
+      for (let k = 0; k < 110; k++) {
+        i++; art.step(i, i * 40);
+        minLength = Math.min(minLength, length(0));
+        const ends = piece.attrs.opacity !== '0' && piece.attrs.d ? piece.attrs.d.match(/-?[\d.]+/g).map(Number) : null;
+        if (ends && Math.abs(ends[1] - 310.5) < 0.2 && Math.abs(ends[3] - 310.5) < 0.2) landed = true;
+      }
+      if (breaks(9, n)) {
+        seenBreak = true;
+        assert.ok(Math.abs(minLength - 42 * STUB) < 0.5, `click ${n}: down to ${minLength}`);
+        assert.ok(landed, `click ${n}: the broken end lies flat on the ground`);
+      } else {
+        seenWhole = true;
+        assert.ok(minLength > 41.5, `click ${n}: whole, ${minLength}`);
+      }
+      // Back in guard, the blade is whole again.
+      assert.ok(Math.abs(length(0) - 42) < 0.5, `click ${n}: ${length(0)}`);
+    }
+    assert.ok(seenBreak && seenWhole);
   });
 
   it('fences back and forth across the masthead without either passing the other, and without end', () => {
