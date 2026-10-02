@@ -38,7 +38,7 @@ function hash(n, k) {
   return ((x ^ (x >>> 16)) >>> 0) / 0x100000000;
 }
 
-/* The bird's legs in a blur: a wheel of motion under its body. Curved strokes of different
+/* The bird's legs in a blur: a wheel of motion trailing under its body. Curved strokes of different
    lengths turn round inside the wheel's rim, a step each frame, and a foot touches the ground
    now behind, now ahead. Arcs read as motion where straight spokes read as a star. Returns
    the strokes and, apart, the rim, which is drawn faint. */
@@ -102,8 +102,9 @@ export default function chase(layer, m) {
   function figure(cls, body, head) {
     var g = m.el('g', { 'class': 'masthead-chase-' + cls, opacity: 0 });
     var inner = m.el('g', {}, g);
-    m.el('path', { 'class': 'masthead-chase-piece', d: body }, inner);
+    // The bird's blur is drawn first, behind the body, as speed leaves it behind.
     var blur = m.el('path', { 'class': 'masthead-chase-blur', opacity: 0 }, inner);
+    m.el('path', { 'class': 'masthead-chase-piece', d: body }, inner);
     var legs = m.el('path', { 'class': 'masthead-chase-legs' }, inner);
     // The head in profile, and (for the canine) turned to the reader.
     var profile = m.el('g', {}, inner);
@@ -142,7 +143,8 @@ export default function chase(layer, m) {
     var isDog = f === dog;
     // Running, the bird's legs are a blur under it and the canine's a scramble. Walking, the
     // canine's step.
-    var blurred = f.mode === 'run' && !isDog ? blurLegs(-2, -16, 16, 16, n) : null;
+    // The blur trails behind the bird, wider than it's tall, as if left behind by its speed.
+    var blurred = f.mode === 'run' && !isDog ? blurLegs(-13, -17, 19, 15, n) : null;
     // Scrambling, the canine is off the ground, bobbing, which gives its legs room to flail.
     var lift = f.mode === 'run' && isDog ? 5 + Math.round(hash(n, 12) * 3) : 0;
     f.legs.setAttribute('d', blurred ? blurred.strokes
