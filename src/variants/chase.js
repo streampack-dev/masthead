@@ -21,9 +21,13 @@ var DOG_FACE = 'M14 -40a12 11 0 1 0 24 0a12 11 0 1 0 -24 0z' +
   'M16 -47l-3 -14l9 8zM36 -47l3 -14l-9 8z';
 var DOG_FACE_MARKS = 'M21 -43v0M31 -43v0M26 -37v0M21 -33q5 4 10 0';
 var DOG_RIBS = 'M8 -30q-2 4 0 9M12 -31q-2 5 0 11M16 -31q-2 4 0 10';
-var DOG_LEGS = 'M-19 -15L-21 0M-14 -15L-14 0M9 -15L9 0M15 -15L18 0';
+/* Standing: jointed, as a dog's legs are. The hind legs angle back to the hock and down to the
+   paw; the front legs come down to a bent wrist; each ends in a paw, pointing forward. */
+var DOG_LEGS = 'M-19 -15L-23 -5L-21 0h4M-14 -15L-17 -5L-15 0h4' +
+  'M9 -15L9 -4L11 0h3M15 -15L16 -4L18 0h3';
 /* Walking: each pair of legs apart, then together. */
-var DOG_STEP = 'M-19 -15L-25 0M-14 -15L-10 0M9 -15L5 0M15 -15L21 0';
+var DOG_STEP = 'M-19 -15L-26 -6L-25 0h4M-14 -15L-13 -5L-10 0h4' +
+  'M9 -15L6 -4L6 0h4M15 -15L19 -5L22 0h3';
 /* The bird, facing right, from its feet: a body, a long neck, a crested head with a beak, a tail. */
 var BIRD = 'M-12 -40a12 7 0 1 0 24 0a12 7 0 1 0 -24 0z' +
   'M8 -44L14 -60M11 -66a5 5 0 1 0 10 0a5 5 0 1 0 -10 0z' +
