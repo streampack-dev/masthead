@@ -13,7 +13,7 @@ demo:
 # points the README's install line at it, commits, tags vX.Y.Z, pushes main and the tag together,
 # and publishes to Nexus. Front ends move to it with their own update.
 # Release: bump, commit, tag, push and publish
-release level="patch":
+release level="patch": _on-main
     #!/usr/bin/env bash
     set -euo pipefail
     level="{{level}}"
@@ -23,19 +23,11 @@ release level="patch":
       *) echo "release level must be one of: patch, minor, major" >&2; exit 1 ;;
     esac
 
-    if [[ "$(git branch --show-current)" != "main" ]]; then
-      echo "Release from main." >&2
-      exit 1
-    fi
     if [[ -n "$(git status --porcelain)" ]]; then
       echo "The working tree has uncommitted changes (a failed release?). Commit or restore them first." >&2
       exit 1
     fi
     git fetch -q --tags origin
-    if [[ -n "$(git rev-list HEAD..origin/main)" ]]; then
-      echo "main is behind origin/main. Pull first." >&2
-      exit 1
-    fi
 
     current="$(node -p "require('./package.json').version")"
     if [[ "$current" == *-SNAPSHOT ]]; then
@@ -72,6 +64,26 @@ release level="patch":
     fi
     echo "Released $next: pushed main and v$next."
     just publish "$next"
+
+# Releases come from main, up to date with origin's: never from a feature branch.
+_on-main:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    branch="$(git branch --show-current)"
+    if [[ "$branch" != "main" ]]; then
+      echo "Release from main, not ${branch:-a detached HEAD}." >&2
+      exit 1
+    fi
+    git fetch -q origin main
+    if [[ -n "$(git rev-list HEAD..origin/main)" ]]; then
+      echo "main is behind origin/main. Pull first." >&2
+      exit 1
+    fi
+
+# The whole release, as in the other projects. Here just release already commits, tags, pushes and
+# publishes, so this is the same thing under the name the others use.
+full-release level="patch":
+    just release {{level}}
 
 # Publishes from a clean export of the tag, so front ends can depend on
 # "@streampack-dev/masthead": "^X.Y.Z" through npm-group. just release runs this; run it by hand to

@@ -142,6 +142,9 @@ just demo      # the demo page at http://localhost:8642
 
 `just release` (or `just release minor`, `just release major`) bumps the version in
 `package.json`, commits, tags `vX.Y.Z`, pushes `main` and the tag together, and publishes the tag
-to Nexus (`just publish X.Y.Z` retries a publish). A front end moves to a release when it's
+to Nexus (`just publish X.Y.Z` retries a publish). It runs only from `main`, up to date with
+`origin/main` and clean, and changes nothing otherwise. `just full-release` is the same thing, under
+the name the other streampack projects use for their whole release (which there also commits and
+pushes the version). A front end moves to a release when it's
 ready; a change to what `m` offers or what `startMasthead` takes is a minor version before 1.0,
 and front ends follow it in turn.
