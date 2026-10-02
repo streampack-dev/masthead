@@ -6,7 +6,8 @@
    along its track. It always pops back up. And now and then it walks out to the middle, turns to
    the reader, and holds up a sign: "...not a coyote." Just then the bird blurs past behind it;
    the sign drops, and the chase is on. The acts come from the seed, so ?ambientSeed=<n> replays
-   them. */
+   them. A click puts a tunnel on the ground there: the bird runs into it and is gone, and the
+   canine, running into it after, finds it painted on solid rock. */
 
 /* The canine, facing right, from its feet: a body, a long-snouted head with an ear, a tail. It's
    hungry: a bony, hunched back, its belly tucked up between haunch and chest, its ribs showing.
@@ -101,6 +102,14 @@ var TRAIN = [
   '  (o)(o)   (O)=(O)=(O)     '
 ];
 var ANVIL_PATH = 'M-30 0H30V-6H16V-16H36V-28H-34Q-46 -26 -56 -21Q-45 -18 -34 -16H-16V-6H-30Z';
+/* A tunnel mouth in the rock, as painted, from the ground: the rock round it, and the dark way in,
+   tall enough for the bird. */
+var TUNNEL_ROCK = 'M-46 0V-58Q-48 -100 0 -104Q48 -100 46 -58V0z';
+var TUNNEL_MOUTH = 'M-30 0V-64A30 26 0 0 1 30 -64V0z';
+var TUNNEL_CRACKS = 'M-40 -70l6 4M-38 -40l5 -2M36 -78l-5 5M38 -30l-6 1M-14 -98l3 5M12 -96l-2 6';
+var TUNNEL_HALF = 46;
+/* How long a tunnel waits for someone to run into it before it fades, in steps of 60 ms. */
+var TUNNEL_WAIT = 330;
 var ACTS = ['chase', 'chase', 'chase', 'chase', 'skid', 'skid', 'edge', 'edge', 'anvil', 'train', 'sign'];
 /* The canine's best speed, and the bird's. */
 var DOG_RUN = 16, BIRD_RUN = 24;
@@ -112,6 +121,12 @@ export default function chase(layer, m) {
   function solid(line) { return line.replace(/ /g, ' '); }
 
   var dustLayer = m.el('g', { 'class': 'masthead-chase-dust' });
+  // The tunnel, behind the cast, there only once the masthead is clicked.
+  var tunnelEl = m.el('g', { 'class': 'masthead-chase-tunnel', opacity: 0 });
+  m.el('path', { 'class': 'masthead-chase-piece', d: TUNNEL_ROCK }, tunnelEl);
+  m.el('path', { 'class': 'masthead-chase-tunnel-mouth', d: TUNNEL_MOUTH }, tunnelEl);
+  m.el('path', { 'class': 'masthead-chase-ribs', d: TUNNEL_CRACKS }, tunnelEl);
+  var tunnel = null;
   function figure(cls, body, head) {
     var g = m.el('g', { 'class': 'masthead-chase-' + cls, opacity: 0 });
     var inner = m.el('g', {}, g);
@@ -153,7 +168,7 @@ export default function chase(layer, m) {
 
   function place(f, n) {
     var squeeze = 1 / m.stretch();
-    f.g.setAttribute('opacity', f.mode === 'hidden' ? 0 : 1);
+    f.g.setAttribute('opacity', f.mode === 'hidden' || f.under ? 0 : 1);
     f.g.setAttribute('transform', 'translate(' + f.x.toFixed(1) + ' ' + ground + ') scale(' + (f.dir * f.sx * squeeze).toFixed(4) + ' ' + f.sy.toFixed(3) + ')');
     var isDog = f === dog;
     // Running, the bird's legs are a blur under it and the canine's a scramble. Walking, the
@@ -344,6 +359,38 @@ export default function chase(layer, m) {
       }
       return false;
     },
+    // Not an act the seed picks: the canine, running after the bird, into the tunnel it went into.
+    smack: function (f, a) {
+      var squeeze = 1 / m.stretch(), face = a.tx - a.dir * (TUNNEL_HALF * squeeze + 6);
+      if (f === 0) {
+        // Whatever act it cut short leaves nothing behind.
+        [sign, anvil, train, stars].forEach(function (e) { e.setAttribute('opacity', 0); });
+        dog.mode = 'stand'; dog.dir = a.dir; dog.sx = 0.25; dog.sy = 1; dog.x = face; bird.mode = 'hidden';
+        a.stage = 'splat'; puff(face, 6);
+      }
+      if (a.stage === 'splat') {
+        if (f > 16) {
+          a.stage = 'dizzy'; a.at = f; dog.sx = 1; dog.x = face - a.dir * 37;
+          // Solid rock, it turns out; the painting fades, its work done.
+          if (tunnel === a.tunnel) tunnel.fading = 0;
+        }
+      } else if (a.stage === 'dizzy') {
+        stars.setAttribute('opacity', 1);
+        var sx = dog.x + a.dir * 24, sy = ground - 58, d = '';
+        for (var k = 0; k < 3; k++) {
+          var ang = (f - a.at) * 0.35 + k * 2.1;
+          var px = sx + Math.cos(ang) * 16, py = sy + Math.sin(ang) * 5;
+          d += 'M' + (px - 3).toFixed(1) + ' ' + py.toFixed(1) + 'h6M' + px.toFixed(1) + ' ' + (py - 3).toFixed(1) + 'v6';
+        }
+        stars.setAttribute('d', d);
+        if (f - a.at > 30) { stars.setAttribute('opacity', 0); a.stage = 'back'; dog.dir = -a.dir; dog.mode = 'walk'; }
+      } else if (a.stage === 'back') {
+        dog.x -= a.dir * 4;
+        dog.sy = 1 + (f % 6 < 3 ? 0.04 : -0.04);
+        if (dog.x < -70 || dog.x > W + 70) { dog.mode = 'hidden'; dog.sy = 1; return true; }
+      }
+      return false;
+    },
     train: function (f, a) {
       if (f === 0) {
         dog.dir = 1; dog.mode = 'run'; bird.mode = 'hidden';
@@ -377,7 +424,39 @@ export default function chase(layer, m) {
     }
   };
 
+  /* Whether [f] passed [x] this step, going no further than a step goes. */
+  function passed(f, x, reach) {
+    return Math.abs(f.x - f.px) <= reach && (f.px - x) * (f.x - x) <= 0 && f.x !== f.px;
+  }
+
+  /* The tunnel's part in a step: it swallows the running bird, and the running canine smacks
+     into it, which ends whatever act was on. */
+  function tunnelStep() {
+    if (!tunnel) return;
+    tunnel.age += 1;
+    if (tunnel.fading === undefined && tunnel.age > TUNNEL_WAIT && !(act && act.name === 'smack')) tunnel.fading = 0;
+    if (tunnel.fading !== undefined) {
+      if (++tunnel.fading > 20) tunnel = null;
+      return;
+    }
+    if (bird.mode === 'run' && !bird.under && passed(bird, tunnel.x, BIRD_RUN + 4)) {
+      bird.under = true;
+      puff(tunnel.x, 9);
+    }
+    var squeeze = 1 / m.stretch(), nose = dog.x + dog.dir * 40 * squeeze, mouth = tunnel.x - dog.dir * TUNNEL_HALF * squeeze;
+    var was = dog.px + dog.dir * 40 * squeeze;
+    if (dog.mode === 'run' && Math.abs(dog.x - dog.px) <= DOG_RUN + 2 && (was - mouth) * (nose - mouth) <= 0 && nose !== was) {
+      act = { name: 'smack', tx: tunnel.x, dir: dog.dir, tunnel: tunnel };
+      frame = 0;
+      acts.smack(frame++, act);
+    }
+  }
+
   function draw(n) {
+    if (tunnel) {
+      tunnelEl.setAttribute('opacity', tunnel.fading === undefined ? 1 : Math.max(0, 1 - tunnel.fading / 20).toFixed(2));
+      tunnelEl.setAttribute('transform', 'translate(' + tunnel.x.toFixed(1) + ' ' + ground + ') scale(' + (1 / m.stretch()).toFixed(4) + ' 1)');
+    } else tunnelEl.setAttribute('opacity', 0);
     place(bird, n);
     place(dog, n);
     dust = dust.filter(function (p) {
@@ -393,13 +472,21 @@ export default function chase(layer, m) {
   return {
     interval: 60,
     step: function (n) {
+      bird.px = bird.x; dog.px = dog.x;
       if (!act) {
-        if (--rest > 0) { draw(n); return; }
+        if (--rest > 0) { tunnelStep(); draw(n); return; }
         act = { name: ACTS[Math.floor(rand() * ACTS.length)] };
         frame = 0;
+        bird.under = false;
       }
-      if (acts[act.name](frame++, act)) { act = null; rest = 20 + Math.floor(rand() * 50); }
+      if (acts[act.name](frame++, act)) { act = null; bird.under = false; rest = 20 + Math.floor(rand() * 50); }
+      else tunnelStep();
       draw(n);
+    },
+    // A click: a tunnel there, on the ground, or the one there is moved.
+    poke: function (x) {
+      tunnel = { x: Math.max(TUNNEL_HALF, Math.min(W - TUNNEL_HALF, x)), age: 0 };
+      draw(frame);
     }
   };
 }

@@ -94,10 +94,10 @@ the choice. Only the chosen animation's file is fetched.
    The runner sets `data-masthead="<name>"` on the SVG and its parent (or `frame`), and
    `.masthead-paused` while paused, for the host's own CSS. Clicking the masthead pokes the
    animation, if it has a fragment of its own (boids scatter from a hawk, the bytecode rain
-   bursts, a surge runs through the circuit, the fractal sprouts a root, ghostrider opens the
-   throttle, life plants a pattern, signal noise tears, the Solari board riffles on, the terrain
-   banks, the train whistles, water skips a stone); the frame has `data-masthead-poke` while it
-   does, for a cursor, say.
+   bursts, a tunnel appears in the chase, a surge runs through the circuit, the fractal sprouts a
+   root, ghostrider opens the throttle, life plants a pattern, signal noise tears, the Solari
+   board riffles on, the terrain banks, the train whistles, water skips a stone); the frame has
+   `data-masthead-poke` while it does, for a cursor, say.
    Clicks on links, buttons and form controls in the masthead pass through untouched; a
    masthead that is itself a link home passes `poke: false`. A host serving the variant files
    under its own addresses (fingerprinted, say) passes `variants: { name: () => import(url) }`.

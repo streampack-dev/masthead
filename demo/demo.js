@@ -5,7 +5,7 @@ var BLURBS = {
   bats: 'October: bats flapping across in loose, wavering flight, now and then a little flock.',
   boids: 'Sixteen fireflies flocking. Click to send a hawk among them.',
   bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded. Click to burst it.',
-  chase: 'A fast bird and the canine forever after it: skids, a smack into the frame, an anvil, the train. It always pops back up.',
+  chase: 'A fast bird and the canine forever after it: skids, a smack into the frame, an anvil, the train. It always pops back up. Click to paint a tunnel.',
   circuit: 'Fireflies running the traces of a circuit board. Click to send a surge through it.',
   citydefense: 'Missile Command, playing itself, slowly: trails from above, rings bursting, cities falling and rebuilt.',
   deadline: 'A writer at a desk, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard.',

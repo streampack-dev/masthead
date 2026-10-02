@@ -710,6 +710,66 @@ describe('the chase', () => {
     assert.equal(find(find(layer, 'masthead-chase-bird')[0], 'masthead-chase-ribs').length, 0);
   });
 
+  it('puts a tunnel where it\'s clicked: the bird runs into it and is gone, the canine smacks into it', () => {
+    const { layer, art } = run(chase, 0, { seed: 3 });
+    const tunnel = find(layer, 'masthead-chase-tunnel')[0];
+    const bird = find(layer, 'masthead-chase-bird')[0], dog = find(layer, 'masthead-chase-dog')[0];
+    const sign = find(layer, 'masthead-chase-sign')[0];
+    const x = (el) => Number(/translate\((-?[\d.]+)/.exec(el.attrs.transform)[1]);
+    assert.equal(tunnel.attrs.opacity, '0');
+    art.poke(400, 200, 0, 0);
+    assert.equal(tunnel.attrs.opacity, '1');
+    art.poke(600, 10, 0, 0);
+    assert.equal(x(tunnel), 600, 'a second click moves it, and only where along the ground matters');
+
+    let swallowed = false, smacked = false, gone = false;
+    for (let i = 1; i <= 20000 && !gone; i++) {
+      // Keep a tunnel there until the canine has smacked into one.
+      if (!smacked && tunnel.attrs.opacity === '0') art.poke(600, 0, i, 0);
+      const before = bird.attrs.opacity === '1' ? x(bird) : null;
+      art.step(i, i * 60);
+      // The bird vanishes in the middle of the frame, at the tunnel, not at an edge.
+      if (before !== null && bird.attrs.opacity === '0' && Math.abs(before - 600) < 30) swallowed = true;
+      const sx = Math.abs(Number(/scale\((-?[\d.]+)/.exec(dog.attrs.transform)[1]));
+      if (sx < 0.3 && dog.attrs.opacity === '1' && Math.abs(x(dog) - 600) < 60) smacked = true;
+      // It never goes in: whenever it's out of sight, it's off the edge of the frame.
+      if (dog.attrs.opacity === '0' && x(dog) > 0 && x(dog) < 1200) assert.ok(!smacked || Math.abs(x(dog) - 600) > 100, `step ${i}`);
+      if (smacked && tunnel.attrs.opacity === '0') gone = true;
+      if (smacked) assert.equal(sign.attrs.opacity === '1' && !gone, false);
+    }
+    assert.ok(swallowed, 'the bird ran into the tunnel');
+    assert.ok(smacked, 'the canine smacked into it');
+    assert.ok(gone, 'and then it faded');
+  });
+
+  it('never leaves a tunnel lying about: it waits a while, and is gone within 24 seconds of the click', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const { layer, art } = run(chase, 0, { seed });
+      const tunnel = find(layer, 'masthead-chase-tunnel')[0];
+      for (let i = 1; i <= 50; i++) art.step(i, i * 60);
+      art.poke(300 + seed * 20, 0, 50, 0);
+      let at = null;
+      for (let i = 51; i <= 450 && at === null; i++) {
+        art.step(i, i * 60);
+        if (tunnel.attrs.opacity === '0') at = i - 50;
+      }
+      assert.ok(at !== null && at <= 400, `seed ${seed}: gone after ${at}`);
+    }
+  });
+
+  it('fades a tunnel nothing runs into after 20 seconds or so', () => {
+    // Seed 2 never runs the canine into a tunnel at the left edge, for this long.
+    const { layer, art } = run(chase, 0, { seed: 2 });
+    const tunnel = find(layer, 'masthead-chase-tunnel')[0], dog = find(layer, 'masthead-chase-dog')[0];
+    art.poke(0, 0, 0, 0);
+    for (let i = 1; i <= 360; i++) {
+      art.step(i, i * 60);
+      assert.ok(Math.abs(Number(/scale\((-?[\d.]+)/.exec(dog.attrs.transform)[1])) > 0.3, 'nothing ran into it');
+      if (i === 320) assert.equal(tunnel.attrs.opacity, '1', 'it waits');
+    }
+    assert.equal(tunnel.attrs.opacity, '0');
+  });
+
   it('holds up a sign now and then, its words the right way round', () => {
     const sign = find(run(chase, 0).layer, 'masthead-chase-sign')[0];
     assert.equal(sign.children[1].textContent, '\u2026not a coyote.');
