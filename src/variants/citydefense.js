@@ -2,7 +2,8 @@
    down from the top toward the cities along the foot of the masthead; the bases between them fire
    back, and each counter-missile bursts into a ring that takes out what it touches. Not every
    shot finds its mark, so now and then a city falls; when most have fallen, they're rebuilt and
-   it starts again. The game comes from the seed, so ?ambientSeed=<n> replays it. */
+   it starts again. The game comes from the seed, so ?ambientSeed=<n> replays it. A click fires a
+   counter-missile from the nearest base to where it lands, as the player's would. */
 export var GROUND = 306;
 export var CITIES = [190, 300, 410, 790, 900, 1010];
 export var BASES = [70, 600, 1130];
@@ -70,11 +71,15 @@ export default function citydefense(layer, m) {
       if (at && (!best || Math.abs(bx - at.x) < Math.abs(best.bx - best.at.x))) best = { bx: bx, at: at };
     });
     if (!best) return;
-    var tx = best.at.x + mi.aimError, ty = best.at.y;
-    var len = Math.hypot(tx - best.bx, ty - (GROUND - 9));
+    shoot(best.bx, best.at.x + mi.aimError, best.at.y);
+  }
+
+  /* A counter-missile from the base at [bx] to (tx, ty), where it bursts. */
+  function shoot(bx, tx, ty) {
+    var len = Math.max(1, Math.hypot(tx - bx, ty - (GROUND - 9)));
     counters.push({
-      sx: best.bx, sy: GROUND - 9, x: best.bx, y: GROUND - 9, tx: tx, ty: ty,
-      vx: (tx - best.bx) / len * COUNTER, vy: (ty - (GROUND - 9)) / len * COUNTER, steps: Math.ceil(len / COUNTER),
+      sx: bx, sy: GROUND - 9, x: bx, y: GROUND - 9, tx: tx, ty: ty,
+      vx: (tx - bx) / len * COUNTER, vy: (ty - (GROUND - 9)) / len * COUNTER, steps: Math.ceil(len / COUNTER),
       el: m.el('path', { 'class': 'masthead-citydefense-counter' }, skyEl)
     });
   }
@@ -138,6 +143,11 @@ export default function citydefense(layer, m) {
 
       // When most of the cities have fallen, a pause, and they're rebuilt.
       if (rebuildAt === null && cities.filter(function (c) { return c.standing; }).length <= 2) rebuildAt = 120;
+    },
+    // A click: a counter-missile from the nearest base to it, bursting there (never in the ground).
+    poke: function (x, y) {
+      var bx = BASES.reduce(function (a, b) { return Math.abs(b - x) < Math.abs(a - x) ? b : a; });
+      shoot(bx, x, Math.min(y, GROUND - 20));
     }
   };
 }

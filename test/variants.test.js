@@ -17,7 +17,7 @@ import bytecode, { OCTOBER, PROGRAMS, STREAMS } from '../src/variants/bytecode.j
 import circuit, { WIRES, along } from '../src/variants/circuit.js';
 import chase, { blurLegs, scramble, SPLAY, TUNNEL_WAIT, tunnelExpires } from '../src/variants/chase.js';
 import citydefense, { BASES, CITIES, GROUND, intercept } from '../src/variants/citydefense.js';
-import grass, { wind as grassWind } from '../src/variants/grass.js';
+import grass, { wind as grassWind, pokeGusts } from '../src/variants/grass.js';
 import lander, { GRAVITY, SIDE, THRUST, ground, pilot } from '../src/variants/lander.js';
 import paddles, { LEFT, RIGHT, landing } from '../src/variants/paddles.js';
 import rocks, { SIZES, outline } from '../src/variants/rocks.js';
@@ -207,6 +207,45 @@ describe('a poke', () => {
     assert.ok(lines.length >= 3 && lines.every((y) => y >= 200 && y <= 314), lines.join(' '));
     for (let i = 1; i <= 20; i++) art.step(i, i * 70);
     assert.equal(find(layer, 'masthead-noise-burst')[0].children.length, 0);
+  });
+
+  it('sends a gust both ways from where the grass is clicked, laying it down away from there', () => {
+    // Each blade's base and tip, from its curve.
+    const blades = (layer) => find(layer, 'masthead-grass-blades').flatMap((p) =>
+      [...p.attrs.d.matchAll(/M(-?[\d.]+) (-?[\d.]+)Q-?[\d.]+ -?[\d.]+ (-?[\d.]+) -?[\d.]+/g)].map((b) => ({ x: Number(b[1]), lean: Number(b[3]) - Number(b[1]) })));
+    const still = run(grass, 0, { seed: 4 }), blown = run(grass, 0, { seed: 4 });
+    blown.art.poke(600, 300, 0, 0);
+    for (let i = 1; i <= 8; i++) { still.art.step(i, i * 50); blown.art.step(i, i * 50); }
+    const a = blades(still.layer), b = blades(blown.layer);
+    let right = 0, left = 0;
+    a.forEach((bl, k) => {
+      if (bl.x > 680 && bl.x < 760) right += b[k].lean - bl.lean;
+      if (bl.x > 440 && bl.x < 520) left += b[k].lean - bl.lean;
+    });
+    assert.ok(right > 20 && left < -20, `right ${right}, left ${left}`);
+    const [out, back] = pokeGusts(600);
+    assert.ok(out.v > 0 && out.strength > 0 && back.v < 0 && back.strength < 0);
+  });
+
+  it('fires a counter-missile from the nearest base to where the sky is clicked, bursting there', () => {
+    const { layer, art } = run(citydefense, 0, { seed: 3 });
+    art.poke(420, 150, 0, 0);
+    const trail = find(layer, 'masthead-citydefense-counter').at(-1);
+    art.step(1, 40);
+    assert.match(trail.attrs.d, new RegExp('^M600 ' + (GROUND - 9) + 'L'));
+    let burst = null;
+    for (let i = 2; i <= 80 && !burst; i++) {
+      art.step(i, i * 40);
+      burst = find(layer, 'masthead-citydefense-burst').find((b) => Math.abs(Number(b.attrs.cx) - 420) < 0.5 && Math.abs(Number(b.attrs.cy) - 150) < 0.5);
+    }
+    assert.ok(burst, 'it burst where clicked');
+    // Clicked at the ground, it bursts above it, never in it.
+    art.poke(80, 319, 80, 0);
+    const low = find(layer, 'masthead-citydefense-counter').at(-1);
+    art.step(81, 81 * 40);
+    const end = /L(-?[\d.]+) (-?[\d.]+)$/.exec(low.attrs.d);
+    assert.match(low.attrs.d, new RegExp('^M70 ' + (GROUND - 9) + 'L'));
+    assert.ok(Number(end[2]) < GROUND - 9, 'it climbs toward a point above the ground');
   });
 
   it('banks the terrain toward the side clicked, then levels out', () => {
