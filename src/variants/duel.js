@@ -3,7 +3,9 @@
    parries, high or low, the blades meeting with a spark, and often answers with a riposte; then
    they reset, and sometimes the other takes the attack. Now and then they pause and salute. No
    touches, no winner. (With a nod to a certain duel atop some cliffs.) The bout comes from the
-   seed, so ?ambientSeed=<n> replays it. */
+   seed, so ?ambientSeed=<n> replays it. A click makes the nearer fencer forget its training: a
+   huge wind-up and a full-bodied swing, edge first, which the other, unimpressed, parries over
+   its head. */
 
 /* Poses, for a fencer facing right, from its middle at the ground: where each foot is (and how
    high it's lifted), how high the hips are, how far the body leans forward, where the sword hand
@@ -16,7 +18,13 @@ export var POSES = {
   lungeLow: { front: 36, back: -20, lift: 0, backLift: 0, hip: 23, lean: 0.34, hand: [24, 12], blade: 0.22 },
   parryHigh: { front: 12, back: -17, lift: 0, backLift: 0, hip: 30, lean: -0.05, hand: [12, 7], blade: -1.15 },
   parryLow: { front: 12, back: -17, lift: 0, backLift: 0, hip: 29, lean: -0.02, hand: [12, 13], blade: 1.0 },
-  salute: { front: 9, back: -9, lift: 0, backLift: 0, hip: 33, lean: 0, hand: [4, -16], blade: -1.5708 }
+  salute: { front: 9, back: -9, lift: 0, backLift: 0, hip: 33, lean: 0, hand: [4, -16], blade: -1.5708 },
+  // Not fencing at all: the sword cocked back over the shoulder, the whole body behind the swing,
+  // and the follow-through.
+  windUp: { front: 16, back: -16, lift: 0, backLift: 0, hip: 31, lean: -0.28, hand: [-6, -14], blade: -2.5 },
+  swing: { front: 38, back: -20, lift: 0, backLift: 3, hip: 23, lean: 0.52, hand: [26, -6], blade: -0.55 },
+  // The answer to it: the blade held flat over the head.
+  parryHead: { front: 10, back: -18, lift: 0, backLift: 0, hip: 28, lean: -0.1, hand: [10, -16], blade: -0.2 }
 };
 var THIGH = 19, SHIN = 19, TORSO = 26, UPPER = 13, FORE = 13, BLADE = 42, GAP = 92;
 
@@ -119,12 +127,33 @@ export default function duel(layer, m) {
 
   function ease(t) { return t * t * (3 - 2 * t); }
 
-  function draw() {
+  /* Where the fencers are now, partway from one key to the next. */
+  function current() {
     var cur = plan[0], t = cur ? ease(Math.min(1, step / cur.dur)) : 1;
-    var now = cur ? {
+    return cur ? {
       a: { pose: mixPose(from.a.pose, cur.a.pose, t), x: lerp(from.a.x, cur.a.x, t) },
       b: { pose: mixPose(from.b.pose, cur.b.pose, t), x: lerp(from.b.x, cur.b.x, t) }
     } : state;
+  }
+
+  /* The haymaker: [left] (the left fencer, or the right) winds up and swings, the other parries
+     over its head, the swinger recoils, and both come back to guard. */
+  function haymaker(left) {
+    var a = state.a.x, b = state.b.x, dir = left ? 1 : -1;
+    function pose(attacker, defender) { return left ? [attacker, defender] : [defender, attacker]; }
+    var p = pose('windUp', 'guard');
+    key(12, p[0], a, p[1], b);
+    p = pose('swing', 'parryHead');
+    key(6, p[0], a + dir * 10, p[1], b + dir * 4, true);
+    key(8, p[0], a + dir * 10, p[1], b + dir * 4);
+    p = pose('stepBack', 'guard');
+    key(10, p[0], a - dir * 4, p[1], b + dir * 2);
+    key(14, 'guard', a, 'guard', b);
+    key(16, 'guard', a, 'guard', b);
+  }
+
+  function draw() {
+    var now = current();
     var mid = (now.a.x + now.b.x) / 2;
     // Both fencers are drawn in one group about their middle, so they keep their shape however the
     // masthead is stretched and their blades still meet.
@@ -171,6 +200,13 @@ export default function duel(layer, m) {
         if (!plan.length) phrase();
       }
       draw();
+    },
+    // A click: the fencer nearer it, as drawn, takes its great swing, cutting short the phrase.
+    poke: function (x) {
+      var now = current(), mid = (now.a.x + now.b.x) / 2, squeeze = 1 / m.stretch();
+      var ax = mid + (now.a.x - mid) * squeeze, bx = mid + (now.b.x - mid) * squeeze;
+      from = now; state = now; plan = []; step = 0;
+      haymaker(Math.abs(x - ax) <= Math.abs(x - bx));
     }
   };
 }

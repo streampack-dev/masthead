@@ -937,6 +937,33 @@ describe('the duel', () => {
     }
   });
 
+  it('swings wildly from the fencer nearer a click, and the other parries it over its head', () => {
+    for (const [clickX, swinger] of [[400, 0], [800, 1]]) {
+      const { layer, art } = run(duel, 0, { seed: 9 });
+      const fencers = find(layer, 'masthead-duel-fencer'), spark = find(layer, 'masthead-duel-spark')[0];
+      const head = (k) => [Number(fencers[k].children[1].attrs.cx), Number(fencers[k].children[1].attrs.cy)];
+      const blade = (k) => fencers[k].children[2].attrs.d.match(/-?[\d.]+/g).slice(0, 4).map(Number);
+      for (let i = 1; i <= 37; i++) art.step(i, i * 40);
+      const before = head(swinger);
+      art.poke(clickX, 200, 37, 0);
+      art.step(38, 38 * 40);
+      // Cut in mid-phrase, nobody jumps.
+      assert.ok(Math.hypot(head(swinger)[0] - before[0], head(swinger)[1] - before[1]) < 4, 'no jump');
+      let woundUp = false, parried = false, sparked = false;
+      for (let i = 39; i <= 38 + 30; i++) {
+        art.step(i, i * 40);
+        const [hx, hy, tx, ty] = blade(swinger), facing = swinger ? -1 : 1;
+        // Cocked back over its shoulder: the tip behind the hand and well above it.
+        if ((tx - hx) * facing < -10 && ty < hy - 20) woundUp = true;
+        // The other's sword hand over its own head.
+        const other = 1 - swinger, [ohx, ohy] = blade(other);
+        if (woundUp && ohy < head(other)[1]) parried = true;
+        if (parried && spark.attrs.opacity === '1.00') sparked = true;
+      }
+      assert.ok(woundUp && parried && sparked, `${clickX}: wound up ${woundUp}, parried ${parried}, spark ${sparked}`);
+    }
+  });
+
   it('fences back and forth across the masthead without either passing the other, and without end', () => {
     const { layer, art } = run(duel, 0, { seed: 9 });
     const group = layer.children[1];

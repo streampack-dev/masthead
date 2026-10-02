@@ -48,8 +48,8 @@ still be asked for by name, and the demo page shows them all year. Otherwise eve
 season is as likely as any other.
 
 On a page running them, `?ambient=<name>` picks one, `?ambientDate=YYYY-MM-DD` picks as on that
-day, `?ambientSeed=<n>` replays a run (the art's title names the seed) and `?ambientDebug=1` logs
-the choice. Only the chosen animation's file is fetched.
+day, `?ambientSeed=<n>` replays a run, and `?ambientDebug=1` logs the choice and names the
+animation and its seed in the masthead's corner. Only the chosen animation's file is fetched.
 
 ## Using it in a front end
 
