@@ -9,7 +9,7 @@
    them. */
 
 /* The canine, facing right, from its feet: a body, a long-snouted head with an ear, a tail. Its
-   legs are drawn apart: standing, or a whirl when it runs. */
+   legs are drawn apart: standing, walking, or a scramble when it runs. */
 var DOG = 'M-24 -24a24 11 0 1 0 48 0a24 11 0 1 0 -48 0z' +
   'M-23 -27q-12 -2 -18 -14q8 6 18 8z';
 var DOG_HEAD = 'M16 -34q2 -12 14 -10l16 6q2 4 -2 6l-14 2q-10 2 -14 -4z' +
@@ -29,15 +29,54 @@ var BIRD = 'M-12 -40a12 7 0 1 0 24 0a12 7 0 1 0 -24 0z' +
   'M-12 -41l-18 -8M-12 -39l-18 -2M-11 -37l-16 5';
 var BIRD_LEGS = 'M-4 -33L-8 0h6M2 -33L2 0h6';
 
-/* Legs in a blur: spokes round a hub, turned a little each frame. */
-export function whirl(cx, cy, r, frame) {
+/* A number in [0, 1) from [n] and [k], the same every time: the legs' randomness, kept apart from
+   the seed's, so ?ambientSeed=<n> replays the same acts whatever the legs do. */
+function hash(n, k) {
+  var x = Math.imul((n * 8 + k + 1) >>> 0, 2654435761) >>> 0;
+  x = Math.imul(x ^ (x >>> 15), 2246822519) >>> 0;
+  x = Math.imul(x ^ (x >>> 13), 3266489917) >>> 0;
+  return ((x ^ (x >>> 16)) >>> 0) / 0x100000000;
+}
+
+/* The bird's legs in a blur: a wheel of motion under its body. Curved strokes of different
+   lengths turn round inside the wheel's rim, a step each frame, and a foot touches the ground
+   now behind, now ahead. Arcs read as motion where straight spokes read as a star. Returns
+   the strokes and, apart, the rim, which is drawn faint. */
+export function blurLegs(cx, cy, rx, ry, frame) {
+  var strokes = '';
+  var spans = [1.9, 1.3, 0.8];
+  for (var k = 0; k < 3; k++) {
+    var a0 = frame * 1.1 + k * 2.1, a1 = a0 + spans[k], f = 0.95 - k * 0.2;
+    strokes += 'M' + (cx + Math.cos(a0) * rx * f).toFixed(1) + ' ' + (cy + Math.sin(a0) * ry * f).toFixed(1) +
+      'A' + (rx * f).toFixed(1) + ' ' + (ry * f).toFixed(1) + ' 0 0 1 ' +
+      (cx + Math.cos(a1) * rx * f).toFixed(1) + ' ' + (cy + Math.sin(a1) * ry * f).toFixed(1);
+  }
+  var foot = cx + (frame % 2 ? -0.6 : 0.3) * rx;
+  strokes += 'M' + (foot - 3).toFixed(1) + ' 0h7';
+  var rim = 'M' + (cx - rx) + ' ' + cy + 'a' + rx + ' ' + ry + ' 0 1 0 ' + (2 * rx) + ' 0a' + rx + ' ' + ry + ' 0 1 0 ' + (-2 * rx) + ' 0';
+  return { strokes: strokes, rim: rim };
+}
+
+/* The canine's legs in a scramble: each from its hip, at an angle drawn afresh every frame, but
+   only as far as a leg goes (SPLAY either side of straight down, toward its head or its tail),
+   bent at a knee, and longer or shorter, so a foot is off the ground now and then. A foot that
+   would go through the ground ([floor] below the hips' zero) stops on it. */
+export var SPLAY = 80 * Math.PI / 180;
+export function scramble(hips, frame, floor) {
   var d = '';
-  for (var k = 0; k < 6; k++) {
-    var a = frame * 0.9 + k * Math.PI / 3;
-    d += 'M' + cx + ' ' + cy + 'l' + (Math.cos(a) * r).toFixed(1) + ' ' + (Math.sin(a) * r).toFixed(1);
+  for (var k = 0; k < hips.length; k++) {
+    var a = (hash(frame, k) * 2 - 1) * SPLAY;
+    var thigh = 9 + hash(frame, k + 4) * 3, shin = thigh + 1;
+    var bend = 0.4 + hash(frame, k + 8) * 0.5;
+    var kx = hips[k][0] + Math.sin(a) * thigh, ky = hips[k][1] + Math.cos(a) * thigh;
+    var down = Math.cos(a - bend);
+    if (down > 0 && ky + down * shin > floor) shin = (floor - ky) / down;
+    var fx = kx + Math.sin(a - bend) * shin, fy = ky + Math.cos(a - bend) * shin;
+    d += 'M' + hips[k][0] + ' ' + hips[k][1] + 'L' + kx.toFixed(1) + ' ' + ky.toFixed(1) + 'L' + fx.toFixed(1) + ' ' + fy.toFixed(1);
   }
   return d;
 }
+var DOG_HIPS = [[-14, -15], [-6, -15], [10, -15], [16, -15]];
 
 /* A short train, as the train animation draws it, coming along the track. */
 var TRAIN = [
@@ -64,6 +103,7 @@ export default function chase(layer, m) {
     var g = m.el('g', { 'class': 'masthead-chase-' + cls, opacity: 0 });
     var inner = m.el('g', {}, g);
     m.el('path', { 'class': 'masthead-chase-piece', d: body }, inner);
+    var blur = m.el('path', { 'class': 'masthead-chase-blur', opacity: 0 }, inner);
     var legs = m.el('path', { 'class': 'masthead-chase-legs' }, inner);
     // The head in profile, and (for the canine) turned to the reader.
     var profile = m.el('g', {}, inner);
@@ -76,7 +116,7 @@ export default function chase(layer, m) {
     }
     // A cartoon "!" over its head, when it notices what's coming.
     var alarm = m.el('path', { 'class': 'masthead-chase-alarm', d: 'M28 -78v-14M28 -70v0', opacity: 0 }, inner);
-    return { g: g, inner: inner, legs: legs, alarm: alarm, profile: profile, face: face, x: 0, dir: 1, sx: 1, sy: 1, mode: 'hidden' };
+    return { g: g, inner: inner, legs: legs, blur: blur, alarm: alarm, profile: profile, face: face, x: 0, dir: 1, sx: 1, sy: 1, mode: 'hidden' };
   }
   var bird = figure('bird', BIRD), dog = figure('dog', DOG, DOG_HEAD);
   var stars = m.el('path', { 'class': 'masthead-chase-stars', opacity: 0 });
@@ -100,17 +140,22 @@ export default function chase(layer, m) {
     f.g.setAttribute('opacity', f.mode === 'hidden' ? 0 : 1);
     f.g.setAttribute('transform', 'translate(' + f.x.toFixed(1) + ' ' + ground + ') scale(' + (f.dir * f.sx * squeeze).toFixed(4) + ' ' + f.sy.toFixed(3) + ')');
     var isDog = f === dog;
-    // Running, legs blur: the canine's front pair and back pair each a whirl of their own, the
-    // bird's trailing behind it. Walking, the canine's step.
-    f.legs.setAttribute('d', f.mode === 'run'
-      ? (isDog ? whirl(-19, -14, 16, n) + whirl(5, -14, 16, n + 1.7) : whirl(-22, -15, 16, n))
+    // Running, the bird's legs are a blur under it and the canine's a scramble. Walking, the
+    // canine's step.
+    var blurred = f.mode === 'run' && !isDog ? blurLegs(-2, -16, 16, 16, n) : null;
+    // Scrambling, the canine is off the ground, bobbing, which gives its legs room to flail.
+    var lift = f.mode === 'run' && isDog ? 5 + Math.round(hash(n, 12) * 3) : 0;
+    f.legs.setAttribute('d', blurred ? blurred.strokes
+      : f.mode === 'run' ? scramble(DOG_HIPS, n, lift)
       : isDog ? (f.mode === 'walk' && n % 4 < 2 ? DOG_STEP : DOG_LEGS) : BIRD_LEGS);
+    f.blur.setAttribute('opacity', blurred ? 1 : 0);
+    if (blurred) f.blur.setAttribute('d', blurred.rim);
     // Noticing: a "!" over its head, for a beat; skidding: leaning back hard.
     f.alarm.setAttribute('opacity', f.mode === 'look' ? 1 : 0);
     // Facing the reader: the front of its head instead of its profile.
     f.profile.setAttribute('opacity', f.mode === 'face' ? 0 : 1);
     f.face.setAttribute('opacity', f.mode === 'face' ? 1 : 0);
-    f.inner.setAttribute('transform', f.mode === 'skid' ? 'rotate(-14)' : '');
+    f.inner.setAttribute('transform', f.mode === 'skid' ? 'rotate(-14)' : lift ? 'translate(0 ' + -lift + ')' : '');
   }
 
   /* Each act: a function of its frame that moves the cast and says when it's done. */

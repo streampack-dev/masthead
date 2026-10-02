@@ -15,7 +15,7 @@ import { find, run, serialize } from './fake.js';
 import boids from '../src/variants/boids.js';
 import bytecode, { OCTOBER, PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
 import circuit, { WIRES, along } from '../src/variants/circuit.js';
-import chase, { whirl } from '../src/variants/chase.js';
+import chase, { blurLegs, scramble, SPLAY } from '../src/variants/chase.js';
 import citydefense, { BASES, CITIES, GROUND, intercept } from '../src/variants/citydefense.js';
 import grass, { wind as grassWind } from '../src/variants/grass.js';
 import lander, { GRAVITY, SIDE, THRUST, ground, pilot } from '../src/variants/lander.js';
@@ -645,18 +645,56 @@ describe('october', () => {
 });
 
 describe('the chase', () => {
-  it('blurs running legs, turning them each frame, two pairs for the canine', () => {
-    assert.notEqual(whirl(0, -9, 10, 1), whirl(0, -9, 10, 2));
+  it('blurs the running bird\'s legs into a wheel: curved strokes turning inside a faint rim', () => {
+    const one = blurLegs(-2, -16, 16, 16, 1), two = blurLegs(-2, -16, 16, 16, 2);
+    assert.notEqual(one.strokes, two.strokes);
+    assert.equal(one.rim, two.rim);
+    // Arcs, not spokes: three curved strokes and a foot on the ground.
+    assert.equal((one.strokes.match(/A/g) || []).length, 3);
+    assert.match(one.strokes, /M-?[\d.]+ 0h7$/);
+
     const { layer, art } = run(chase, 0, { seed: 3 });
-    const legs = find(layer, 'masthead-chase-legs');
-    let pairs = 0;
-    for (let i = 1; i <= 400 && !pairs; i++) {
+    const bird = find(layer, 'masthead-chase-bird')[0];
+    const [blur] = find(bird, 'masthead-chase-blur'), [legs] = find(bird, 'masthead-chase-legs');
+    let blurred = false;
+    for (let i = 1; i <= 400; i++) {
       art.step(i, i * 60);
-      const d = legs[1].attrs.d || '';
-      // A whirl is six spokes from one hub; the canine's running legs are two of them.
-      if ((d.match(/M/g) || []).length === 12) pairs = 2;
+      const arcs = /A/.test(legs.attrs.d);
+      // The rim shows exactly when the legs are a blur.
+      assert.equal(blur.attrs.opacity === '1', arcs, `step ${i}`);
+      blurred = blurred || arcs;
     }
-    assert.equal(pairs, 2);
+    assert.ok(blurred);
+  });
+
+  it('scrambles the running canine\'s legs: four jointed legs, as far as legs go, never through the ground', () => {
+    const hips = [[-14, -15], [-6, -15], [10, -15], [16, -15]];
+    assert.equal(scramble(hips, 5, 6), scramble(hips, 5, 6));
+    assert.notEqual(scramble(hips, 5, 6), scramble(hips, 6, 6));
+    for (let n = 0; n < 500; n++) {
+      const floor = 5 + (n % 4);
+      const legs = scramble(hips, n, floor).split('M').filter(Boolean).map((leg) => leg.split('L').map((p) => p.split(' ').map(Number)));
+      assert.equal(legs.length, 4);
+      legs.forEach(([hip, knee, foot], k) => {
+        assert.deepEqual(hip, hips[k]);
+        // The thigh within SPLAY of straight down, toward head or tail; the foot never below the ground.
+        const angle = Math.atan2(knee[0] - hip[0], knee[1] - hip[1]);
+        assert.ok(Math.abs(angle) <= SPLAY + 0.01, `frame ${n}, leg ${k}: ${angle}`);
+        assert.ok(foot[1] <= floor + 0.05, `frame ${n}, leg ${k}: foot at ${foot[1]}`);
+      });
+    }
+
+    const { layer, art } = run(chase, 0, { seed: 3 });
+    const dog = find(layer, 'masthead-chase-dog')[0];
+    const [legs] = find(dog, 'masthead-chase-legs'), inner = dog.children[0];
+    let scrambled = false;
+    for (let i = 1; i <= 2000 && !scrambled; i++) {
+      art.step(i, i * 60);
+      // Scrambling, it's off the ground, and its feet reach down to it.
+      const lift = /translate\(0 -(\d+)\)/.exec(inner.attrs.transform || '');
+      if (lift && (legs.attrs.d.match(/L/g) || []).length === 8) scrambled = Number(lift[1]) >= 5 && Number(lift[1]) <= 8;
+    }
+    assert.ok(scrambled);
   });
 
   it('holds up a sign now and then, its words the right way round', () => {
