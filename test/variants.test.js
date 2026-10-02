@@ -5,7 +5,7 @@ import { variants } from '../src/variants.js';
 import { SEASONS, inSeason } from '../src/runner.js';
 import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
-import duel, { POSES, STUB, breaks, crossing, figure, mixPose } from '../src/variants/duel.js';
+import duel, { POSES, STUB, breaks, crossing, facepalms, figure, mixPose } from '../src/variants/duel.js';
 import deadline, { ANVIL, POSES as DESK_POSES, SCENES, anvilAt, writer } from '../src/variants/deadline.js';
 import ghosts, { round, sheet } from '../src/variants/ghosts.js';
 import graveyard, { tree } from '../src/variants/graveyard.js';
@@ -964,7 +964,7 @@ describe('the duel', () => {
     }
   });
 
-  it('breaks the swinger\'s blade on about one wild swing in three; it drops the stub and draws another', () => {
+  it('breaks the swinger\'s blade on about one wild swing in three; it stares or facepalms, drops the stub and draws another', () => {
     const rate = Array.from({ length: 300 }, (_, n) => breaks(9, n)).filter(Boolean).length / 300;
     assert.ok(rate > 0.25 && rate < 0.42, String(rate));
     assert.equal(breaks(9, 2), breaks(9, 2));
@@ -973,16 +973,26 @@ describe('the duel', () => {
     const fencers = find(layer, 'masthead-duel-fencer'), pieces = find(layer, 'masthead-duel-piece');
     const length = (k) => { const [hx, hy, tx, ty] = fencers[k].children[2].attrs.d.match(/-?[\d.]+/g).slice(0, 4).map(Number); return Math.hypot(tx - hx, ty - hy); };
     const flat = (el) => { const e = el.attrs.opacity !== '0' && el.attrs.d ? el.attrs.d.match(/-?[\d.]+/g).map(Number) : null; return !!e && Math.abs(e[1] - 310.5) < 0.2 && Math.abs(e[3] - 310.5) < 0.2; };
-    let i = 30, seenBreak = false, seenWhole = false;
+    // The free hand: the end of the last limb drawn. How near it comes to the face.
+    const palmToFace = () => {
+      const pts = fencers[0].children[0].attrs.d.split('M').filter(Boolean).at(-1).split('L').map((q) => q.split(' ').map(Number));
+      const head = fencers[0].children[1].attrs;
+      return Math.hypot(pts.at(-1)[0] - Number(head.cx), pts.at(-1)[1] - Number(head.cy));
+    };
+    let i = 30, seenBreak = false, seenWhole = false, seenPalm = false, seenStare = false;
     for (let k = 1; k <= i; k++) art.step(k, k * 40);
     for (let n = 0; n < 6; n++) {
       art.poke(400, 200, i, 0);
       const lengths = [], landed = [false, false];
-      for (let k = 0; k < 150; k++) {
+      let nearest = Infinity;
+      for (let k = 0; k < 170; k++) {
         i++; art.step(i, i * 40);
         lengths.push(length(0));
+        nearest = Math.min(nearest, palmToFace());
         pieces.forEach((el, j) => { if (flat(el)) landed[j] = true; });
       }
+      if (breaks(9, n) && facepalms(9, n)) { seenPalm = true; assert.ok(nearest < 8, `click ${n}: hand to face, ${nearest}`); }
+      else { if (breaks(9, n)) seenStare = true; assert.ok(nearest > 10, `click ${n}: no facepalm, ${nearest}`); }
       const stub = lengths.findIndex((l) => Math.abs(l - 42 * STUB) < 0.5);
       if (breaks(9, n)) {
         seenBreak = true;
@@ -1000,7 +1010,7 @@ describe('the duel', () => {
       // Back in guard, the blade is whole.
       assert.ok(Math.abs(length(0) - 42) < 0.5, `click ${n}: ${length(0)}`);
     }
-    assert.ok(seenBreak && seenWhole);
+    assert.ok(seenBreak && seenWhole && seenPalm && seenStare);
   });
 
   it('fences back and forth across the masthead without either passing the other, and without end', () => {

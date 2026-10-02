@@ -6,7 +6,12 @@
    seed, so ?ambientSeed=<n> replays it. A click makes the nearer fencer forget its training: a
    huge wind-up and a full-bodied swing, edge first, which the other, unimpressed, parries over
    its head; and sometimes the swinger's blade snaps, the end of it tumbling away. It stares at
-   what's left, drops it, and draws another from its hip, as if it always carried a spare. */
+   what's left (or, sometimes, puts its face in its other hand), drops it, and draws another from
+   its hip, as if it always carried a spare.
+
+   For whoever comes next: this is as much as the duel should carry. It's meant to be calm
+   fencing behind the name, and the click's gag (the swing, the break, the facepalm, the fresh
+   blade) is already the most elaborate thing in it. Add to it only by taking something away. */
 
 /* Poses, for a fencer facing right, from its middle at the ground: where each foot is (and how
    high it's lifted), how high the hips are, how far the body leans forward, where the sword hand
@@ -32,6 +37,8 @@ export var POSES = {
   reach: { front: 13, back: -15, lift: 0, backLift: 0, hip: 31, lean: 0.14, hand: [-6, 24], blade: 2.4 - 2 * Math.PI },
   pull: { front: 14, back: -15, lift: 0, backLift: 0, hip: 31, lean: 0.08, hand: [10, 6], blade: 2.7 - 2 * Math.PI },
   draw: { front: 14, back: -14, lift: 0, backLift: 0, hip: 32, lean: 0.02, hand: [12, -12], blade: -1.0 },
+  // Its face in its other hand, the stub hanging from the sword hand, the whole of it slumped.
+  facepalm: { front: 12, back: -14, lift: 0, backLift: 0, hip: 31, lean: 0.24, hand: [6, 12], blade: 1.0, off: [14, 7, 8, -9] },
   // The answer to it: the blade held flat over the head.
   parryHead: { front: 10, back: -18, lift: 0, backLift: 0, hip: 28, lean: -0.1, hand: [10, -16], blade: -0.2 }
 };
@@ -47,10 +54,27 @@ export function breaks(seed, n) {
   return ((x ^ (x >>> 16)) >>> 0) % 3 === 0;
 }
 
+/* The other arm, elbow and hand from the shoulder, raised behind for balance, unless a pose says
+   otherwise (as "off"). */
+export var OFF = [-9, 3, -14, -8];
+
+/* Whether a broken blade's moment is a facepalm rather than a stare: about half of them, from the
+   seed and the click's number like breaks(), and apart from it. */
+export function facepalms(seed, n) {
+  return breaks((seed ^ 0x5bd1e995) >>> 0, n + 7919);
+}
+
 function lerp(a, b, t) { return a + (b - a) * t; }
 export function mixPose(a, b, t) {
   var out = {};
-  for (var k in a) out[k] = k === 'hand' ? [lerp(a.hand[0], b.hand[0], t), lerp(a.hand[1], b.hand[1], t)] : lerp(a[k], b[k], t);
+  for (var k in a) {
+    if (k === 'off') continue;
+    out[k] = k === 'hand' ? [lerp(a.hand[0], b.hand[0], t), lerp(a.hand[1], b.hand[1], t)] : lerp(a[k], b[k], t);
+  }
+  if (a.off || b.off) {
+    var ao = a.off || OFF, bo = b.off || OFF;
+    out.off = ao.map(function (v, i) { return lerp(v, bo[i], t); });
+  }
   return out;
 }
 
@@ -71,16 +95,17 @@ export function figure(p) {
   var front = [p.front, -p.lift], back = [p.back, -p.backLift];
   var hand = [shoulder[0] + p.hand[0], shoulder[1] + p.hand[1]];
   var tip = [hand[0] + Math.cos(p.blade) * BLADE, hand[1] + Math.sin(p.blade) * BLADE];
+  var off = p.off || OFF;
   return {
     limbs: [
       [hip, joint(hip, front, THIGH, SHIN, -1), front],
       [hip, joint(hip, back, THIGH, SHIN, -1), back],
       [hip, shoulder],
       [shoulder, joint(shoulder, hand, UPPER, FORE, -1), hand],
-      // The other arm, raised behind for balance.
-      [shoulder, [shoulder[0] - 9, shoulder[1] + 3], [shoulder[0] - 14, shoulder[1] - 8]]
+      // The other arm, raised behind for balance unless the pose puts it elsewhere.
+      [shoulder, [shoulder[0] + off[0], shoulder[1] + off[1]], [shoulder[0] + off[2], shoulder[1] + off[3]]]
     ],
-    head: head, hand: hand, tip: tip
+    head: head, hand: hand, tip: tip, off: [shoulder[0] + off[2], shoulder[1] + off[3]]
   };
 }
 
@@ -168,7 +193,7 @@ export default function duel(layer, m) {
 
   /* The haymaker: [left] (the left fencer, or the right) winds up and swings, the other parries
      over its head, the swinger recoils, and both come back to guard. */
-  function haymaker(left, snaps) {
+  function haymaker(left, snaps, palm) {
     var a = state.a.x, b = state.b.x, dir = left ? 1 : -1;
     function pose(attacker, defender) { return left ? [attacker, defender] : [defender, attacker]; }
     var p = pose('windUp', 'guard');
@@ -178,11 +203,13 @@ export default function duel(layer, m) {
     key(8, p[0], a + dir * 10, p[1], b + dir * 4);
     var k = left ? 0 : 1;
     if (snaps) {
-      // It looks at what it has left, for a long moment, lets it drop, and watches it land.
-      p = pose('stare', 'guard');
+      // It looks at what it has left, for a long moment (or puts its face in its hand), lets it
+      // drop, and watches it land.
+      p = pose(palm ? 'facepalm' : 'stare', 'guard');
       key(10, p[0], a + dir * 4, p[1], b + dir * 2);
-      key(18, p[0], a + dir * 4, p[1], b + dir * 2, false, { drop: k });
-      key(20, p[0], a + dir * 4, p[1], b + dir * 2);
+      key(palm ? 30 : 18, p[0], a + dir * 4, p[1], b + dir * 2, false, { drop: k });
+      p = pose('stare', 'guard');
+      key(palm ? 12 : 20, p[0], a + dir * 4, p[1], b + dir * 2);
       // A hand to the hip, another blade drawn out of it, and swung up and over into the air.
       p = pose('reach', 'guard');
       key(10, p[0], a + dir * 2, p[1], b + dir * 2);
@@ -307,7 +334,8 @@ export default function duel(layer, m) {
       from = now; state = now; plan = []; step = 0;
       // A blade broken by the last click, cut short, is whole again for this one.
       bladeFrom = [1, 1];
-      haymaker(Math.abs(x - ax) <= Math.abs(x - bx), breaks(seed, pokes++));
+      haymaker(Math.abs(x - ax) <= Math.abs(x - bx), breaks(seed, pokes), facepalms(seed, pokes));
+      pokes++;
     }
   };
 }
