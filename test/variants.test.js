@@ -984,14 +984,21 @@ describe('the duel', () => {
     for (let n = 0; n < 6; n++) {
       art.poke(400, 200, i, 0);
       const lengths = [], landed = [false, false];
-      let nearest = Infinity;
-      for (let k = 0; k < 170; k++) {
+      let nearest = Infinity, landedAt = null, palmAt = null;
+      for (let k = 0; k < 190; k++) {
         i++; art.step(i, i * 40);
         lengths.push(length(0));
         nearest = Math.min(nearest, palmToFace());
+        if (palmAt === null && palmToFace() < 8) palmAt = k;
         pieces.forEach((el, j) => { if (flat(el)) landed[j] = true; });
+        if (landedAt === null && landed[0]) landedAt = k;
       }
-      if (breaks(9, n) && facepalms(9, n)) { seenPalm = true; assert.ok(nearest < 8, `click ${n}: hand to face, ${nearest}`); }
+      if (breaks(9, n) && facepalms(9, n)) {
+        seenPalm = true;
+        assert.ok(nearest < 8, `click ${n}: hand to face, ${nearest}`);
+        // Only once the broken end is down.
+        assert.ok(landedAt !== null && palmAt > landedAt, `click ${n}: landed ${landedAt}, facepalm ${palmAt}`);
+      }
       else { if (breaks(9, n)) seenStare = true; assert.ok(nearest > 10, `click ${n}: no facepalm, ${nearest}`); }
       const stub = lengths.findIndex((l) => Math.abs(l - 42 * STUB) < 0.5);
       if (breaks(9, n)) {

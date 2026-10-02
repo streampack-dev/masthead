@@ -203,13 +203,21 @@ export default function duel(layer, m) {
     key(8, p[0], a + dir * 10, p[1], b + dir * 4);
     var k = left ? 0 : 1;
     if (snaps) {
-      // It looks at what it has left, for a long moment (or puts its face in its hand), lets it
-      // drop, and watches it land.
-      p = pose(palm ? 'facepalm' : 'stare', 'guard');
-      key(10, p[0], a + dir * 4, p[1], b + dir * 2);
-      key(palm ? 30 : 18, p[0], a + dir * 4, p[1], b + dir * 2, false, { drop: k });
+      // It looks at what it has left, for a long moment, lets it drop, and watches it land. Or it
+      // watches the broken end come down, and only once it's landed puts its face in its hand.
       p = pose('stare', 'guard');
-      key(palm ? 12 : 20, p[0], a + dir * 4, p[1], b + dir * 2);
+      key(10, p[0], a + dir * 4, p[1], b + dir * 2);
+      if (palm) {
+        key(4, p[0], a + dir * 4, p[1], b + dir * 2, false, { untilLanded: true });
+        p = pose('facepalm', 'guard');
+        key(8, p[0], a + dir * 4, p[1], b + dir * 2);
+        key(28, p[0], a + dir * 4, p[1], b + dir * 2, false, { drop: k });
+        p = pose('stare', 'guard');
+        key(14, p[0], a + dir * 4, p[1], b + dir * 2);
+      } else {
+        key(18, p[0], a + dir * 4, p[1], b + dir * 2, false, { drop: k });
+        key(20, p[0], a + dir * 4, p[1], b + dir * 2);
+      }
       // A hand to the hip, another blade drawn out of it, and swung up and over into the air.
       p = pose('reach', 'guard');
       key(10, p[0], a + dir * 2, p[1], b + dir * 2);
@@ -313,7 +321,9 @@ export default function duel(layer, m) {
       sparkAge += 1;
       step += 1;
       var cur = plan[0];
-      if (step >= cur.dur) {
+      // A key that waits for the broken end to land holds its last pose until it has.
+      if (step >= cur.dur && cur.untilLanded && pieces[0] && !pieces[0].down) step = cur.dur;
+      else if (step >= cur.dur) {
         if (cur.clash) sparkAge = 0;
         if (cur.blades) bladeFrom = cur.blades.slice();
         if (cur.snap !== undefined) snap(cur.snap);
