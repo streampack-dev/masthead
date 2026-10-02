@@ -71,6 +71,8 @@
 .masthead-chase-piece { fill: color-mix(in srgb, var(--_accent) 14%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.4; stroke-linejoin: round; }
 .masthead-chase-legs, .masthead-chase-alarm, .masthead-chase-stars { fill: none; stroke: var(--_accent); stroke-width: 2.2; stroke-linecap: round; }
 .masthead-chase-blur { fill: color-mix(in srgb, var(--_accent) 8%, transparent); stroke: var(--_accent); stroke-width: 1; stroke-opacity: 0.35; }
+.masthead-chase-streaks { fill: none; stroke: var(--_accent); stroke-width: 1.2; stroke-linecap: round; stroke-opacity: 0.55; }
+.masthead-chase-ribs { fill: none; stroke: var(--_accent); stroke-width: 1.1; stroke-linecap: round; stroke-opacity: 0.8; }
 .masthead-chase-eye { fill: var(--_accent); }
 .masthead-chase-dust { fill: color-mix(in srgb, var(--_accent) 35%, var(--_border)); }
 .masthead-chase-anvil { fill: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.6; stroke-linejoin: round; }

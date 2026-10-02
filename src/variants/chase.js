@@ -8,9 +8,11 @@
    the sign drops, and the chase is on. The acts come from the seed, so ?ambientSeed=<n> replays
    them. */
 
-/* The canine, facing right, from its feet: a body, a long-snouted head with an ear, a tail. Its
-   legs are drawn apart: standing, walking, or a scramble when it runs. */
-var DOG = 'M-24 -24a24 11 0 1 0 48 0a24 11 0 1 0 -48 0z' +
+/* The canine, facing right, from its feet: a body, a long-snouted head with an ear, a tail. It's
+   hungry: a bony, hunched back, its belly tucked up between haunch and chest, its ribs showing.
+   Its legs are drawn apart: standing, walking, or a scramble when it runs. */
+var DOG = 'M-24 -25C-24 -31 -16 -32 -8 -30C0 -29 8 -33 14 -34C20 -34 24 -30 23 -25C22 -18 19 -14 14 -14' +
+  'L8 -14C4 -16 2 -23 -4 -23C-9 -23 -10 -16 -12 -14L-20 -14C-23 -15 -24 -19 -24 -25z' +
   'M-23 -27q-12 -2 -18 -14q8 6 18 8z';
 var DOG_HEAD = 'M16 -34q2 -12 14 -10l16 6q2 4 -2 6l-14 2q-10 2 -14 -4z' +
   'M20 -42l-2 -14l9 10z';
@@ -18,9 +20,10 @@ var DOG_HEAD = 'M16 -34q2 -12 14 -10l16 6q2 4 -2 6l-14 2q-10 2 -14 -4z' +
 var DOG_FACE = 'M14 -40a12 11 0 1 0 24 0a12 11 0 1 0 -24 0z' +
   'M16 -47l-3 -14l9 8zM36 -47l3 -14l-9 8z';
 var DOG_FACE_MARKS = 'M21 -43v0M31 -43v0M26 -37v0M21 -33q5 4 10 0';
-var DOG_LEGS = 'M-14 -15L-16 0M-6 -15L-6 0M10 -15L10 0M16 -15L19 0';
+var DOG_RIBS = 'M8 -30q-2 4 0 9M12 -31q-2 5 0 11M16 -31q-2 4 0 10';
+var DOG_LEGS = 'M-19 -15L-21 0M-14 -15L-14 0M9 -15L9 0M15 -15L18 0';
 /* Walking: each pair of legs apart, then together. */
-var DOG_STEP = 'M-14 -15L-20 0M-6 -15L-2 0M10 -15L6 0M16 -15L22 0';
+var DOG_STEP = 'M-19 -15L-25 0M-14 -15L-10 0M9 -15L5 0M15 -15L21 0';
 /* The bird, facing right, from its feet: a body, a long neck, a crested head with a beak, a tail. */
 var BIRD = 'M-12 -40a12 7 0 1 0 24 0a12 7 0 1 0 -24 0z' +
   'M8 -44L14 -60M11 -66a5 5 0 1 0 10 0a5 5 0 1 0 -10 0z' +
@@ -40,8 +43,9 @@ function hash(n, k) {
 
 /* The bird's legs in a blur: a wheel of motion trailing under its body. Curved strokes of different
    lengths turn round inside the wheel's rim, a step each frame, and a foot touches the ground
-   now behind, now ahead. Arcs read as motion where straight spokes read as a star. Returns
-   the strokes and, apart, the rim, which is drawn faint. */
+   now behind, now ahead. Arcs read as motion where straight spokes read as a star. Behind the
+   wheel, three speed streaks, each a different length every frame. Returns the strokes and,
+   apart, the rim and the streaks, which are drawn lighter. */
 export function blurLegs(cx, cy, rx, ry, frame) {
   var strokes = '';
   var spans = [1.9, 1.3, 0.8];
@@ -54,7 +58,12 @@ export function blurLegs(cx, cy, rx, ry, frame) {
   var foot = cx + (frame % 2 ? -0.6 : 0.3) * rx;
   strokes += 'M' + (foot - 3).toFixed(1) + ' 0h7';
   var rim = 'M' + (cx - rx) + ' ' + cy + 'a' + rx + ' ' + ry + ' 0 1 0 ' + (2 * rx) + ' 0a' + rx + ' ' + ry + ' 0 1 0 ' + (-2 * rx) + ' 0';
-  return { strokes: strokes, rim: rim };
+  var streaks = '';
+  [-0.55, 0, 0.5].forEach(function (y, k) {
+    var from = cx - rx * (y ? 0.9 : 1) - 3, len = 10 + Math.round(hash(frame, 20 + k) * 10);
+    streaks += 'M' + from.toFixed(1) + ' ' + (cy + y * ry).toFixed(1) + 'h' + (-len);
+  });
+  return { strokes: strokes, rim: rim, streaks: streaks };
 }
 
 /* The canine's legs in a scramble: each from its hip, at an angle drawn afresh every frame, but
@@ -76,7 +85,7 @@ export function scramble(hips, frame, floor) {
   }
   return d;
 }
-var DOG_HIPS = [[-14, -15], [-6, -15], [10, -15], [16, -15]];
+var DOG_HIPS = [[-19, -15], [-14, -15], [9, -15], [15, -15]];
 
 /* A short train, as the train animation draws it, coming along the track. */
 var TRAIN = [
@@ -104,7 +113,9 @@ export default function chase(layer, m) {
     var inner = m.el('g', {}, g);
     // The bird's blur is drawn first, behind the body, as speed leaves it behind.
     var blur = m.el('path', { 'class': 'masthead-chase-blur', opacity: 0 }, inner);
+    var streaks = m.el('path', { 'class': 'masthead-chase-streaks', opacity: 0 }, inner);
     m.el('path', { 'class': 'masthead-chase-piece', d: body }, inner);
+    if (cls === 'dog') m.el('path', { 'class': 'masthead-chase-ribs', d: DOG_RIBS }, inner);
     var legs = m.el('path', { 'class': 'masthead-chase-legs' }, inner);
     // The head in profile, and (for the canine) turned to the reader.
     var profile = m.el('g', {}, inner);
@@ -117,7 +128,7 @@ export default function chase(layer, m) {
     }
     // A cartoon "!" over its head, when it notices what's coming.
     var alarm = m.el('path', { 'class': 'masthead-chase-alarm', d: 'M28 -78v-14M28 -70v0', opacity: 0 }, inner);
-    return { g: g, inner: inner, legs: legs, blur: blur, alarm: alarm, profile: profile, face: face, x: 0, dir: 1, sx: 1, sy: 1, mode: 'hidden' };
+    return { g: g, inner: inner, legs: legs, blur: blur, streaks: streaks, alarm: alarm, profile: profile, face: face, x: 0, dir: 1, sx: 1, sy: 1, mode: 'hidden' };
   }
   var bird = figure('bird', BIRD), dog = figure('dog', DOG, DOG_HEAD);
   var stars = m.el('path', { 'class': 'masthead-chase-stars', opacity: 0 });
@@ -151,7 +162,8 @@ export default function chase(layer, m) {
       : f.mode === 'run' ? scramble(DOG_HIPS, n, lift)
       : isDog ? (f.mode === 'walk' && n % 4 < 2 ? DOG_STEP : DOG_LEGS) : BIRD_LEGS);
     f.blur.setAttribute('opacity', blurred ? 1 : 0);
-    if (blurred) f.blur.setAttribute('d', blurred.rim);
+    f.streaks.setAttribute('opacity', blurred ? 1 : 0);
+    if (blurred) { f.blur.setAttribute('d', blurred.rim); f.streaks.setAttribute('d', blurred.streaks); }
     // Noticing: a "!" over its head, for a beat; skidding: leaning back hard.
     f.alarm.setAttribute('opacity', f.mode === 'look' ? 1 : 0);
     // Facing the reader: the front of its head instead of its profile.

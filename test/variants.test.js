@@ -652,16 +652,23 @@ describe('the chase', () => {
     // Arcs, not spokes: three curved strokes and a foot on the ground.
     assert.equal((one.strokes.match(/A/g) || []).length, 3);
     assert.match(one.strokes, /M-?[\d.]+ 0h7$/);
+    // Three speed streaks trailing behind the wheel (behind is -x, facing right), each a length of its own.
+    const streaks = [...one.streaks.matchAll(/M(-?[\d.]+) (-?[\d.]+)h(-\d+)/g)];
+    assert.equal(streaks.length, 3);
+    for (const [, x, , h] of streaks) assert.ok(Number(x) <= -2 - 16 * 0.9 - 3 + 0.01 && Number(h) <= -10, one.streaks);
+    assert.notEqual(one.streaks, blurLegs(-2, -16, 16, 16, 3).streaks);
 
     const { layer, art } = run(chase, 0, { seed: 3 });
     const bird = find(layer, 'masthead-chase-bird')[0];
     const [blur] = find(bird, 'masthead-chase-blur'), [legs] = find(bird, 'masthead-chase-legs');
+    const [streakEl] = find(bird, 'masthead-chase-streaks');
     let blurred = false;
     for (let i = 1; i <= 400; i++) {
       art.step(i, i * 60);
       const arcs = /A/.test(legs.attrs.d);
       // The rim shows exactly when the legs are a blur.
       assert.equal(blur.attrs.opacity === '1', arcs, `step ${i}`);
+      assert.equal(streakEl.attrs.opacity === '1', arcs, `step ${i}`);
       blurred = blurred || arcs;
     }
     assert.ok(blurred);
@@ -695,6 +702,12 @@ describe('the chase', () => {
       if (lift && (legs.attrs.d.match(/L/g) || []).length === 8) scrambled = Number(lift[1]) >= 5 && Number(lift[1]) <= 8;
     }
     assert.ok(scrambled);
+  });
+
+  it('draws a hungry canine, its ribs showing, and no ribs on the bird', () => {
+    const { layer } = run(chase, 0);
+    assert.equal(find(find(layer, 'masthead-chase-dog')[0], 'masthead-chase-ribs').length, 1);
+    assert.equal(find(find(layer, 'masthead-chase-bird')[0], 'masthead-chase-ribs').length, 0);
   });
 
   it('holds up a sign now and then, its words the right way round', () => {
