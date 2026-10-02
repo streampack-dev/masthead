@@ -105,11 +105,8 @@ export function startMasthead(svg, options) {
 
   frameEl.setAttribute('data-masthead', name);
   svg.setAttribute('data-masthead', name);
-  var title = svg.querySelector(':scope > title');
-  if (!title) title = svg.insertBefore(document.createElementNS(NS, 'title'), svg.firstChild);
-  title.textContent = label;
   if (debug) {
-    // ?ambientDebug=1 names the run in the masthead's corner too (ui-pudl #97).
+    // Show the run label in a corner tag for debugging (ui-pudl #97).
     var tag = document.createElement('p');
     tag.className = 'masthead-debug';
     tag.setAttribute('aria-hidden', 'true');
