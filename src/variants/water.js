@@ -1,8 +1,25 @@
 /* Water: a still surface seen from just above, drawn as lines across it, that drops land on now
    and then. Their rings spread, cross and fade, over a slow swell that never quite settles. The
-   drops come from the seed, so ?ambientSeed=<n> replays where and when they land. */
+   drops come from the seed, so ?ambientSeed=<n> replays where and when they land. A click skips
+   a stone: it lands where you clicked, then skips on across the surface and away, each skip
+   shorter and lighter, and sinks. */
 export var GRID_W = 120, GRID_H = 40, LINES = 18;
 var DAMPING = 0.986;
+
+/* A stone's skips after it lands at (x, y): where and how hard each touches, and how many steps
+   after the landing. It skips toward the wider side of the surface and away from the viewer. */
+export function skips(x, y) {
+  var dir = x < GRID_W / 2 ? 1 : -1, out = [], gap = 9, at = 0;
+  for (var k = 1; k <= 5; k++) {
+    x += dir * gap;
+    y -= 2;
+    at += 4 + gap;
+    if (x < 3 || x > GRID_W - 4 || y < 3) break;
+    out.push({ x: Math.round(x), y: y, depth: 6 - k, after: Math.round(at) });
+    gap -= 1.5;
+  }
+  return out;
+}
 
 /* One step of the ripple equation: each cell's next height is half its neighbours' sum less its
    last height, damped. [heights] holds the last two frames; returns them swapped. */
@@ -46,6 +63,7 @@ export default function water(layer, m) {
   // A few drops already ringing, so the surface is moving from the first frame.
   for (var d = 0; d < 3; d++) drop(now, 6 + Math.floor(rand() * (GRID_W - 12)), 4 + Math.floor(rand() * (GRID_H - 8)), 3 + rand() * 3);
   var nextDrop = null;
+  var stone = [], last = 0;
 
   function draw(time) {
     var t = time / 1000;
@@ -65,7 +83,20 @@ export default function water(layer, m) {
 
   return {
     interval: 40,
+    poke: function (x, y) {
+      var gx = Math.min(GRID_W - 4, Math.max(3, Math.round(x / cellW)));
+      var gy = Math.min(GRID_H - 4, Math.max(3, Math.round(y / cellH)));
+      drop(now, gx, gy, 7);
+      stone = skips(gx, gy).map(function (s) {
+        return { x: s.x, y: s.y, depth: s.depth, at: last + s.after };
+      });
+    },
     step: function (n, time) {
+      last = n;
+      while (stone.length && stone[0].at <= n) {
+        var s = stone.shift();
+        drop(now, s.x, s.y, s.depth);
+      }
       if (nextDrop === null) nextDrop = time + 300 + rand() * 900;
       if (time >= nextDrop) {
         drop(now, 4 + Math.floor(rand() * (GRID_W - 8)), 3 + Math.floor(rand() * (GRID_H - 6)), 2.5 + rand() * 4);

@@ -106,3 +106,6 @@ h1 { margin: 0 0 0.5rem; font-size: clamp(1.75rem, 5vw, 2.75rem); letter-spacing
 .stage-name span { color: var(--accent); }
 
 .page-foot { padding-bottom: 2.5rem; color: var(--text-muted); font-size: 0.8125rem; }
+
+/* A masthead whose animation takes clicks. */
+.stage[data-masthead-poke] { cursor: pointer; }

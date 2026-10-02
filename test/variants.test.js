@@ -14,7 +14,7 @@ import spider, { spider as spiderShape, web } from '../src/variants/spider.js';
 import { find, run, serialize } from './fake.js';
 import boids from '../src/variants/boids.js';
 import bytecode, { OCTOBER, PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
-import circuit from '../src/variants/circuit.js';
+import circuit, { WIRES, along } from '../src/variants/circuit.js';
 import chase, { whirl } from '../src/variants/chase.js';
 import citydefense, { BASES, CITIES, GROUND, intercept } from '../src/variants/citydefense.js';
 import grass, { wind as grassWind } from '../src/variants/grass.js';
@@ -25,15 +25,15 @@ import pongwars, { COLS as WAR_COLS, ROWS as WAR_ROWS, bounce } from '../src/var
 import stix, { GH, GW, claim, field, route } from '../src/variants/stix.js';
 import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
 import fractal from '../src/variants/fractal.js';
-import ghostrider, { DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
-import life from '../src/variants/life.js';
+import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
+import life, { PLANTS } from '../src/variants/life.js';
 import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
 import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
-import water, { GRID_H, GRID_W, drop, ripple } from '../src/variants/water.js';
+import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
 
-const all = { bats, boids, bytecode, chase, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -65,10 +65,183 @@ describe('every variant', () => {
   }
 });
 
-describe('the circuit', () => {
-  it('draws its board and four fireflies that move by SVG alone, so it takes no steps', () => {
+describe('a poke', () => {
+  const poking = Object.keys(all).filter((name) => run(all[name], 0).art && run(all[name], 0).art.poke);
+
+  it('is taken by the first eleven animations', () => {
+    const first = ['boids', 'bytecode', 'circuit', 'fractal', 'ghostrider', 'life', 'signalnoise', 'solari', 'terrainflight', 'train', 'water'];
+    for (const name of first) assert.ok(poking.includes(name), name);
+  });
+
+  for (const name of poking) {
+    it(`${name} takes pokes anywhere, mid-run, and runs on`, () => {
+      const { art } = run(all[name], 50);
+      for (const [x, y] of [[0, 0], [600, 160], [1200, 320], [37.5, 301.2]]) art.poke(x, y, 50, 50 * 40);
+      for (let i = 51; i <= 1000; i++) art.step(i, i * 40);
+    });
+  }
+
+  it('scatters the flock from it, faster for a while, and leaves a ring there', () => {
+    const { layer, art } = run(boids, 100);
+    const at = (g) => /translate\(([\d.]+) ([\d.]+)\)/.exec(g.attrs.transform).slice(1).map(Number);
+    const flock = find(layer, 'masthead-boid');
+    const [x, y] = at(flock[0]);
+    const near = flock.filter((g) => Math.hypot(at(g)[0] - x, at(g)[1] - y) < 200);
+    const before = near.map((g) => Math.hypot(at(g)[0] - x, at(g)[1] - y));
+    art.poke(x, y, 100, 2400);
+    const ring = find(layer, 'masthead-boids-hawk')[0];
+    assert.equal(ring.attrs.cx, x.toFixed(1));
+    assert.ok(Number(ring.attrs.opacity) > 0);
+    for (let i = 101; i <= 110; i++) art.step(i, i * 24);
+    const after = near.map((g) => Math.hypot(at(g)[0] - x, at(g)[1] - y));
+    assert.ok(after.every((d, i) => d > before[i]), `${before} -> ${after}`);
+    for (let i = 111; i <= 140; i++) art.step(i, i * 24);
+    assert.equal(ring.attrs.opacity, '0');
+  });
+
+  it('plants the next of its patterns in life, in a cleared patch', () => {
+    const { layer, art } = run(life, 10);
+    const cells = find(layer, 'masthead-life-cells')[0];
+    const live = (x0, x1, y0, y1) => [...cells.attrs.d.matchAll(/M([\d.]+) ([\d.]+)/g)]
+      .map((m) => [Number(m[1]), Number(m[2])])
+      .filter(([x, y]) => x >= x0 && x < x1 && y >= y0 && y < y1).length;
+    for (const plant of PLANTS) {
+      art.poke(600, 160, 10, 1450);
+      const planted = plant.join('').split('O').length - 1;
+      assert.equal(live(600 - 6 * 9, 600 + 6 * 9, 160 - 6 * 9, 160 + 6 * 9), planted);
+    }
+  });
+
+  it('sprouts a root in the fractal where it lands, or beside the name, and wakes a resting growth', () => {
+    const { layer, art } = run(fractal, 0);
+    const tips = find(layer, 'masthead-fractal-tips')[0];
+    let i = 1;
+    for (; i <= 400 && tips.children.length > 0; i++) art.step(i, i * 92);
+    assert.equal(tips.children.length, 0);
+    art.poke(100, 60, i, i * 92);
+    assert.equal(tips.children.length, 3);
+    assert.ok(tips.children.every((g) => g.attrs.transform === 'translate(100.0 60.0)'));
+    const grown = () => find(layer, 'masthead-fractal-glow')[0].attrs.d.split('M').length;
+    const before = grown();
+    for (let k = 1; k <= 20; k++) art.step(i + k, (i + k) * 92);
+    assert.ok(grown() > before + 20, `${before} -> ${grown()}`);
+    art.poke(600, 160, i + 20, (i + 20) * 92);
+    const [x, y] = /translate\(([\d.]+) ([\d.]+)\)/.exec(tips.children[0].attrs.transform).slice(1).map(Number);
+    assert.ok(Math.hypot((x - 600) / 300, (y - 160) / 94) >= 1, `${x} ${y}`);
+  });
+
+  it('surges through every trace on the circuit board, then fades', () => {
     const { layer, art } = run(circuit, 0);
-    assert.equal(art, undefined);
+    const surge = find(layer, 'masthead-circuit-surge')[0];
+    const near = along(WIRES[4], 100);
+    art.poke(near[0] + 3, near[1], 0, 0);
+    assert.equal(surge.children.length, 2);
+    const seen = new Set(surge.children);
+    for (let i = 1; i <= 200; i++) {
+      art.step(i, i * 24);
+      surge.children.forEach((g) => seen.add(g));
+    }
+    assert.equal(seen.size, WIRES.length * 2);
+    assert.equal(surge.children.length, 0);
+  });
+
+  it('opens the throttle on the road, then eases back to the cruise', () => {
+    const { layer, art } = run(ghostrider, 0);
+    const posts = find(layer, 'masthead-ghostrider-post')[0];
+    const quiet = run(ghostrider, 0);
+    const quietPosts = find(quiet.layer, 'masthead-ghostrider-post')[0];
+    art.poke(600, 160, 0, 0);
+    for (let i = 1; i <= 10; i++) { art.step(i, i * 40); quiet.art.step(i, i * 40); }
+    assert.notEqual(posts.attrs.d, quietPosts.attrs.d);
+    assert.ok(BOOST > 1 && SPEED > 0);
+    for (let i = 11; i <= 600; i++) art.step(i, i * 40);
+  });
+
+  it('blows the train whistle, or calls the next train in when the track is empty', () => {
+    const { layer, art } = run(train, 0);
+    const smoke = find(layer, 'masthead-train-smoke')[0];
+    for (let i = 1; i <= 20; i++) art.step(i, i * 40);
+    art.poke(600, 300, 20, 800);
+    assert.ok(smoke.children.some((p) => p.textContent.includes('TOOT!')));
+    const cars = find(layer, 'masthead-train-cars')[0];
+    let i = 21;
+    for (; i <= 2000 && cars.attrs.opacity !== '0'; i++) art.step(i, i * 40);
+    art.poke(600, 300, i, i * 40);
+    art.step(i + 1, (i + 1) * 40);
+    art.step(i + 2, (i + 2) * 40);
+    assert.equal(cars.attrs.opacity, '1');
+  });
+
+  it('riffles the solari board on to the next dek now, in a wave from the flap clicked', () => {
+    const deks = ['Beside the lead', 'The second story'];
+    const { layer, art } = run(solari, 40, { deks });
+    const cells = () => find(layer, 'masthead-solari-glyph').map((t) => t.textContent);
+    const before = cells();
+    art.poke(80, 110, 40, 40 * 58);
+    art.step(41, 41 * 58);
+    art.step(42, 42 * 58);
+    const riffling = cells();
+    assert.notEqual(riffling[0], before[0]);
+    assert.equal(riffling[COLS * ROWS - 1], before[COLS * ROWS - 1]);
+    for (let i = 43; i <= 120; i++) art.step(i, i * 58);
+    const shown = rowsOf(cells());
+    assert.ok(shown.join(' ').includes('STORY') || shown.join(' ').includes('LEAD'), shown.join('|'));
+    assert.notDeepEqual(cells(), before);
+  });
+
+  it('bursts the bytecode rain from it, and decodes the instruction there', () => {
+    const { layer, art } = run(bytecode, 50);
+    art.poke(60, 40, 50, 3000);
+    const note = find(layer, 'masthead-bytecode-note')[0];
+    assert.ok(Number(note.attrs.opacity) > 0);
+    assert.ok(PROGRAMS.flat().some((ins) => ins.text === note.children[0].textContent));
+    const head = find(layer, 'masthead-bytecode-head');
+    assert.ok(head.length > 0);
+  });
+
+  it('tears the signal round the height clicked, the band jumping there', () => {
+    const { layer, art } = run(signalnoise, 0);
+    art.poke(600, 250, 0, 0);
+    assert.equal(Number(find(layer, 'masthead-noise-band')[0].attrs.y), 232);
+    const lines = find(layer, 'masthead-noise-line').map((r) => Number(r.attrs.y));
+    assert.ok(lines.length >= 3 && lines.every((y) => y >= 200 && y <= 314), lines.join(' '));
+    for (let i = 1; i <= 20; i++) art.step(i, i * 70);
+    assert.equal(find(layer, 'masthead-noise-burst')[0].children.length, 0);
+  });
+
+  it('banks the terrain toward the side clicked, then levels out', () => {
+    const { layer, art } = run(terrainflight, 0);
+    const view = find(layer, 'masthead-terrain-view')[0];
+    art.poke(1000, 160, 0, 0);
+    for (let i = 1; i <= 55; i++) art.step(i, i * 32);
+    assert.ok(Number(/rotate\((-?[\d.]+)/.exec(view.attrs.transform)[1]) < -5);
+    art.poke(100, 160, 55, 55 * 32);
+    for (let i = 56; i <= 110; i++) art.step(i, i * 32);
+    assert.ok(Number(/rotate\((-?[\d.]+)/.exec(view.attrs.transform)[1]) > 5);
+    for (let i = 111; i <= 200; i++) art.step(i, i * 32);
+    assert.equal(view.attrs.transform, '');
+  });
+
+  it('skips a stone across the water, shorter and lighter each time, toward the open side', () => {
+    const from = skips(10, 30);
+    assert.ok(from.length >= 3 && from.every((s) => s.x > 10 && s.y < 30));
+    for (let k = 1; k < from.length; k++) {
+      assert.ok(from[k].depth < from[k - 1].depth && from[k].after > from[k - 1].after);
+      assert.ok(from[k].x - from[k - 1].x <= from[0].x - 10);
+    }
+    assert.ok(skips(110, 30).every((s) => s.x < 110));
+    assert.ok(skips(60, 4).length === 0);
+  });
+});
+
+const rowsOf = (cells) => Array.from({ length: ROWS }, (_, r) => cells.slice(r * COLS, (r + 1) * COLS).join('').trim()).filter(Boolean);
+
+describe('the circuit', () => {
+  it('draws its board and four fireflies that move by SVG alone, its steps idle until a surge', () => {
+    const { layer, art } = run(circuit, 0);
+    const before = serialize(layer);
+    for (let i = 1; i <= 50; i++) art.step(i, i * 24);
+    assert.equal(serialize(layer), before);
     assert.equal(find(layer, 'masthead-circuit-traces')[0].children.length, 9);
     assert.equal(find(layer, 'masthead-circuit-nodes')[0].children.length, 12);
     const runs = find(layer, 'masthead-circuit-fireflies')[0].children.map((g) => g.children[2].attrs);

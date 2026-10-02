@@ -2,7 +2,8 @@
    at random from those it's given (?ambient=<name> picks one; ?ambientDebug=1 logs the choice),
    loads only that one, and runs it, so the masthead stays blank until the chosen animation is
    ready and nothing is swapped out. It pauses while the tab is hidden or the host says so. With
-   prefers-reduced-motion, or if the variant fails, the masthead stays blank.
+   prefers-reduced-motion, or if the variant fails, the masthead stays blank. A variant that
+   returns poke() is handed clicks on the masthead, for a fragment of its own.
 
    Hosts call startMasthead(svg, options) once the art is in the page, and stop() on the handle
    when it leaves. Nothing here knows about any framework.
@@ -57,6 +58,8 @@ function randomSeed() { return Math.floor(Math.random() * 0x7fffffff); }
      frame: the element given data-masthead="<name>" and .masthead-paused, for host CSS (the
        SVG's parent by default).
      reducedMotion: overrides prefers-reduced-motion.
+     poke: false keeps clicks on the masthead from reaching the variant (a masthead that is a
+       link home, say). Clicks on links, buttons and form controls in it never do.
      debug: overrides ?ambientDebug=1, which logs the choice and shows the label in a
        p.masthead-debug in the frame.
    Returns { name, seed, label, update(), stop() }. */
@@ -202,7 +205,32 @@ export function startMasthead(svg, options) {
     }
     svg.appendChild(layer);
     art = result && typeof result.step === 'function' ? result : null;
+    if (art && typeof art.poke === 'function' && options.poke !== false) {
+      frameEl.setAttribute('data-masthead-poke', '');
+      frameEl.addEventListener('click', poke);
+    }
     update();
+  }
+
+  /* A click on the masthead, in the art's 1200 x 320, handed to the variant's poke(x, y, n,
+     time). Clicks meant for something else (a link or control in the masthead, a right click,
+     the end of a text selection, one outside the art) and clicks while paused are left alone.
+     A poke that throws is logged and the animation carries on. */
+  function poke(e) {
+    if (stopped || !art || paused() || (e.button !== undefined && e.button !== 0)) return;
+    if (e.target && e.target.closest && e.target.closest('a, button, input, select, textarea, label, summary, [role="button"], [role="link"]')) return;
+    var selection = window.getSelection && window.getSelection();
+    if (selection && !selection.isCollapsed) return;
+    var box = svg.getBoundingClientRect();
+    if (!(box.width > 0 && box.height > 0)) return;
+    var x = (e.clientX - box.left) / box.width * WIDTH;
+    var y = (e.clientY - box.top) / box.height * HEIGHT;
+    if (x < 0 || y < 0 || x > WIDTH || y > HEIGHT) return;
+    try {
+      art.poke(x, y, step, performance.now());
+    } catch (err) {
+      log('the variant failed to take a poke', err);
+    }
   }
 
   loaders[name]().then(function (module) {
@@ -223,6 +251,8 @@ export function startMasthead(svg, options) {
     if (frame) cancelAnimationFrame(frame);
     frame = null;
     document.removeEventListener('visibilitychange', update);
+    frameEl.removeEventListener('click', poke);
+    frameEl.removeAttribute('data-masthead-poke');
     if (resizes) resizes.disconnect();
     log('stopped');
   };

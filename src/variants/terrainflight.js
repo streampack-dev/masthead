@@ -1,4 +1,5 @@
-/* Terrain flight: ridgelines rolling toward you from the horizon, as on bytecode.news. */
+/* Terrain flight: ridgelines rolling toward you from the horizon, as on bytecode.news. A click
+   banks the view toward its side, and it levels out again. */
 export default function terrainflight(layer, m) {
   var COUNT = 7, SAMPLES = 18, HORIZON = 44, SPEED = 0.9;
   var W = m.width, H = m.height;
@@ -19,13 +20,25 @@ export default function terrainflight(layer, m) {
   for (var i = 0; i < COUNT; i++) ridges.push(ridge(i + 1, i / COUNT));
   var nextId = COUNT + 1;
 
-  m.el('path', { 'class': 'masthead-terrain-horizon', d: 'M 0 46 L ' + W + ' 46' });
+  var view = m.el('g', { 'class': 'masthead-terrain-view' });
+  m.el('path', { 'class': 'masthead-terrain-horizon', d: 'M ' + -W * 0.25 + ' 46 L ' + W * 1.25 + ' 46' }, view);
   var drawn = [];
   for (var j = 0; j < COUNT; j++) {
     drawn.push({
-      glow: m.el('path', { 'class': 'masthead-terrain-glow' }),
-      line: m.el('path', { 'class': 'masthead-terrain-ridge' })
+      glow: m.el('path', { 'class': 'masthead-terrain-glow' }, view),
+      line: m.el('path', { 'class': 'masthead-terrain-ridge' }, view)
     });
+  }
+  var BANK = 9, BANK_STEPS = 110, bank = null;
+
+  /* The view's roll, a bank easing in toward its side and out again level. */
+  function roll() {
+    if (!bank) return;
+    bank.age += 1;
+    var t = bank.age / BANK_STEPS;
+    if (t >= 1) { bank = null; view.setAttribute('transform', ''); return; }
+    var angle = bank.dir * BANK * Math.sin(Math.PI * t) * Math.sin(Math.PI * t);
+    view.setAttribute('transform', 'rotate(' + angle.toFixed(2) + ' ' + W / 2 + ' ' + H * 0.4 + ')');
   }
 
   function draw() {
@@ -55,7 +68,9 @@ export default function terrainflight(layer, m) {
 
   return {
     interval: 32,
+    poke: function (x) { bank = { dir: x < W / 2 ? 1 : -1, age: 0 }; },
     step: function () {
+      roll();
       ridges = ridges
         .map(function (r) { r.depth += (0.016 + r.roughness * 0.004) * SPEED; return r; })
         .filter(function (r) { return r.depth < 1.16; });

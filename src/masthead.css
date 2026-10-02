@@ -29,6 +29,7 @@
 .masthead-glow { stop-color: var(--_accent); }
 .masthead-spark { fill: var(--_accent); }
 .masthead-trace { fill: none; stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; }
+.masthead-circuit-lit { fill: none; stroke: var(--_accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.75; }
 
 /* The variants. */
 .masthead-boids { opacity: 0.8; }

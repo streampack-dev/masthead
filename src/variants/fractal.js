@@ -1,5 +1,6 @@
 /* Fractal: a branching growth tracing round the name, resting when grown, then starting again, as
-   on bytecode.news. ?ambientSeed=<n> replays a growth. */
+   on bytecode.news. ?ambientSeed=<n> replays a growth. A click sprouts a new root there, three
+   tips branching out from it, and wakes a resting growth to grow it. */
 export default function fractal(layer, m) {
   // A growth that dies young, as many do in the bands above and below the name, rests only
   // briefly before the next starts (ui-pudl #98). It grows from ROOTS points spread round the
@@ -102,8 +103,37 @@ export default function fractal(layer, m) {
   }
   draw();
 
+  /* A root at (x, y), or the nearest point outside the name if that's in it, of three tips
+     spread round it. Room is made for it by letting the oldest growth go. */
+  function sprout(x, y) {
+    x = Math.min(W - EDGE - 1, Math.max(EDGE + 1, x));
+    y = Math.min(H - EDGE - 1, Math.max(EDGE + 1, y));
+    if (excluded(x, y)) {
+      var nx = (x - W / 2) / (W * 0.25), ny = (y - H / 2) / (H * 0.3);
+      if (nx === 0 && ny === 0) ny = -1;
+      var k = Math.hypot(nx, ny);
+      x = W / 2 + nx / k * W * 0.26;
+      y = H / 2 + ny / k * H * 0.31;
+    }
+    var rs = nextRandom(state.random ^ Math.round(x * 31 + y));
+    var first = unit(rs) * Math.PI * 2, id = state.nextId, burst = [];
+    for (var t = 0; t < 3; t++) {
+      rs = nextRandom(rs);
+      burst.push({ angle: norm(first + t * Math.PI * 2 / 3), depth: 0, energy: 50 + unit(rs) * 24, id: id++, x: x, y: y });
+    }
+    var room = MAX_SEGMENTS - 240;
+    state = {
+      complete: false, generation: state.generation, nextId: id, random: rs,
+      segments: state.segments.length > room ? state.segments.slice(state.segments.length - room) : state.segments,
+      tips: burst.concat(state.tips).slice(0, MAX_TIPS)
+    };
+    restedAt = null;
+    draw();
+  }
+
   return {
     interval: 92,
+    poke: function (x, y) { sprout(x, y); },
     step: function (n, time) {
       if (state.complete) {
         if (restedAt === null) restedAt = time;

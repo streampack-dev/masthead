@@ -20,8 +20,16 @@ export type MastheadContext = {
   el(tag: string, attrs?: Record<string, string | number>, parent?: Element): SVGElement;
 };
 
-/** What make returns: step is called every interval ms (24 by default), or nothing if it's still. */
-export type MastheadArt = { step(n: number, time: number): void; interval?: number } | void;
+/**
+ * What make returns: step is called every interval ms (24 by default), or nothing if it's still.
+ * poke, if given, is called when the masthead is clicked, with where in the art's 1200 x 320, the
+ * step count and the clock, for a fragment of the animation's own.
+ */
+export type MastheadArt = {
+  step(n: number, time: number): void;
+  interval?: number;
+  poke?(x: number, y: number, n: number, time: number): void;
+} | void;
 
 export type MastheadVariant = (layer: SVGGElement, m: MastheadContext) => MastheadArt;
 
@@ -39,6 +47,8 @@ export type MastheadOptions = {
   frame?: Element;
   reducedMotion?: boolean;
   debug?: boolean;
+  /** false keeps clicks on the masthead from reaching the animation's poke. */
+  poke?: boolean;
 };
 
 export type MastheadHandle = {

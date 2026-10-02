@@ -1,4 +1,5 @@
-/* Boids: sixteen fireflies flocking, as on bytecode.news. */
+/* Boids: sixteen fireflies flocking, as on bytecode.news. A click is a hawk: the flock scatters
+   from it, faster for a moment, then gathers again. */
 export default function boids(layer, m) {
   var COUNT = 16, MIN_SPEED = 0.86, MAX_SPEED = 1.89;
   var NEIGHBOR = 132, SEPARATION = 34, EDGE = 42;
@@ -12,10 +13,11 @@ export default function boids(layer, m) {
     var l = Math.hypot(x, y);
     return l === 0 ? { x: 0, y: 0 } : { x: x / l, y: y / l };
   }
+  var SCATTER = 360, fright = 0;
   function clamp(vx, vy) {
     var s = Math.hypot(vx, vy);
     if (s === 0) return { vx: MIN_SPEED, vy: 0 };
-    var k = Math.min(MAX_SPEED, Math.max(MIN_SPEED, s)) / s;
+    var k = Math.min(MAX_SPEED + fright * 3.2, Math.max(MIN_SPEED, s)) / s;
     return { vx: vx * k, vy: vy * k };
   }
 
@@ -45,7 +47,34 @@ export default function boids(layer, m) {
   }
   place();
 
+  var ring = m.el('circle', { 'class': 'masthead-trace masthead-boids-hawk', r: 0, opacity: 0 });
+  var hawk = null;
+
+  /* The ring where the hawk struck, widening and fading over half a second or so. */
+  function strike() {
+    if (!hawk) return;
+    hawk.age += 1;
+    var t = hawk.age / 26;
+    if (t >= 1) { hawk = null; ring.setAttribute('opacity', 0); return; }
+    ring.setAttribute('r', (8 + t * 90).toFixed(1));
+    ring.setAttribute('opacity', (1 - t).toFixed(2));
+  }
+
   return {
+    poke: function (x, y) {
+      fright = 1;
+      hawk = { age: 0 };
+      ring.setAttribute('cx', x.toFixed(1));
+      ring.setAttribute('cy', y.toFixed(1));
+      strike();
+      boids.forEach(function (b) {
+        var d = Math.hypot(b.x - x, b.y - y), away = unit(b.x - x, b.y - y);
+        if (d === 0) away = { x: 0, y: -1 };
+        var push = 1.2 + 4.2 * Math.max(0, 1 - d / SCATTER);
+        b.vx += away.x * push;
+        b.vy += away.y * push;
+      });
+    },
     step: function (n) {
       var cx = W / 2, cy = H / 2;
       var next = boids.map(function (b) {
@@ -79,7 +108,9 @@ export default function boids(layer, m) {
         return { x: Math.min(W - 8, Math.max(8, b.x + v.vx)), y: Math.min(H - 8, Math.max(8, b.y + v.vy)), vx: v.vx, vy: v.vy };
       });
       next.forEach(function (s, i) { var b = boids[i]; b.x = s.x; b.y = s.y; b.vx = s.vx; b.vy = s.vy; });
+      fright = fright > 0.01 ? fright * 0.965 : 0;
       place();
+      strike();
     }
   };
 }

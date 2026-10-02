@@ -1,6 +1,7 @@
 /* Signal noise: brief bursts of interference lines, at random intervals, as on bytecode.news.
    ?ambientSeed=<n> replays the bursts. Between them it rests on a screen waiting for a signal:
-   faint scanlines, and a dim band rolling down them (ui-pudl #98). */
+   faint scanlines, and a dim band rolling down them (ui-pudl #98). A click tears the signal
+   there: a longer burst gathered round the click's height, the band jumping to it. */
 export default function signalnoise(layer, m) {
   // Frequent, longish and strong enough to see through the art's fade (ui-pudl #98).
   var MIN_IDLE = 900, IDLE_SPAN = 2600, MIN_BURST = 120, BURST_SPAN = 200;
@@ -15,7 +16,7 @@ export default function signalnoise(layer, m) {
   function range(seed, salt, min, span) { return min + unit(seed, salt) * span; }
 
   var seed = m.seed();
-  var active = false, burstEndsAt = 0, nextBurstAt = null;
+  var active = false, burstEndsAt = 0, nextBurstAt = null, tear = null;
 
   var scan = [];
   for (var sy = 2; sy < H; sy += 6) scan.push('M0 ' + sy + 'H' + W + 'v1H0Z');
@@ -36,7 +37,8 @@ export default function signalnoise(layer, m) {
     var count = Math.floor(range(seed, 2, 3, 10));
     for (var l = 0; l < count; l++) {
       var salt = l * 17;
-      var y = range(seed, salt + 4, 0, H).toFixed(1), h = range(seed, salt + 5, 1.2, 4.8).toFixed(1);
+      var y = (tear === null ? range(seed, salt + 4, 0, H) : Math.max(0, Math.min(H - 6, tear + range(seed, salt + 4, -50, 100)))).toFixed(1);
+      var h = range(seed, salt + 5, 1.2, 4.8).toFixed(1);
       var g = m.el('g', { opacity: range(seed, salt + 9, 0.5, 0.3).toFixed(3) }, burst);
       m.el('rect', { 'class': 'masthead-noise-line', x: 0, y: y, width: W, height: h }, g);
       var pieces = Math.floor(range(seed, salt + 3, 1, 5));
@@ -54,6 +56,15 @@ export default function signalnoise(layer, m) {
 
   return {
     interval: 70,
+    poke: function (x, y, n, now) {
+      tear = y;
+      bandY = Math.max(-BAND / 2, y - BAND / 2);
+      band.setAttribute('y', bandY.toFixed(1));
+      seed = next(seed);
+      active = true;
+      burstEndsAt = now + 450 + range(seed, 10, 0, 250);
+      drawLines();
+    },
     step: function (n, now) {
       roll();
       if (nextBurstAt === null) nextBurstAt = now + range(seed, 1, MIN_IDLE, IDLE_SPAN);
@@ -61,6 +72,7 @@ export default function signalnoise(layer, m) {
       if (active) {
         seed = next(seed);
         active = false;
+        tear = null;
         clear();
         nextBurstAt = now + range(seed, 1, MIN_IDLE, IDLE_SPAN);
         return;

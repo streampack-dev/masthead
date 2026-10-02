@@ -156,6 +156,31 @@ export default function bytecode(layer, m) {
     if (col.head - col.length > ROWS) start(col, false);
   }
 
+  /* A burst from the click: the nearest columns run again from its row, fast and long, the
+     clicked one first, and the instruction it's in is decoded just past them. */
+  function burst(x, y, now) {
+    var hit = Math.max(0, Math.min(count - 1, Math.floor(x / spacing)));
+    var row = Math.max(0, Math.min(ROWS - 1, Math.round((y - top) / ROW_H)));
+    for (var c = hit - 2; c <= hit + 2; c++) {
+      if (c < 0 || c >= count) continue;
+      var col = columns[c], lag = Math.abs(c - hit);
+      col.head = row - lag * 1.5;
+      col.speed = 0.55 + rand() * 0.2 - lag * 0.06;
+      col.length = 12 + Math.floor(rand() * 6);
+      col.wait = 0;
+      col.cells.forEach(function (cell) { cell.el.textContent = ''; });
+      if (col.head >= 0) col.cells[Math.floor(col.head)].el.textContent = next(col).hex;
+      draw(col);
+    }
+    var at = columns[hit];
+    for (var k = 0; !at.last && k < 8; k++) next(at);
+    var nx = at.x + spacing * 2.6;
+    noteText.textContent = at.last || '';
+    note = { x: nx > W - 160 ? at.x - spacing * 2.6 - 140 : nx, y: top + row * ROW_H, at: now };
+    nextNoteAt = now + NOTE_MS + 1500;
+    showNote(now);
+  }
+
   /* One instruction decoded beside a column whose head is clear of the name. */
   function decode(now) {
     var tries = 0;
@@ -183,6 +208,7 @@ export default function bytecode(layer, m) {
 
   return {
     interval: 60,
+    poke: function (x, y, n, now) { burst(x, y, now); },
     step: function (n, now) {
       var s = m.stretch();
       if (columnsFor(s) !== count) build();

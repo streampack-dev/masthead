@@ -92,7 +92,14 @@ the choice. Only the chosen animation's file is fetched.
    ```
 
    The runner sets `data-masthead="<name>"` on the SVG and its parent (or `frame`), and
-   `.masthead-paused` while paused, for the host's own CSS. A host serving the variant files
+   `.masthead-paused` while paused, for the host's own CSS. Clicking the masthead pokes the
+   animation, if it has a fragment of its own (boids scatter from a hawk, the bytecode rain
+   bursts, a surge runs through the circuit, the fractal sprouts a root, ghostrider opens the
+   throttle, life plants a pattern, signal noise tears, the Solari board riffles on, the terrain
+   banks, the train whistles, water skips a stone); the frame has `data-masthead-poke` while it
+   does, for a cursor, say.
+   Clicks on links, buttons and form controls in the masthead pass through untouched; a
+   masthead that is itself a link home passes `poke: false`. A host serving the variant files
    under its own addresses (fingerprinted, say) passes `variants: { name: () => import(url) }`.
    `src/index.d.ts` has the full options.
 
@@ -115,6 +122,9 @@ export default function name(layer, m) {
   // Build the elements here, once. Return { step(n, time) { ... }, interval: ms } to be called
   // every interval ms (24 by default) with the step count and the clock, moving what was built;
   // or return nothing if it's still, or animates by SVG or CSS itself.
+  // Optionally add poke(x, y, n, time) to that, called when the masthead is clicked, with where
+  // in the 1200 x 320 and the step count and clock: a fragment of the animation's own, played
+  // out over the steps that follow.
 }
 ```
 

@@ -1,6 +1,7 @@
 /* Train: an ASCII-art train running along a track at the foot of the masthead, below the name,
    trailing smoke, its wheels' rods turning. Between trains the track waits, empty. Each train's
-   cars, cargo and pace come from the seed, so ?ambientSeed=<n> replays them. */
+   cars, cargo and pace come from the seed, so ?ambientSeed=<n> replays them. A click blows the
+   whistle, or calls the next train in when the track is empty. */
 
 /* The engine, front to the right, as it runs left to right; its stack is at STACK. */
 export var ENGINE = [
@@ -94,11 +95,17 @@ export default function train(layer, m) {
     group.setAttribute('transform', 'translate(' + running.x.toFixed(1) + ' ' + base + ') scale(' + (1 / stretch).toFixed(4) + ' 1)');
   }
 
-  function puff(stretch) {
+  function puff(stretch, text, lift) {
     var x = running.x + (running.stack + 1) * CHAR / stretch;
     var p = m.el('text', { 'class': 'masthead-train-puff' }, smoke);
-    p.textContent = solid(rand() < 0.5 ? '( )' : '(  )');
-    puffs.push({ el: p, x: x, y: base - ENGINE.length * LINE + 2, age: 0, drift: 0.3 + rand() * 0.5 });
+    p.textContent = solid(text || (rand() < 0.5 ? '( )' : '(  )'));
+    puffs.push({ el: p, x: x, y: base - ENGINE.length * LINE + 2 - (lift || 0), age: 0, drift: 0.3 + rand() * 0.5 });
+  }
+
+  /* The whistle: a burst of steam from the stack, the word rising clear above it. */
+  function whistle(stretch) {
+    for (var k = 0; k < 3; k++) puff(stretch, k % 2 ? '(  )' : '( )', k * 6);
+    puff(stretch, 'TOOT!', 34);
   }
 
   function blow(stretch) {
@@ -118,13 +125,19 @@ export default function train(layer, m) {
   running.x = -running.length * CHAR / m.stretch() * 0.6;
   draw();
 
+  var called = false;
+
   return {
     interval: 40,
+    poke: function () {
+      if (!running) called = true;
+      else if (running.x !== null) whistle(m.stretch());
+    },
     step: function (n, now) {
       var stretch = m.stretch();
       if (!running) {
         if (nextAt === null) nextAt = now + 3500 + rand() * 6000;
-        if (now >= nextAt) { nextAt = null; depart(now); }
+        if (now >= nextAt || called) { nextAt = null; called = false; depart(now); }
       }
       if (running) {
         var width = running.length * CHAR / stretch;
