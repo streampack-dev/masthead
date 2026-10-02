@@ -105,9 +105,10 @@ export function startMasthead(svg, options) {
 
   frameEl.setAttribute('data-masthead', name);
   svg.setAttribute('data-masthead', name);
+  // No <title>: the art is decorative (aria-hidden), and a tooltip naming the run and its seed is
+  // for whoever is debugging it, which ?ambientDebug=1 is for. One an earlier run left is removed.
   var title = svg.querySelector(':scope > title');
-  if (!title) title = svg.insertBefore(document.createElementNS(NS, 'title'), svg.firstChild);
-  title.textContent = label;
+  if (title) svg.removeChild(title);
   if (debug) {
     // ?ambientDebug=1 names the run in the masthead's corner too (ui-pudl #97).
     var tag = document.createElement('p');

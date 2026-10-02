@@ -5,7 +5,7 @@ import { variants } from '../src/variants.js';
 import { SEASONS, inSeason } from '../src/runner.js';
 import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
-import duel, { POSES, crossing, figure, mixPose } from '../src/variants/duel.js';
+import duel, { POSES, STUB, breaks, crossing, facepalms, figure, mixPose } from '../src/variants/duel.js';
 import deadline, { ANVIL, POSES as DESK_POSES, SCENES, anvilAt, writer } from '../src/variants/deadline.js';
 import ghosts, { round, sheet } from '../src/variants/ghosts.js';
 import graveyard, { tree } from '../src/variants/graveyard.js';
@@ -15,9 +15,9 @@ import { find, run, serialize } from './fake.js';
 import boids from '../src/variants/boids.js';
 import bytecode, { OCTOBER, PROGRAMS, STREAMS } from '../src/variants/bytecode.js';
 import circuit, { WIRES, along } from '../src/variants/circuit.js';
-import chase, { whirl } from '../src/variants/chase.js';
+import chase, { blurLegs, scramble, SPLAY, TUNNEL_WAIT, tunnelExpires } from '../src/variants/chase.js';
 import citydefense, { BASES, CITIES, GROUND, intercept } from '../src/variants/citydefense.js';
-import grass, { wind as grassWind } from '../src/variants/grass.js';
+import grass, { wind as grassWind, pokeGusts } from '../src/variants/grass.js';
 import lander, { GRAVITY, SIDE, THRUST, ground, pilot } from '../src/variants/lander.js';
 import paddles, { LEFT, RIGHT, landing } from '../src/variants/paddles.js';
 import rocks, { SIZES, outline } from '../src/variants/rocks.js';
@@ -207,6 +207,45 @@ describe('a poke', () => {
     assert.ok(lines.length >= 3 && lines.every((y) => y >= 200 && y <= 314), lines.join(' '));
     for (let i = 1; i <= 20; i++) art.step(i, i * 70);
     assert.equal(find(layer, 'masthead-noise-burst')[0].children.length, 0);
+  });
+
+  it('sends a gust both ways from where the grass is clicked, laying it down away from there', () => {
+    // Each blade's base and tip, from its curve.
+    const blades = (layer) => find(layer, 'masthead-grass-blades').flatMap((p) =>
+      [...p.attrs.d.matchAll(/M(-?[\d.]+) (-?[\d.]+)Q-?[\d.]+ -?[\d.]+ (-?[\d.]+) -?[\d.]+/g)].map((b) => ({ x: Number(b[1]), lean: Number(b[3]) - Number(b[1]) })));
+    const still = run(grass, 0, { seed: 4 }), blown = run(grass, 0, { seed: 4 });
+    blown.art.poke(600, 300, 0, 0);
+    for (let i = 1; i <= 8; i++) { still.art.step(i, i * 50); blown.art.step(i, i * 50); }
+    const a = blades(still.layer), b = blades(blown.layer);
+    let right = 0, left = 0;
+    a.forEach((bl, k) => {
+      if (bl.x > 680 && bl.x < 760) right += b[k].lean - bl.lean;
+      if (bl.x > 440 && bl.x < 520) left += b[k].lean - bl.lean;
+    });
+    assert.ok(right > 20 && left < -20, `right ${right}, left ${left}`);
+    const [out, back] = pokeGusts(600);
+    assert.ok(out.v > 0 && out.strength > 0 && back.v < 0 && back.strength < 0);
+  });
+
+  it('fires a counter-missile from the nearest base to where the sky is clicked, bursting there', () => {
+    const { layer, art } = run(citydefense, 0, { seed: 3 });
+    art.poke(420, 150, 0, 0);
+    const trail = find(layer, 'masthead-citydefense-counter').at(-1);
+    art.step(1, 40);
+    assert.match(trail.attrs.d, new RegExp('^M600 ' + (GROUND - 9) + 'L'));
+    let burst = null;
+    for (let i = 2; i <= 80 && !burst; i++) {
+      art.step(i, i * 40);
+      burst = find(layer, 'masthead-citydefense-burst').find((b) => Math.abs(Number(b.attrs.cx) - 420) < 0.5 && Math.abs(Number(b.attrs.cy) - 150) < 0.5);
+    }
+    assert.ok(burst, 'it burst where clicked');
+    // Clicked at the ground, it bursts above it, never in it.
+    art.poke(80, 319, 80, 0);
+    const low = find(layer, 'masthead-citydefense-counter').at(-1);
+    art.step(81, 81 * 40);
+    const end = /L(-?[\d.]+) (-?[\d.]+)$/.exec(low.attrs.d);
+    assert.match(low.attrs.d, new RegExp('^M70 ' + (GROUND - 9) + 'L'));
+    assert.ok(Number(end[2]) < GROUND - 9, 'it climbs toward a point above the ground');
   });
 
   it('banks the terrain toward the side clicked, then levels out', () => {
@@ -645,18 +684,139 @@ describe('october', () => {
 });
 
 describe('the chase', () => {
-  it('blurs running legs, turning them each frame, two pairs for the canine', () => {
-    assert.notEqual(whirl(0, -9, 10, 1), whirl(0, -9, 10, 2));
+  it('blurs the running bird\'s legs into a wheel: curved strokes turning inside a faint rim', () => {
+    const one = blurLegs(-2, -16, 16, 16, 1), two = blurLegs(-2, -16, 16, 16, 2);
+    assert.notEqual(one.strokes, two.strokes);
+    assert.equal(one.rim, two.rim);
+    // Arcs, not spokes: three curved strokes and a foot on the ground.
+    assert.equal((one.strokes.match(/A/g) || []).length, 3);
+    assert.match(one.strokes, /M-?[\d.]+ 0h7$/);
+    // Three speed streaks trailing behind the wheel (behind is -x, facing right), each a length of its own.
+    const streaks = [...one.streaks.matchAll(/M(-?[\d.]+) (-?[\d.]+)h(-\d+)/g)];
+    assert.equal(streaks.length, 3);
+    for (const [, x, , h] of streaks) assert.ok(Number(x) <= -2 - 16 * 0.9 - 3 + 0.01 && Number(h) <= -10, one.streaks);
+    assert.notEqual(one.streaks, blurLegs(-2, -16, 16, 16, 3).streaks);
+
     const { layer, art } = run(chase, 0, { seed: 3 });
-    const legs = find(layer, 'masthead-chase-legs');
-    let pairs = 0;
-    for (let i = 1; i <= 400 && !pairs; i++) {
+    const bird = find(layer, 'masthead-chase-bird')[0];
+    const [blur] = find(bird, 'masthead-chase-blur'), [legs] = find(bird, 'masthead-chase-legs');
+    const [streakEl] = find(bird, 'masthead-chase-streaks');
+    let blurred = false;
+    for (let i = 1; i <= 400; i++) {
       art.step(i, i * 60);
-      const d = legs[1].attrs.d || '';
-      // A whirl is six spokes from one hub; the canine's running legs are two of them.
-      if ((d.match(/M/g) || []).length === 12) pairs = 2;
+      const arcs = /A/.test(legs.attrs.d);
+      // The rim shows exactly when the legs are a blur.
+      assert.equal(blur.attrs.opacity === '1', arcs, `step ${i}`);
+      assert.equal(streakEl.attrs.opacity === '1', arcs, `step ${i}`);
+      blurred = blurred || arcs;
     }
-    assert.equal(pairs, 2);
+    assert.ok(blurred);
+  });
+
+  it('scrambles the running canine\'s legs: four jointed legs, as far as legs go, never through the ground', () => {
+    const hips = [[-14, -15], [-6, -15], [10, -15], [16, -15]];
+    assert.equal(scramble(hips, 5, 6), scramble(hips, 5, 6));
+    assert.notEqual(scramble(hips, 5, 6), scramble(hips, 6, 6));
+    for (let n = 0; n < 500; n++) {
+      const floor = 5 + (n % 4);
+      const legs = scramble(hips, n, floor).split('M').filter(Boolean).map((leg) => leg.split('L').map((p) => p.split(' ').map(Number)));
+      assert.equal(legs.length, 4);
+      legs.forEach(([hip, knee, foot], k) => {
+        assert.deepEqual(hip, hips[k]);
+        // The thigh within SPLAY of straight down, toward head or tail; the foot never below the ground.
+        const angle = Math.atan2(knee[0] - hip[0], knee[1] - hip[1]);
+        assert.ok(Math.abs(angle) <= SPLAY + 0.01, `frame ${n}, leg ${k}: ${angle}`);
+        assert.ok(foot[1] <= floor + 0.05, `frame ${n}, leg ${k}: foot at ${foot[1]}`);
+      });
+    }
+
+    const { layer, art } = run(chase, 0, { seed: 3 });
+    const dog = find(layer, 'masthead-chase-dog')[0];
+    const [legs] = find(dog, 'masthead-chase-legs'), inner = dog.children[0];
+    let scrambled = false;
+    for (let i = 1; i <= 2000 && !scrambled; i++) {
+      art.step(i, i * 60);
+      // Scrambling, it's off the ground, and its feet reach down to it.
+      const lift = /translate\(0 -(\d+)\)/.exec(inner.attrs.transform || '');
+      if (lift && (legs.attrs.d.match(/L/g) || []).length === 8) scrambled = Number(lift[1]) >= 5 && Number(lift[1]) <= 8;
+    }
+    assert.ok(scrambled);
+  });
+
+  it('draws a hungry canine, its ribs showing, and no ribs on the bird', () => {
+    const { layer } = run(chase, 0);
+    assert.equal(find(find(layer, 'masthead-chase-dog')[0], 'masthead-chase-ribs').length, 1);
+    assert.equal(find(find(layer, 'masthead-chase-bird')[0], 'masthead-chase-ribs').length, 0);
+  });
+
+  it('puts a tunnel where it\'s clicked: the bird runs into it and is gone, the canine smacks into it', () => {
+    const { layer, art } = run(chase, 0, { seed: 3 });
+    const tunnel = find(layer, 'masthead-chase-tunnel')[0];
+    const bird = find(layer, 'masthead-chase-bird')[0], dog = find(layer, 'masthead-chase-dog')[0];
+    const sign = find(layer, 'masthead-chase-sign')[0];
+    const x = (el) => Number(/translate\((-?[\d.]+)/.exec(el.attrs.transform)[1]);
+    assert.equal(tunnel.attrs.opacity, '0');
+    art.poke(400, 200, 0, 0);
+    assert.equal(tunnel.attrs.opacity, '1');
+    art.poke(600, 10, 0, 0);
+    assert.equal(x(tunnel), 600, 'a second click moves it, and only where along the ground matters');
+
+    const dustLayer = find(layer, 'masthead-chase-dust')[0];
+    let swallowed = false, smacked = false, gone = false, dust = new Set(dustLayer.children);
+    for (let i = 1; i <= 20000 && !gone; i++) {
+      // Keep a tunnel there until the canine has smacked into one.
+      if (!smacked && tunnel.attrs.opacity === '0') art.poke(600, 0, i, 0);
+      const before = bird.attrs.opacity === '1' ? x(bird) : null;
+      // Its nose, 40 ahead of it at full width, wherever it faces.
+      const nose = () => { const k = Number(/scale\((-?[\d.]+)/.exec(dog.attrs.transform)[1]); return x(dog) + 40 * k; };
+      const noseBefore = dog.attrs.opacity === '1' ? nose() : null;
+      art.step(i, i * 60);
+      // The bird vanishes in the middle of the frame, at the tunnel, not at an edge.
+      if (before !== null && bird.attrs.opacity === '0' && Math.abs(before - 600) < 30) swallowed = true;
+      // Once it's in, its dust stops: none new until the canine comes, but the puff at the mouth.
+      const fresh = dustLayer.children.filter((c) => !dust.has(c));
+      if (swallowed && !smacked && dog.attrs.opacity === '0') {
+        for (const c of fresh) assert.ok(Math.abs(Number(c.attrs.cx) - 600) < 1, `step ${i}: dust at ${c.attrs.cx}`);
+      }
+      dust = new Set(dustLayer.children);
+      const sx = Math.abs(Number(/scale\((-?[\d.]+)/.exec(dog.attrs.transform)[1]));
+      // It meets the rock at the middle of the tunnel, where the bird went in.
+      if (sx < 0.3 && dog.attrs.opacity === '1' && !smacked) {
+        // Squashed up, its nose to the middle of the tunnel, and got there running, not by a jump.
+        assert.ok(Math.abs(nose() - 600) <= 2, `nose at ${nose()}`);
+        assert.ok(noseBefore !== null && Math.abs(nose() - noseBefore) <= 20, `nose from ${noseBefore} to ${nose()}`);
+        smacked = true;
+      }
+      // It never goes in: whenever it's out of sight, it's off the edge of the frame.
+      if (dog.attrs.opacity === '0' && x(dog) > 0 && x(dog) < 1200) assert.ok(!smacked || Math.abs(x(dog) - 600) > 100, `step ${i}`);
+      if (smacked && tunnel.attrs.opacity === '0') gone = true;
+      if (smacked) assert.equal(sign.attrs.opacity === '1' && !gone, false);
+    }
+    assert.ok(swallowed, 'the bird ran into the tunnel');
+    assert.ok(smacked, 'the canine smacked into it');
+    assert.ok(gone, 'and then it faded');
+  });
+
+  it('never leaves a tunnel lying about: it waits a while, and is gone within 24 seconds of the click', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const { layer, art } = run(chase, 0, { seed });
+      const tunnel = find(layer, 'masthead-chase-tunnel')[0];
+      for (let i = 1; i <= 50; i++) art.step(i, i * 60);
+      art.poke(300 + seed * 20, 0, 50, 0);
+      let at = null;
+      for (let i = 51; i <= 450 && at === null; i++) {
+        art.step(i, i * 60);
+        if (tunnel.attrs.opacity === '0') at = i - 50;
+      }
+      assert.ok(at !== null && at <= 400, `seed ${seed}: gone after ${at}`);
+    }
+  });
+
+  it('fades a tunnel nothing runs into after 20 seconds or so, but never mid-smack', () => {
+    assert.equal(TUNNEL_WAIT * 60 >= 18000 && TUNNEL_WAIT * 60 <= 22000, true);
+    assert.equal(tunnelExpires(TUNNEL_WAIT, false), false);
+    assert.equal(tunnelExpires(TUNNEL_WAIT + 1, false), true);
+    assert.equal(tunnelExpires(TUNNEL_WAIT + 1, true), false);
   });
 
   it('holds up a sign now and then, its words the right way round', () => {
@@ -775,6 +935,89 @@ describe('the duel', () => {
         for (const limb of f.limbs.slice(0, 2)) assert.ok(limb[2][1] <= 0 && limb[2][1] >= -5, name);
       }
     }
+  });
+
+  it('swings wildly from the fencer nearer a click, and the other parries it over its head', () => {
+    for (const [clickX, swinger] of [[400, 0], [800, 1]]) {
+      const { layer, art } = run(duel, 0, { seed: 9 });
+      const fencers = find(layer, 'masthead-duel-fencer'), spark = find(layer, 'masthead-duel-spark')[0];
+      const head = (k) => [Number(fencers[k].children[1].attrs.cx), Number(fencers[k].children[1].attrs.cy)];
+      const blade = (k) => fencers[k].children[2].attrs.d.match(/-?[\d.]+/g).slice(0, 4).map(Number);
+      for (let i = 1; i <= 37; i++) art.step(i, i * 40);
+      const before = head(swinger);
+      art.poke(clickX, 200, 37, 0);
+      art.step(38, 38 * 40);
+      // Cut in mid-phrase, nobody jumps.
+      assert.ok(Math.hypot(head(swinger)[0] - before[0], head(swinger)[1] - before[1]) < 4, 'no jump');
+      let woundUp = false, parried = false, sparked = false;
+      for (let i = 39; i <= 38 + 30; i++) {
+        art.step(i, i * 40);
+        const [hx, hy, tx, ty] = blade(swinger), facing = swinger ? -1 : 1;
+        // Cocked back over its shoulder: the tip behind the hand and well above it.
+        if ((tx - hx) * facing < -10 && ty < hy - 20) woundUp = true;
+        // The other's sword hand over its own head.
+        const other = 1 - swinger, [ohx, ohy] = blade(other);
+        if (woundUp && ohy < head(other)[1]) parried = true;
+        if (parried && spark.attrs.opacity === '1.00') sparked = true;
+      }
+      assert.ok(woundUp && parried && sparked, `${clickX}: wound up ${woundUp}, parried ${parried}, spark ${sparked}`);
+    }
+  });
+
+  it('breaks the swinger\'s blade on about one wild swing in three; it stares or facepalms, drops the stub and draws another', () => {
+    const rate = Array.from({ length: 300 }, (_, n) => breaks(9, n)).filter(Boolean).length / 300;
+    assert.ok(rate > 0.25 && rate < 0.42, String(rate));
+    assert.equal(breaks(9, 2), breaks(9, 2));
+
+    const { layer, art } = run(duel, 0, { seed: 9 });
+    const fencers = find(layer, 'masthead-duel-fencer'), pieces = find(layer, 'masthead-duel-piece');
+    const length = (k) => { const [hx, hy, tx, ty] = fencers[k].children[2].attrs.d.match(/-?[\d.]+/g).slice(0, 4).map(Number); return Math.hypot(tx - hx, ty - hy); };
+    const flat = (el) => { const e = el.attrs.opacity !== '0' && el.attrs.d ? el.attrs.d.match(/-?[\d.]+/g).map(Number) : null; return !!e && Math.abs(e[1] - 310.5) < 0.2 && Math.abs(e[3] - 310.5) < 0.2; };
+    // The free hand: the end of the last limb drawn. How near it comes to the face.
+    const palmToFace = () => {
+      const pts = fencers[0].children[0].attrs.d.split('M').filter(Boolean).at(-1).split('L').map((q) => q.split(' ').map(Number));
+      const head = fencers[0].children[1].attrs;
+      return Math.hypot(pts.at(-1)[0] - Number(head.cx), pts.at(-1)[1] - Number(head.cy));
+    };
+    let i = 30, seenBreak = false, seenWhole = false, seenPalm = false, seenStare = false;
+    for (let k = 1; k <= i; k++) art.step(k, k * 40);
+    for (let n = 0; n < 6; n++) {
+      art.poke(400, 200, i, 0);
+      const lengths = [], landed = [false, false];
+      let nearest = Infinity, landedAt = null, palmAt = null;
+      for (let k = 0; k < 190; k++) {
+        i++; art.step(i, i * 40);
+        lengths.push(length(0));
+        nearest = Math.min(nearest, palmToFace());
+        if (palmAt === null && palmToFace() < 8) palmAt = k;
+        pieces.forEach((el, j) => { if (flat(el)) landed[j] = true; });
+        if (landedAt === null && landed[0]) landedAt = k;
+      }
+      if (breaks(9, n) && facepalms(9, n)) {
+        seenPalm = true;
+        assert.ok(nearest < 8, `click ${n}: hand to face, ${nearest}`);
+        // Only once the broken end is down.
+        assert.ok(landedAt !== null && palmAt > landedAt, `click ${n}: landed ${landedAt}, facepalm ${palmAt}`);
+      }
+      else { if (breaks(9, n)) seenStare = true; assert.ok(nearest > 10, `click ${n}: no facepalm, ${nearest}`); }
+      const stub = lengths.findIndex((l) => Math.abs(l - 42 * STUB) < 0.5);
+      if (breaks(9, n)) {
+        seenBreak = true;
+        // A stub, then nothing in hand, then a blade drawn out to full length, growing all the way.
+        const empty = lengths.findIndex((l, j) => j > stub && l < 0.5);
+        const whole = lengths.findIndex((l, j) => j > empty && l > 41.5);
+        assert.ok(stub >= 0 && empty > stub && whole > empty, `click ${n}: stub ${stub}, empty ${empty}, whole ${whole}`);
+        for (let j = empty + 1; j <= whole; j++) assert.ok(lengths[j] >= lengths[j - 1] - 1e-9, `click ${n}: drawn out steadily`);
+        assert.ok(lengths.slice(whole, whole + 3).some((l) => l > 41.5) && whole - empty > 4, `click ${n}: drawn, not popped in`);
+        assert.ok(landed[0] && landed[1], `click ${n}: the broken end and the stub both on the ground`);
+      } else {
+        seenWhole = true;
+        assert.ok(Math.min(...lengths) > 41.5, `click ${n}: whole, ${Math.min(...lengths)}`);
+      }
+      // Back in guard, the blade is whole.
+      assert.ok(Math.abs(length(0) - 42) < 0.5, `click ${n}: ${length(0)}`);
+    }
+    assert.ok(seenBreak && seenWhole && seenPalm && seenStare);
   });
 
   it('fences back and forth across the masthead without either passing the other, and without end', () => {

@@ -1,9 +1,15 @@
 /* Grass: a field of grass along the foot of the masthead, the wind moving through it. Slow swells
    lean the blades one way and let them back, and now and then a gust runs across the field,
    bending each blade as it passes. Nearer blades are taller and stronger; a few carry seed
-   heads. The field and its gusts come from the seed, so ?ambientSeed=<n> replays them. */
+   heads. The field and its gusts come from the seed, so ?ambientSeed=<n> replays them. A click
+   sends a gust out both ways from where it lands, laying the grass down away from it. */
 export var BLADES = 360;
 var GUST_SPEED = 7, GUST_WIDTH = 160;
+/* A click's gusts: one each way from [x], stronger and quicker than the wind's own. Each leans the
+   grass the way it's going. */
+export function pokeGusts(x) {
+  return [{ x: x, strength: 0.34, v: GUST_SPEED * 1.6 }, { x: x, strength: -0.34, v: -GUST_SPEED * 1.6 }];
+}
 
 /* How far the wind leans a blade at [x] at step [n]: a slow swell, and any gusts passing. */
 export function wind(x, n, gusts) {
@@ -60,11 +66,12 @@ export default function grass(layer, m) {
     interval: 50,
     step: function (n) {
       if (--nextGust <= 0) {
-        gusts.push({ x: -GUST_WIDTH * 2, strength: 0.12 + rand() * 0.16 });
+        gusts.push({ x: -GUST_WIDTH * 2, strength: 0.12 + rand() * 0.16, v: GUST_SPEED });
         nextGust = 140 + Math.floor(rand() * 260);
       }
-      gusts = gusts.filter(function (g) { g.x += GUST_SPEED; return g.x < W + GUST_WIDTH * 2; });
+      gusts = gusts.filter(function (g) { g.x += g.v; return g.x < W + GUST_WIDTH * 2 && g.x > -GUST_WIDTH * 2; });
       draw(n);
-    }
+    },
+    poke: function (x) { gusts = gusts.concat(pokeGusts(x)); }
   };
 }

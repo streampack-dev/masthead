@@ -48,8 +48,8 @@ still be asked for by name, and the demo page shows them all year. Otherwise eve
 season is as likely as any other.
 
 On a page running them, `?ambient=<name>` picks one, `?ambientDate=YYYY-MM-DD` picks as on that
-day, `?ambientSeed=<n>` replays a run (the art's title names the seed) and `?ambientDebug=1` logs
-the choice. Only the chosen animation's file is fetched.
+day, `?ambientSeed=<n>` replays a run, and `?ambientDebug=1` logs the choice and names the
+animation and its seed in the masthead's corner. Only the chosen animation's file is fetched.
 
 ## Using it in a front end
 
@@ -94,8 +94,9 @@ the choice. Only the chosen animation's file is fetched.
    The runner sets `data-masthead="<name>"` on the SVG and its parent (or `frame`), and
    `.masthead-paused` while paused, for the host's own CSS. Clicking the masthead pokes the
    animation, if it has a fragment of its own (boids scatter from a hawk, the bytecode rain
-   bursts, a surge runs through the circuit, the fractal sprouts a root, ghostrider opens the
-   throttle, life plants a pattern, signal noise tears, the Solari board riffles on, the terrain
+   bursts, a tunnel appears in the chase, a surge runs through the circuit, city defense fires
+   where you click, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
+   the grass, life plants a pattern, signal noise tears, the Solari board riffles on, the terrain
    banks, the train whistles, water skips a stone); the frame has `data-masthead-poke` while it
    does, for a cursor, say.
    Clicks on links, buttons and form controls in the masthead pass through untouched; a

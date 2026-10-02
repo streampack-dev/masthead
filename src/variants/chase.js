@@ -6,11 +6,14 @@
    along its track. It always pops back up. And now and then it walks out to the middle, turns to
    the reader, and holds up a sign: "...not a coyote." Just then the bird blurs past behind it;
    the sign drops, and the chase is on. The acts come from the seed, so ?ambientSeed=<n> replays
-   them. */
+   them. A click puts a tunnel on the ground there: the bird runs into it and is gone, and the
+   canine, running into it after, finds it painted on solid rock. */
 
-/* The canine, facing right, from its feet: a body, a long-snouted head with an ear, a tail. Its
-   legs are drawn apart: standing, or a whirl when it runs. */
-var DOG = 'M-24 -24a24 11 0 1 0 48 0a24 11 0 1 0 -48 0z' +
+/* The canine, facing right, from its feet: a body, a long-snouted head with an ear, a tail. It's
+   hungry: a bony, hunched back, its belly tucked up between haunch and chest, its ribs showing.
+   Its legs are drawn apart: standing, walking, or a scramble when it runs. */
+var DOG = 'M-24 -25C-24 -31 -16 -32 -8 -30C0 -29 8 -33 14 -34C20 -34 24 -30 23 -25C22 -18 19 -14 14 -14' +
+  'L8 -14C4 -16 2 -23 -4 -23C-9 -23 -10 -16 -12 -14L-20 -14C-23 -15 -24 -19 -24 -25z' +
   'M-23 -27q-12 -2 -18 -14q8 6 18 8z';
 var DOG_HEAD = 'M16 -34q2 -12 14 -10l16 6q2 4 -2 6l-14 2q-10 2 -14 -4z' +
   'M20 -42l-2 -14l9 10z';
@@ -18,9 +21,14 @@ var DOG_HEAD = 'M16 -34q2 -12 14 -10l16 6q2 4 -2 6l-14 2q-10 2 -14 -4z' +
 var DOG_FACE = 'M14 -40a12 11 0 1 0 24 0a12 11 0 1 0 -24 0z' +
   'M16 -47l-3 -14l9 8zM36 -47l3 -14l-9 8z';
 var DOG_FACE_MARKS = 'M21 -43v0M31 -43v0M26 -37v0M21 -33q5 4 10 0';
-var DOG_LEGS = 'M-14 -15L-16 0M-6 -15L-6 0M10 -15L10 0M16 -15L19 0';
+var DOG_RIBS = 'M8 -30q-2 4 0 9M12 -31q-2 5 0 11M16 -31q-2 4 0 10';
+/* Standing: jointed, as a dog's legs are. The hind legs angle back to the hock and down to the
+   paw; the front legs come down to a bent wrist; each ends in a paw, pointing forward. */
+var DOG_LEGS = 'M-19 -15L-23 -5L-21 0h4M-14 -15L-17 -5L-15 0h4' +
+  'M9 -15L9 -4L11 0h3M15 -15L16 -4L18 0h3';
 /* Walking: each pair of legs apart, then together. */
-var DOG_STEP = 'M-14 -15L-20 0M-6 -15L-2 0M10 -15L6 0M16 -15L22 0';
+var DOG_STEP = 'M-19 -15L-26 -6L-25 0h4M-14 -15L-13 -5L-10 0h4' +
+  'M9 -15L6 -4L6 0h4M15 -15L19 -5L22 0h3';
 /* The bird, facing right, from its feet: a body, a long neck, a crested head with a beak, a tail. */
 var BIRD = 'M-12 -40a12 7 0 1 0 24 0a12 7 0 1 0 -24 0z' +
   'M8 -44L14 -60M11 -66a5 5 0 1 0 10 0a5 5 0 1 0 -10 0z' +
@@ -29,15 +37,60 @@ var BIRD = 'M-12 -40a12 7 0 1 0 24 0a12 7 0 1 0 -24 0z' +
   'M-12 -41l-18 -8M-12 -39l-18 -2M-11 -37l-16 5';
 var BIRD_LEGS = 'M-4 -33L-8 0h6M2 -33L2 0h6';
 
-/* Legs in a blur: spokes round a hub, turned a little each frame. */
-export function whirl(cx, cy, r, frame) {
+/* A number in [0, 1) from [n] and [k], the same every time: the legs' randomness, kept apart from
+   the seed's, so ?ambientSeed=<n> replays the same acts whatever the legs do. */
+function hash(n, k) {
+  var x = Math.imul((n * 8 + k + 1) >>> 0, 2654435761) >>> 0;
+  x = Math.imul(x ^ (x >>> 15), 2246822519) >>> 0;
+  x = Math.imul(x ^ (x >>> 13), 3266489917) >>> 0;
+  return ((x ^ (x >>> 16)) >>> 0) / 0x100000000;
+}
+
+/* The bird's legs in a blur: a wheel of motion trailing under its body. Curved strokes of different
+   lengths turn round inside the wheel's rim, a step each frame, and a foot touches the ground
+   now behind, now ahead. Arcs read as motion where straight spokes read as a star. Behind the
+   wheel, three speed streaks, each a different length every frame. Returns the strokes and,
+   apart, the rim and the streaks, which are drawn lighter. */
+export function blurLegs(cx, cy, rx, ry, frame) {
+  var strokes = '';
+  var spans = [1.9, 1.3, 0.8];
+  for (var k = 0; k < 3; k++) {
+    var a0 = frame * 1.1 + k * 2.1, a1 = a0 + spans[k], f = 0.95 - k * 0.2;
+    strokes += 'M' + (cx + Math.cos(a0) * rx * f).toFixed(1) + ' ' + (cy + Math.sin(a0) * ry * f).toFixed(1) +
+      'A' + (rx * f).toFixed(1) + ' ' + (ry * f).toFixed(1) + ' 0 0 1 ' +
+      (cx + Math.cos(a1) * rx * f).toFixed(1) + ' ' + (cy + Math.sin(a1) * ry * f).toFixed(1);
+  }
+  var foot = cx + (frame % 2 ? -0.6 : 0.3) * rx;
+  strokes += 'M' + (foot - 3).toFixed(1) + ' 0h7';
+  var rim = 'M' + (cx - rx) + ' ' + cy + 'a' + rx + ' ' + ry + ' 0 1 0 ' + (2 * rx) + ' 0a' + rx + ' ' + ry + ' 0 1 0 ' + (-2 * rx) + ' 0';
+  var streaks = '';
+  [-0.55, 0, 0.5].forEach(function (y, k) {
+    var from = cx - rx * (y ? 0.9 : 1) - 3, len = 10 + Math.round(hash(frame, 20 + k) * 10);
+    streaks += 'M' + from.toFixed(1) + ' ' + (cy + y * ry).toFixed(1) + 'h' + (-len);
+  });
+  return { strokes: strokes, rim: rim, streaks: streaks };
+}
+
+/* The canine's legs in a scramble: each from its hip, at an angle drawn afresh every frame, but
+   only as far as a leg goes (SPLAY either side of straight down, toward its head or its tail),
+   bent at a knee, and longer or shorter, so a foot is off the ground now and then. A foot that
+   would go through the ground ([floor] below the hips' zero) stops on it. */
+export var SPLAY = 80 * Math.PI / 180;
+export function scramble(hips, frame, floor) {
   var d = '';
-  for (var k = 0; k < 6; k++) {
-    var a = frame * 0.9 + k * Math.PI / 3;
-    d += 'M' + cx + ' ' + cy + 'l' + (Math.cos(a) * r).toFixed(1) + ' ' + (Math.sin(a) * r).toFixed(1);
+  for (var k = 0; k < hips.length; k++) {
+    var a = (hash(frame, k) * 2 - 1) * SPLAY;
+    var thigh = 9 + hash(frame, k + 4) * 3, shin = thigh + 1;
+    var bend = 0.4 + hash(frame, k + 8) * 0.5;
+    var kx = hips[k][0] + Math.sin(a) * thigh, ky = hips[k][1] + Math.cos(a) * thigh;
+    var down = Math.cos(a - bend);
+    if (down > 0 && ky + down * shin > floor) shin = (floor - ky) / down;
+    var fx = kx + Math.sin(a - bend) * shin, fy = ky + Math.cos(a - bend) * shin;
+    d += 'M' + hips[k][0] + ' ' + hips[k][1] + 'L' + kx.toFixed(1) + ' ' + ky.toFixed(1) + 'L' + fx.toFixed(1) + ' ' + fy.toFixed(1);
   }
   return d;
 }
+var DOG_HIPS = [[-19, -15], [-14, -15], [9, -15], [15, -15]];
 
 /* A short train, as the train animation draws it, coming along the track. */
 var TRAIN = [
@@ -49,6 +102,17 @@ var TRAIN = [
   '  (o)(o)   (O)=(O)=(O)     '
 ];
 var ANVIL_PATH = 'M-30 0H30V-6H16V-16H36V-28H-34Q-46 -26 -56 -21Q-45 -18 -34 -16H-16V-6H-30Z';
+/* A tunnel mouth in the rock, as painted, from the ground: the rock round it, and the dark way in,
+   tall enough for the bird. */
+var TUNNEL_ROCK = 'M-46 0V-58Q-48 -100 0 -104Q48 -100 46 -58V0z';
+var TUNNEL_MOUTH = 'M-30 0V-64A30 26 0 0 1 30 -64V0z';
+var TUNNEL_CRACKS = 'M-40 -70l6 4M-38 -40l5 -2M36 -78l-5 5M38 -30l-6 1M-14 -98l3 5M12 -96l-2 6';
+var TUNNEL_HALF = 46;
+/* How long a tunnel waits for someone to run into it before it fades, in steps of 60 ms: a safety
+   net, since one nearly always does first. */
+export var TUNNEL_WAIT = 330;
+/* Whether a tunnel [age] steps old starts to fade, unless the canine is smacking into it now. */
+export function tunnelExpires(age, smacking) { return age > TUNNEL_WAIT && !smacking; }
 var ACTS = ['chase', 'chase', 'chase', 'chase', 'skid', 'skid', 'edge', 'edge', 'anvil', 'train', 'sign'];
 /* The canine's best speed, and the bird's. */
 var DOG_RUN = 16, BIRD_RUN = 24;
@@ -60,10 +124,20 @@ export default function chase(layer, m) {
   function solid(line) { return line.replace(/ /g, ' '); }
 
   var dustLayer = m.el('g', { 'class': 'masthead-chase-dust' });
+  // The tunnel, behind the cast, there only once the masthead is clicked.
+  var tunnelEl = m.el('g', { 'class': 'masthead-chase-tunnel', opacity: 0 });
+  m.el('path', { 'class': 'masthead-chase-piece', d: TUNNEL_ROCK }, tunnelEl);
+  m.el('path', { 'class': 'masthead-chase-tunnel-mouth', d: TUNNEL_MOUTH }, tunnelEl);
+  m.el('path', { 'class': 'masthead-chase-ribs', d: TUNNEL_CRACKS }, tunnelEl);
+  var tunnel = null;
   function figure(cls, body, head) {
     var g = m.el('g', { 'class': 'masthead-chase-' + cls, opacity: 0 });
     var inner = m.el('g', {}, g);
+    // The bird's blur is drawn first, behind the body, as speed leaves it behind.
+    var blur = m.el('path', { 'class': 'masthead-chase-blur', opacity: 0 }, inner);
+    var streaks = m.el('path', { 'class': 'masthead-chase-streaks', opacity: 0 }, inner);
     m.el('path', { 'class': 'masthead-chase-piece', d: body }, inner);
+    if (cls === 'dog') m.el('path', { 'class': 'masthead-chase-ribs', d: DOG_RIBS }, inner);
     var legs = m.el('path', { 'class': 'masthead-chase-legs' }, inner);
     // The head in profile, and (for the canine) turned to the reader.
     var profile = m.el('g', {}, inner);
@@ -76,7 +150,7 @@ export default function chase(layer, m) {
     }
     // A cartoon "!" over its head, when it notices what's coming.
     var alarm = m.el('path', { 'class': 'masthead-chase-alarm', d: 'M28 -78v-14M28 -70v0', opacity: 0 }, inner);
-    return { g: g, inner: inner, legs: legs, alarm: alarm, profile: profile, face: face, x: 0, dir: 1, sx: 1, sy: 1, mode: 'hidden' };
+    return { g: g, inner: inner, legs: legs, blur: blur, streaks: streaks, alarm: alarm, profile: profile, face: face, x: 0, dir: 1, sx: 1, sy: 1, mode: 'hidden' };
   }
   var bird = figure('bird', BIRD), dog = figure('dog', DOG, DOG_HEAD);
   var stars = m.el('path', { 'class': 'masthead-chase-stars', opacity: 0 });
@@ -91,26 +165,36 @@ export default function chase(layer, m) {
 
   var dust = [], act = null, frame = 0, rest = 10;
 
+  /* The bird's dust, which stops while it's in the tunnel. */
+  function birdPuff(x, size) { if (!bird.under) puff(x, size); }
+
   function puff(x, size) {
     dust.push({ el: m.el('circle', { cx: x.toFixed(1), cy: (ground - 6).toFixed(1), r: size }, dustLayer), age: 0, size: size });
   }
 
   function place(f, n) {
     var squeeze = 1 / m.stretch();
-    f.g.setAttribute('opacity', f.mode === 'hidden' ? 0 : 1);
+    f.g.setAttribute('opacity', f.mode === 'hidden' || f.under ? 0 : 1);
     f.g.setAttribute('transform', 'translate(' + f.x.toFixed(1) + ' ' + ground + ') scale(' + (f.dir * f.sx * squeeze).toFixed(4) + ' ' + f.sy.toFixed(3) + ')');
     var isDog = f === dog;
-    // Running, legs blur: the canine's front pair and back pair each a whirl of their own, the
-    // bird's trailing behind it. Walking, the canine's step.
-    f.legs.setAttribute('d', f.mode === 'run'
-      ? (isDog ? whirl(-19, -14, 16, n) + whirl(5, -14, 16, n + 1.7) : whirl(-22, -15, 16, n))
+    // Running, the bird's legs are a blur under it and the canine's a scramble. Walking, the
+    // canine's step.
+    // The blur trails behind the bird, wider than it's tall, as if left behind by its speed.
+    var blurred = f.mode === 'run' && !isDog ? blurLegs(-13, -17, 19, 15, n) : null;
+    // Scrambling, the canine is off the ground, bobbing, which gives its legs room to flail.
+    var lift = f.mode === 'run' && isDog ? 5 + Math.round(hash(n, 12) * 3) : 0;
+    f.legs.setAttribute('d', blurred ? blurred.strokes
+      : f.mode === 'run' ? scramble(DOG_HIPS, n, lift)
       : isDog ? (f.mode === 'walk' && n % 4 < 2 ? DOG_STEP : DOG_LEGS) : BIRD_LEGS);
+    f.blur.setAttribute('opacity', blurred ? 1 : 0);
+    f.streaks.setAttribute('opacity', blurred ? 1 : 0);
+    if (blurred) { f.blur.setAttribute('d', blurred.rim); f.streaks.setAttribute('d', blurred.streaks); }
     // Noticing: a "!" over its head, for a beat; skidding: leaning back hard.
     f.alarm.setAttribute('opacity', f.mode === 'look' ? 1 : 0);
     // Facing the reader: the front of its head instead of its profile.
     f.profile.setAttribute('opacity', f.mode === 'face' ? 0 : 1);
     f.face.setAttribute('opacity', f.mode === 'face' ? 1 : 0);
-    f.inner.setAttribute('transform', f.mode === 'skid' ? 'rotate(-14)' : '');
+    f.inner.setAttribute('transform', f.mode === 'skid' ? 'rotate(-14)' : lift ? 'translate(0 ' + -lift + ')' : '');
   }
 
   /* Each act: a function of its frame that moves the cast and says when it's done. */
@@ -124,7 +208,7 @@ export default function chase(layer, m) {
       }
       if (bird.mode === 'run') {
         bird.x += a.dir * BIRD_RUN;
-        if (f % 3 === 0) puff(bird.x - a.dir * 20, 6 + rand() * 4);
+        if (f % 3 === 0) birdPuff(bird.x - a.dir * 20, 6 + rand() * 4);
         if ((a.dir > 0 && bird.x > W + 60) || (a.dir < 0 && bird.x < -60)) { bird.mode = 'hidden'; a.goneAt = f; }
       }
       if (a.goneAt !== undefined && f === a.goneAt + a.gap) { dog.mode = 'run'; dog.x = a.dir > 0 ? -50 : W + 50; }
@@ -260,7 +344,7 @@ export default function chase(layer, m) {
         if (f - a.at === 46) { bird.mode = 'run'; bird.dir = a.dir; bird.x = a.dir > 0 ? -40 : W + 40; }
         if (bird.mode === 'run') {
           bird.x += a.dir * BIRD_RUN;
-          if (f % 2 === 0) puff(bird.x - a.dir * 20, 7 + rand() * 4);
+          if (f % 2 === 0) birdPuff(bird.x - a.dir * 20, 7 + rand() * 4);
           if ((a.dir > 0 && bird.x > dog.x) || (a.dir < 0 && bird.x < dog.x)) { dog.mode = 'look'; a.stage = 'drop'; a.at = f; }
         }
       } else if (a.stage === 'drop' || a.stage === 'after') {
@@ -278,6 +362,39 @@ export default function chase(layer, m) {
         if (a.stage === 'after' && (dog.x < -70 || dog.x > W + 70) && t > 42) {
           dog.mode = 'hidden'; sign.setAttribute('opacity', 0); return true;
         }
+      }
+      return false;
+    },
+    // Not an act the seed picks: the canine, running after the bird, into the tunnel it went into.
+    smack: function (f, a) {
+      // Flat against the painting, nose to the middle of the way in.
+      var squeeze = 1 / m.stretch(), face = a.tx - a.dir * 11 * squeeze;
+      if (f === 0) {
+        // Whatever act it cut short leaves nothing behind.
+        [sign, anvil, train, stars].forEach(function (e) { e.setAttribute('opacity', 0); });
+        dog.mode = 'stand'; dog.dir = a.dir; dog.sx = 0.25; dog.sy = 1; dog.x = face; bird.mode = 'hidden';
+        a.stage = 'splat'; puff(face, 6);
+      }
+      if (a.stage === 'splat') {
+        if (f > 16) {
+          a.stage = 'dizzy'; a.at = f; dog.sx = 1; dog.x = face - a.dir * 37;
+          // Solid rock, it turns out; the painting fades, its work done.
+          if (tunnel === a.tunnel) tunnel.fading = 0;
+        }
+      } else if (a.stage === 'dizzy') {
+        stars.setAttribute('opacity', 1);
+        var sx = dog.x + a.dir * 24, sy = ground - 58, d = '';
+        for (var k = 0; k < 3; k++) {
+          var ang = (f - a.at) * 0.35 + k * 2.1;
+          var px = sx + Math.cos(ang) * 16, py = sy + Math.sin(ang) * 5;
+          d += 'M' + (px - 3).toFixed(1) + ' ' + py.toFixed(1) + 'h6M' + px.toFixed(1) + ' ' + (py - 3).toFixed(1) + 'v6';
+        }
+        stars.setAttribute('d', d);
+        if (f - a.at > 30) { stars.setAttribute('opacity', 0); a.stage = 'back'; dog.dir = -a.dir; dog.mode = 'walk'; }
+      } else if (a.stage === 'back') {
+        dog.x -= a.dir * 4;
+        dog.sy = 1 + (f % 6 < 3 ? 0.04 : -0.04);
+        if (dog.x < -70 || dog.x > W + 70) { dog.mode = 'hidden'; dog.sy = 1; return true; }
       }
       return false;
     },
@@ -314,7 +431,39 @@ export default function chase(layer, m) {
     }
   };
 
+  /* Whether [f] passed [x] this step, going no further than a step goes. */
+  function passed(f, x, reach) {
+    return Math.abs(f.x - f.px) <= reach && (f.px - x) * (f.x - x) <= 0 && f.x !== f.px;
+  }
+
+  /* The tunnel's part in a step: it swallows the running bird, and the running canine smacks
+     into it, which ends whatever act was on. */
+  function tunnelStep() {
+    if (!tunnel) return;
+    tunnel.age += 1;
+    if (tunnel.fading === undefined && tunnelExpires(tunnel.age, !!(act && act.name === 'smack'))) tunnel.fading = 0;
+    if (tunnel.fading !== undefined) {
+      if (++tunnel.fading > 20) tunnel = null;
+      return;
+    }
+    if (bird.mode === 'run' && !bird.under && passed(bird, tunnel.x, BIRD_RUN + 4)) {
+      bird.under = true;
+      puff(tunnel.x, 9);
+    }
+    // The canine runs at the middle of the tunnel, where the bird went in, and meets rock.
+    var squeeze = 1 / m.stretch(), nose = dog.x + dog.dir * 40 * squeeze, was = dog.px + dog.dir * 40 * squeeze;
+    if (dog.mode === 'run' && Math.abs(dog.x - dog.px) <= DOG_RUN + 2 && (was - tunnel.x) * (nose - tunnel.x) <= 0 && nose !== was) {
+      act = { name: 'smack', tx: tunnel.x, dir: dog.dir, tunnel: tunnel };
+      frame = 0;
+      acts.smack(frame++, act);
+    }
+  }
+
   function draw(n) {
+    if (tunnel) {
+      tunnelEl.setAttribute('opacity', tunnel.fading === undefined ? 1 : Math.max(0, 1 - tunnel.fading / 20).toFixed(2));
+      tunnelEl.setAttribute('transform', 'translate(' + tunnel.x.toFixed(1) + ' ' + ground + ') scale(' + (1 / m.stretch()).toFixed(4) + ' 1)');
+    } else tunnelEl.setAttribute('opacity', 0);
     place(bird, n);
     place(dog, n);
     dust = dust.filter(function (p) {
@@ -330,13 +479,21 @@ export default function chase(layer, m) {
   return {
     interval: 60,
     step: function (n) {
+      bird.px = bird.x; dog.px = dog.x;
       if (!act) {
-        if (--rest > 0) { draw(n); return; }
+        if (--rest > 0) { tunnelStep(); draw(n); return; }
         act = { name: ACTS[Math.floor(rand() * ACTS.length)] };
         frame = 0;
+        bird.under = false;
       }
-      if (acts[act.name](frame++, act)) { act = null; rest = 20 + Math.floor(rand() * 50); }
+      if (acts[act.name](frame++, act)) { act = null; bird.under = false; rest = 20 + Math.floor(rand() * 50); }
+      else tunnelStep();
       draw(n);
+    },
+    // A click: a tunnel there, on the ground, or the one there is moved.
+    poke: function (x) {
+      tunnel = { x: Math.max(TUNNEL_HALF, Math.min(W - TUNNEL_HALF, x)), age: 0 };
+      draw(frame);
     }
   };
 }
