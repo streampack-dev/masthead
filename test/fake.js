@@ -1,3 +1,5 @@
+import { during } from '../src/runner.js';
+
 /* Just enough of an SVG element for a variant to draw into, and the m its make() is given, so the
    variants run under node:test without a browser. */
 export function element(tag) {
@@ -23,6 +25,7 @@ export function context(layer, opts) {
     seed: () => (opts.seed === undefined ? 7 : opts.seed),
     stretch: () => opts.stretch || 1,
     date: () => opts.date || new Date(2026, 4, 1),
+    during: (occasion) => during(occasion, opts.date || new Date(2026, 4, 1)),
     deks: () => opts.deks || [],
     el(tag, attrs, parent) {
       const e = element(tag);

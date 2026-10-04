@@ -2,6 +2,7 @@
    is make(layer, m); see the README. Adding one is adding its file and its line here. */
 export var variants = {
   bats: function () { return import('./variants/bats.js'); },
+  blockpeek: function () { return import('./variants/blockpeek.js'); },
   boids: function () { return import('./variants/boids.js'); },
   bytecode: function () { return import('./variants/bytecode.js'); },
   chase: function () { return import('./variants/chase.js'); },
@@ -10,6 +11,7 @@ export var variants = {
   deadline: function () { return import('./variants/deadline.js'); },
   duel: function () { return import('./variants/duel.js'); },
   eyes: function () { return import('./variants/eyes.js'); },
+  football: function () { return import('./variants/football.js'); },
   fractal: function () { return import('./variants/fractal.js'); },
   ghostrider: function () { return import('./variants/ghostrider.js'); },
   ghosts: function () { return import('./variants/ghosts.js'); },
@@ -21,6 +23,7 @@ export var variants = {
   pongwars: function () { return import('./variants/pongwars.js'); },
   pumpkins: function () { return import('./variants/pumpkins.js'); },
   rocks: function () { return import('./variants/rocks.js'); },
+  ships: function () { return import('./variants/ships.js'); },
   signalnoise: function () { return import('./variants/signalnoise.js'); },
   solari: function () { return import('./variants/solari.js'); },
   spider: function () { return import('./variants/spider.js'); },

@@ -1,8 +1,9 @@
 /* The specimen page: every variant, each in a masthead-shaped stage, paused while off screen. */
-import { startMasthead, variants } from '../src/index.js';
+import { DRAFTS, startMasthead, variants } from '../src/index.js';
 
 var BLURBS = {
   bats: 'October: bats flapping across in loose, wavering flight, now and then a little flock.',
+  blockpeek: 'Someone on the far side breaking a block to peer through at you, in the style of the block-building games. Click the block to help, or anywhere else to have them mine there.',
   boids: 'Sixteen fireflies flocking. Click to send a hawk among them.',
   bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded. Click to burst it.',
   chase: 'A fast bird and the canine forever after it: skids, a smack into the frame, an anvil, the train. It always pops back up. Click to paint a tunnel.',
@@ -11,6 +12,7 @@ var BLURBS = {
   deadline: 'A writer at a desk, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard.',
   duel: 'Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth, forever: no touches, no winner.',
   eyes: 'October: eyes in the dark, opening, blinking, glancing about, and closing again.',
+  football: 'Football season: a player in pads running a play. A pass, caught or dropped, or a run with a hurdle over a diving defender.',
   fractal: 'A branching growth tracing round the name, resting when grown, then starting again. Click to sprout a root.',
   ghostrider: 'A wireframe road ahead, bending and rising gently, the hills sliding aside on the bends. Click to open the throttle. For Neil Peart.',
   ghosts: 'October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below.',
@@ -22,6 +24,7 @@ var BLURBS = {
   pongwars: 'Pong Wars: two sides of a field of squares, a ball each, the border between them wandering forever.',
   pumpkins: "October: a row of jack-o'-lanterns, their candles flickering.",
   rocks: 'Asteroids, playing itself: rocks drifting and turning, splitting when the ship hits them.',
+  ships: 'Ships gliding across a low sea: a liner trailing smoke, a carrier, a tall ship, a sailboat bobbing. Click for a dolphin.',
   signalnoise: 'Faint scanlines and a rolling band, with brief bursts of interference. Click to tear the signal.',
   solari: "A split-flap board showing the front page's deks, riffling to the next every so often. Click to riffle it on.",
   spider: 'October: a spider letting itself down on its thread, dangling, and climbing back up; a cobweb in the corner.',
@@ -115,7 +118,8 @@ function specimen(name, art) {
     '<div class="stage"><div class="stage-text"><p class="stage-date"></p>' +
     '<p class="stage-name">bytecode<span>.</span>news</p>' +
     '<p class="stage-tagline">Programming News &amp; Technical Writing</p></div></div>';
-  figure.querySelector('h2').textContent = name;
+  // A draft runs here, but the sites never pick it.
+  figure.querySelector('h2').textContent = DRAFTS.indexOf(name) >= 0 ? name + ' (draft: not on the sites)' : name;
   figure.querySelector('.specimen-blurb').textContent = BLURBS[name] || '';
   figure.querySelector('.stage-date').textContent = today;
   main.appendChild(figure);

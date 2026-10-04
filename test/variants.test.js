@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import { variants } from '../src/variants.js';
-import { SEASONS, inSeason } from '../src/runner.js';
+import { DRAFTS, OCCASIONS, REFERENCE_DAYS, SEASONS, during, inSeason, isWindow, pick, weights } from '../src/runner.js';
 import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
 import duel, { POSES, STUB, breaks, crossing, facepalms, figure, mixPose } from '../src/variants/duel.js';
@@ -24,6 +24,7 @@ import rocks, { SIZES, outline } from '../src/variants/rocks.js';
 import pongwars, { COLS as WAR_COLS, ROWS as WAR_ROWS, bounce } from '../src/variants/pongwars.js';
 import stix, { GH, GW, claim, field, route } from '../src/variants/stix.js';
 import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
+import football, { FLIGHT, GROUND as FIELD, arc, joints } from '../src/variants/football.js';
 import fractal from '../src/variants/fractal.js';
 import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
 import life, { PLANTS } from '../src/variants/life.js';
@@ -32,8 +33,10 @@ import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/so
 import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
+import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
+import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -57,7 +60,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -298,24 +301,116 @@ describe('the circuit', () => {
 
 describe('the seasons', () => {
   const names = Object.keys(variants);
+  // Noon, local time, as ?ambientDate gives it.
+  const day = (y, m, d) => new Date(y, m - 1, d, 12);
 
-  it('keeps the October animations to October, and the rest to all year', () => {
-    const october = inSeason(names, new Date(2026, 9, 31));
-    const may = inSeason(names, new Date(2026, 4, 1));
+  it('keeps the Halloween animations to October, and the rest to all year', () => {
+    const october = inSeason(names, day(2026, 10, 31));
+    const may = inSeason(names, day(2026, 5, 1));
     for (const name of ['bats', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider']) {
       assert.ok(october.includes(name) && !may.includes(name), name);
     }
     assert.ok(may.includes('boids') && october.includes('boids'));
-    assert.equal(october.length, names.length);
+    // In October every animation may be picked but the drafts (and those out of season).
+    assert.equal(october.length, names.filter((n) => !DRAFTS.includes(n) && (!SEASONS[n] || during(SEASONS[n][0], day(2026, 10, 31)))).length);
+    // A month is long enough that October's animations simply join the pool.
+    assert.equal(weights(['bats', 'boids'], day(2026, 10, 15)).bats, 1);
   });
 
-  it('lists only animations there are', () => {
-    for (const name of Object.keys(SEASONS)) assert.ok(names.includes(name), name);
+  it('never picks a draft at random, in or out of season', () => {
+    // An animation made a draft drops out of the picking at once.
+    DRAFTS.push('boids');
+    try {
+      assert.ok(!inSeason(names, day(2027, 6, 1)).includes('boids'));
+      assert.equal(weights(['boids'], day(2027, 6, 1)).boids, 0);
+    } finally {
+      DRAFTS.pop();
+    }
+    assert.ok(inSeason(names, day(2027, 6, 1)).includes('boids'));
+    for (const d of [day(2026, 10, 4), day(2027, 6, 1), day(2027, 1, 15)]) {
+      const picked = inSeason(names, d);
+      for (const name of DRAFTS) assert.ok(!picked.includes(name), name);
+      for (let i = 0; i < 50; i++) assert.ok(!DRAFTS.includes(pick(names, d)));
+    }
+    for (const name of DRAFTS) assert.ok(names.includes(name), name);
+  });
+
+  it('lists only animations there are, in windows it understands', () => {
+    for (const name of Object.keys(SEASONS)) {
+      assert.ok(names.includes(name), name);
+      for (const win of SEASONS[name]) assert.ok(isWindow(win), `${name}: ${JSON.stringify(win)}`);
+    }
+    for (const [name, wins] of Object.entries(OCCASIONS)) {
+      for (const win of wins) assert.ok(isWindow(win), `${name}: ${JSON.stringify(win)}`);
+    }
+  });
+
+  it('knows a window when it sees one, and not otherwise', () => {
+    for (const win of [10, '07-04', '02-29', '12-24..12-26', '12-31..01-01', '2026-12-04',
+      '2026-12-04..2026-12-12', 'halloween', { when: '07-04', weight: 50 }]) {
+      assert.ok(isWindow(win), JSON.stringify(win));
+    }
+    for (const win of [0, 13, 2.5, '13-01', '02-30', '7-4', '2026-02-29', '2026-12-12..2026-12-04',
+      '01-01..02-01..03-01', 'nowhen', { when: '07-04', weight: -1 }, null]) {
+      assert.ok(!isWindow(win), JSON.stringify(win));
+    }
+  });
+
+  it('opens each kind of window on its days, inclusive, and not a day either side', () => {
+    const open = (win, y, m, d) => during(win, day(y, m, d));
+    assert.ok(open('07-04', 2027, 7, 4) && !open('07-04', 2027, 7, 3) && !open('07-04', 2027, 7, 5));
+    assert.ok(open('12-24..12-26', 2026, 12, 24) && open('12-24..12-26', 2026, 12, 26));
+    assert.ok(!open('12-24..12-26', 2026, 12, 23) && !open('12-24..12-26', 2026, 12, 27));
+    // Over the year end, from either side of it.
+    assert.ok(open('12-30..01-02', 2026, 12, 31) && open('12-30..01-02', 2027, 1, 2));
+    assert.ok(!open('12-30..01-02', 2027, 1, 3) && !open('12-30..01-02', 2026, 12, 29));
+    // Once, on its own dates only; a dated range may cross the year end too.
+    assert.ok(open('2027-12-24..2028-01-01', 2027, 12, 24) && open('2027-12-24..2028-01-01', 2028, 1, 1));
+    assert.ok(!open('2027-12-24..2028-01-01', 2028, 12, 24) && !open('2027-12-24..2028-01-01', 2028, 1, 2));
+    assert.ok(open('2026-12-04', 2026, 12, 4) && !open('2026-12-04', 2027, 12, 4));
+    assert.ok(open(2, 2028, 2, 29) && !open(2, 2028, 3, 1));
+  });
+
+  it('weighs a window by how short it is, the shortest open one deciding, or by its own weight', () => {
+    const was = { ...SEASONS };
+    try {
+      SEASONS.boids = ['06-27..07-04', '07-04'];
+      SEASONS.life = ['2026-12-04..2026-12-11'];
+      SEASONS.water = [{ when: '07-04', weight: 2 }];
+      assert.equal(weights(['boids'], day(2027, 6, 28)).boids, REFERENCE_DAYS / 8);
+      assert.equal(weights(['boids'], day(2027, 7, 4)).boids, REFERENCE_DAYS);
+      assert.equal(weights(['boids'], day(2027, 7, 5)).boids, 0);
+      assert.equal(weights(['life'], day(2026, 12, 8)).life, REFERENCE_DAYS / 8);
+      assert.equal(weights(['water'], day(2027, 7, 4)).water, 2);
+      assert.equal(weights(['grass'], day(2027, 7, 4)).grass, 1);
+    } finally {
+      for (const k of Object.keys(SEASONS)) delete SEASONS[k];
+      Object.assign(SEASONS, was);
+    }
+  });
+
+  it('picks by weight: a one-day occasion\'s animation more often than not, nothing out of season', () => {
+    const was = { ...SEASONS };
+    try {
+      SEASONS.boids = ['07-04'];
+      let s = 1;
+      const random = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x100000000; };
+      let picked = 0;
+      for (let i = 0; i < 2000; i++) if (pick(names, day(2027, 7, 4), random) === 'boids') picked++;
+      const others = names.filter((n) => !SEASONS[n]).length;
+      const expected = REFERENCE_DAYS / (REFERENCE_DAYS + others);
+      assert.ok(Math.abs(picked / 2000 - expected) < 0.05, `${picked / 2000} vs ${expected}`);
+      for (let i = 0; i < 200; i++) assert.notEqual(pick(names, day(2027, 7, 5), random), 'boids');
+      assert.equal(pick(['bats'], day(2027, 5, 1)), null);
+    } finally {
+      for (const k of Object.keys(SEASONS)) delete SEASONS[k];
+      Object.assign(SEASONS, was);
+    }
   });
 });
 
 describe('the bytecode rain', () => {
-  it('runs to 0xDEADBEEF in October, and not otherwise', () => {
+  it('runs to 0xDEADBEEF at Halloween, and not otherwise', () => {
     assert.deepEqual(OCTOBER.slice(0, 4).map((b) => b.hex), ['DE', 'AD', 'BE', 'EF']);
     const shown = (date) => {
       const { layer } = run(bytecode, 2000, { date, seed: 11 });
@@ -1246,5 +1341,219 @@ describe('the fractal', () => {
     assert.ok(xs.length >= 600, `${xs.length} segments`);
     assert.ok(Math.min(...xs) < 250);
     assert.ok(Math.max(...xs) > 950);
+  });
+});
+
+describe('the ships', () => {
+  const at = (g) => /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(g.attrs.transform).slice(1).map(Number);
+
+  it('sail on the sea, a few at a time, every kind in a long enough run', () => {
+    const { layer, art } = run(ships, 0, { seed: 5 });
+    const seen = new Set();
+    for (let n = 1; n <= 20000; n++) {
+      art.step(n, n * 40);
+      if (n % 50) continue;
+      const fleet = find(layer, 'masthead-ships-ship');
+      assert.ok(fleet.length <= MAX_SHIPS, `${fleet.length} ships at ${n}`);
+      for (const g of fleet) {
+        const [, y] = at(g);
+        assert.ok(y > HORIZON && y < NEAR, `${g.attrs.class} at y ${y}`);
+        seen.add(g.attrs.class.split(' ').pop().replace('masthead-ships-', ''));
+      }
+    }
+    assert.deepEqual([...seen].sort(), Object.keys(KINDS).sort());
+  });
+
+  it('trail smoke from a liner, which drifts up and fades', () => {
+    const { layer, art } = run(ships, 0, { seed: 5 });
+    let puff = null, n = 0;
+    while (!puff && n < 20000) {
+      n++;
+      art.step(n, n * 40);
+      puff = find(layer, 'masthead-ships-puff').at(-1) || null;
+    }
+    assert.ok(puff, 'a liner smoked');
+    const y0 = Number(puff.attrs.cy), o0 = Number(puff.attrs.opacity);
+    for (let k = 1; k <= 30; k++) art.step(n + k, (n + k) * 40);
+    assert.ok(Number(puff.attrs.cy) < y0 && Number(puff.attrs.opacity) < o0);
+  });
+
+  it('leaps a dolphin from the water and back in', () => {
+    assert.deepEqual([leap(0).y, leap(1).y].map((y) => Math.abs(y)), [0, 0]);
+    assert.equal(leap(0.5).y, -LEAP_HEIGHT);
+    assert.ok(leap(0.1).angle < 0 && leap(0.9).angle > 0, 'nose up, then down');
+  });
+
+  it('sends a dolphin from the water below a poke, with a splash in and out', () => {
+    const { layer, art } = run(ships, 10);
+    art.poke(400, 60, 10, 400);
+    const dolphin = find(layer, 'masthead-ships-dolphin')[0];
+    const [x0, y0] = at(dolphin);
+    assert.ok(Math.abs(x0 - 400) < 80 && y0 > HORIZON, `${x0}, ${y0}`);
+    assert.equal(find(layer, 'masthead-ships-splash').length, 1);
+    for (let n = 11; n <= 10 + LEAP_STEPS / 2; n++) art.step(n, n * 40);
+    assert.ok(at(dolphin)[1] < y0 - LEAP_HEIGHT / 2, 'in the air');
+    for (let n = 11 + LEAP_STEPS / 2; n <= 10 + LEAP_STEPS; n++) art.step(n, n * 40);
+    assert.equal(find(layer, 'masthead-ships-dolphin').length, 0);
+    // The splash going in has faded by now; the one coming out is where it lands, on along.
+    const out = find(layer, 'masthead-ships-splash');
+    assert.equal(out.length, 1);
+    assert.ok(Number(out[0].attrs.cx) > x0 + 60, `${out[0].attrs.cx} after ${x0}`);
+    for (let n = 11 + LEAP_STEPS; n <= 40 + LEAP_STEPS; n++) art.step(n, n * 40);
+    assert.equal(find(layer, 'masthead-ships-splash').length, 0);
+  });
+
+  it('keeps to three dolphins at once', () => {
+    const { layer, art } = run(ships, 10);
+    for (let i = 0; i < 6; i++) art.poke(100 + i * 150, 200, 10, 400);
+    assert.equal(find(layer, 'masthead-ships-dolphin').length, 3);
+  });
+});
+
+describe('the block peek', () => {
+  const where = (layer) => {
+    const patch = find(layer, 'masthead-blockpeek-patch')[0];
+    const t = /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(patch.attrs.transform || '');
+    return { shown: Number(patch.attrs.opacity), x: t && Number(t[1]), y: t && Number(t[2]) };
+  };
+  const opacity = (layer, cls) => Number(find(layer, cls)[0].attrs.opacity);
+  const rows = Math.floor(320 / BLOCK);
+
+  it('keeps holes low, or to the sides of the name, at any stretch', () => {
+    for (const stretch of [1, 1.6, 3]) {
+      const spots = candidates(stretch, 1200, 320);
+      assert.ok(spots.length > 10);
+      for (const s of spots) {
+        assert.ok(s.y >= (rows - 2) * BLOCK || Math.abs(s.x - 600) > 360, `${s.x}, ${s.y}`);
+      }
+    }
+    assert.deepEqual(cellAt(10, 10, 1, 320), { x: BLOCK / 2, y: BLOCK / 2 });
+  });
+
+  it('cracks a block in stages, inside the block', () => {
+    let s = 3;
+    const stages = cracks(() => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x100000000; });
+    assert.equal(stages.length, STAGES);
+    for (const stage of stages) {
+      assert.ok(stage.length >= 1);
+      for (const seg of stage) for (const v of seg) assert.ok(Math.abs(v) <= BLOCK / 2, String(v));
+    }
+  });
+
+  it('breaks a block, a face peers through and ducks away, and the wall fades', () => {
+    const { layer, art } = run(blockpeek, 0, { seed: 9 });
+    const seen = { patch: false, hole: false, head: false, gone: false };
+    for (let n = 1; n <= 4000; n++) {
+      art.step(n, n * 40);
+      const at = where(layer);
+      if (at.shown > 0.9) {
+        seen.patch = true;
+        assert.ok(at.y >= (rows - 2) * BLOCK || Math.abs(at.x - 600) > 360 - BLOCK, `${at.x}, ${at.y}`);
+      }
+      if (opacity(layer, 'masthead-blockpeek-hole') === 1) seen.hole = true;
+      if (opacity(layer, 'masthead-blockpeek-head') > 0.9) seen.head = true;
+      if (seen.head && at.shown === 0) seen.gone = true;
+    }
+    assert.deepEqual(seen, { patch: true, hole: true, head: true, gone: true });
+  });
+
+  const untilMining = (art, layer) => {
+    for (let n = 1; n <= 2000; n++) {
+      art.step(n, n * 40);
+      if (where(layer).shown >= 1 && find(layer, 'masthead-blockpeek-crack')[0].attrs.d) return n;
+    }
+    throw new Error('never mined');
+  };
+  const untilBroken = (art, layer, from, poke) => {
+    for (let n = from + 1; n <= from + 2000; n++) {
+      if (poke && n % 10 === 0) { const at = where(layer); art.poke(at.x, at.y, n, n * 40); }
+      art.step(n, n * 40);
+      if (opacity(layer, 'masthead-blockpeek-hole') > 0) return n - from;
+    }
+    throw new Error('never broke');
+  };
+
+  it('breaks the block sooner for clicks on it', () => {
+    const left = run(blockpeek, 0, { seed: 4 });
+    const alone = untilBroken(left.art, left.layer, untilMining(left.art, left.layer), false);
+    const right = run(blockpeek, 0, { seed: 4 });
+    const helped = untilBroken(right.art, right.layer, untilMining(right.art, right.layer), true);
+    assert.ok(helped < alone / 2, `${helped} steps helped, ${alone} alone`);
+  });
+
+  it('mines where you click instead, the cracks there starting afresh', () => {
+    const { layer, art } = run(blockpeek, 0, { seed: 4 });
+    const n = untilMining(art, layer);
+    art.poke(1100, 40, n, n * 40);
+    const at = where(layer);
+    assert.deepEqual([at.x, at.y], [cellAt(1100, 40, 1, 320).x, BLOCK / 2]);
+    assert.equal(find(layer, 'masthead-blockpeek-crack')[0].attrs.d, '');
+  });
+
+  it('has the face duck when you click the hole', () => {
+    const { layer, art } = run(blockpeek, 0, { seed: 9 });
+    let n = 0;
+    while (opacity(layer, 'masthead-blockpeek-head') < 0.9 && n < 4000) { n++; art.step(n, n * 40); }
+    const at = where(layer);
+    art.poke(at.x, at.y, n, n * 40);
+    for (let k = 1; k <= 20; k++) art.step(n + k, (n + k) * 40);
+    assert.equal(opacity(layer, 'masthead-blockpeek-head'), 0);
+  });
+});
+
+describe('football', () => {
+  const at = (g) => {
+    const t = /translate\((-?[\d.]+) (-?[\d.]+)\).*rotate\((-?[\d.]+)\)/.exec(g.attrs.transform || '');
+    return t ? { x: Number(t[1]), y: Number(t[2]), tilt: Number(t[3]) } : null;
+  };
+  // Seeds from the whole range, as real runs have, rather than small ones.
+  const seeds = Array.from({ length: 12 }, (_, i) => Math.imul(i + 1, 2654435761) >>> 1);
+
+  it('is in season through the football season, and weighs as a long season does', () => {
+    const day = (y, m, d) => new Date(y, m - 1, d, 12);
+    // Its season, as the football occasion has it; while it's a draft, it isn't picked at all.
+    assert.ok(during('football', day(2026, 10, 4)) && during('football', day(2027, 2, 14)));
+    assert.ok(!during('football', day(2027, 6, 1)));
+    assert.deepEqual(SEASONS.football, ['football']);
+  });
+
+  it('throws a ball from one end to the other, over the top', () => {
+    const a = arc(0, 250, 300, 230, 70, 0), b = arc(0, 250, 300, 230, 70, FLIGHT), mid = arc(0, 250, 300, 230, 70, FLIGHT / 2);
+    assert.deepEqual([a.x, a.y, b.x, Math.round(b.y)], [0, 250, 300, 230]);
+    assert.ok(mid.y < 230 - 50, String(mid.y));
+  });
+
+  it('stands its players on their feet, reaching up for a catch and hands up to the helmet', () => {
+    const stand = joints(0, 'stand');
+    for (const leg of stand.legs) assert.ok(Math.abs(leg.foot[1]) < 0.5, String(leg.foot[1]));
+    for (const arm of joints(0, 'reach').arms) assert.ok(arm.hand[1] < stand.shoulder[1]);
+    for (const arm of joints(0, 'hands').arms) assert.ok(arm.hand[1] < stand.head[1]);
+  });
+
+  it('takes no clicks', () => {
+    assert.equal(run(football, 0).art.poke, undefined);
+  });
+
+  it('plays passes, caught and dropped, and runs with a hurdle over a diving defender', () => {
+    const seen = { caught: false, dropped: false, hurdle: false, dive: false };
+    for (const seed of seeds) {
+      const { layer, art } = run(football, 0, { seed });
+      for (let n = 1; n <= 2500; n++) {
+        art.step(n, n * 40);
+        const [runner, defender] = find(layer, 'masthead-football-player');
+        const ball = find(layer, 'masthead-football-ball')[0];
+        const r = at(runner), d = at(defender), b = at(ball);
+        if (r && runner.attrs.opacity === '1') {
+          assert.ok(r.y >= FIELD - 40 && r.y <= FIELD, `the runner at ${r.y}`);
+          if (r.y < FIELD - 20) seen.hurdle = true;
+        }
+        if (d && defender.attrs.opacity === '1' && d.tilt > 60) seen.dive = true;
+        if (b && ball.attrs.opacity === '1' && r && defender.attrs.opacity !== '1') {
+          if (b.y > FIELD - 6) seen.dropped = true;
+          else if (Math.abs(b.x - r.x) < 20 && b.y > FIELD - 60) seen.caught = true;
+        }
+      }
+    }
+    assert.deepEqual(seen, { caught: true, dropped: true, hurdle: true, dive: true });
   });
 });
