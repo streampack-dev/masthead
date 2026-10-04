@@ -32,8 +32,9 @@ import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/so
 import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
+import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -57,7 +58,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1319,5 +1320,71 @@ describe('the fractal', () => {
     assert.ok(xs.length >= 600, `${xs.length} segments`);
     assert.ok(Math.min(...xs) < 250);
     assert.ok(Math.max(...xs) > 950);
+  });
+});
+
+describe('the ships', () => {
+  const at = (g) => /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(g.attrs.transform).slice(1).map(Number);
+
+  it('sail on the sea, a few at a time, every kind in a long enough run', () => {
+    const { layer, art } = run(ships, 0, { seed: 5 });
+    const seen = new Set();
+    for (let n = 1; n <= 20000; n++) {
+      art.step(n, n * 40);
+      if (n % 50) continue;
+      const fleet = find(layer, 'masthead-ships-ship');
+      assert.ok(fleet.length <= MAX_SHIPS, `${fleet.length} ships at ${n}`);
+      for (const g of fleet) {
+        const [, y] = at(g);
+        assert.ok(y > HORIZON && y < NEAR, `${g.attrs.class} at y ${y}`);
+        seen.add(g.attrs.class.split(' ').pop().replace('masthead-ships-', ''));
+      }
+    }
+    assert.deepEqual([...seen].sort(), Object.keys(KINDS).sort());
+  });
+
+  it('trail smoke from a liner, which drifts up and fades', () => {
+    const { layer, art } = run(ships, 0, { seed: 5 });
+    let puff = null, n = 0;
+    while (!puff && n < 20000) {
+      n++;
+      art.step(n, n * 40);
+      puff = find(layer, 'masthead-ships-puff').at(-1) || null;
+    }
+    assert.ok(puff, 'a liner smoked');
+    const y0 = Number(puff.attrs.cy), o0 = Number(puff.attrs.opacity);
+    for (let k = 1; k <= 30; k++) art.step(n + k, (n + k) * 40);
+    assert.ok(Number(puff.attrs.cy) < y0 && Number(puff.attrs.opacity) < o0);
+  });
+
+  it('leaps a dolphin from the water and back in', () => {
+    assert.deepEqual([leap(0).y, leap(1).y].map((y) => Math.abs(y)), [0, 0]);
+    assert.equal(leap(0.5).y, -LEAP_HEIGHT);
+    assert.ok(leap(0.1).angle < 0 && leap(0.9).angle > 0, 'nose up, then down');
+  });
+
+  it('sends a dolphin from the water below a poke, with a splash in and out', () => {
+    const { layer, art } = run(ships, 10);
+    art.poke(400, 60, 10, 400);
+    const dolphin = find(layer, 'masthead-ships-dolphin')[0];
+    const [x0, y0] = at(dolphin);
+    assert.ok(Math.abs(x0 - 400) < 80 && y0 > HORIZON, `${x0}, ${y0}`);
+    assert.equal(find(layer, 'masthead-ships-splash').length, 1);
+    for (let n = 11; n <= 10 + LEAP_STEPS / 2; n++) art.step(n, n * 40);
+    assert.ok(at(dolphin)[1] < y0 - LEAP_HEIGHT / 2, 'in the air');
+    for (let n = 11 + LEAP_STEPS / 2; n <= 10 + LEAP_STEPS; n++) art.step(n, n * 40);
+    assert.equal(find(layer, 'masthead-ships-dolphin').length, 0);
+    // The splash going in has faded by now; the one coming out is where it lands, on along.
+    const out = find(layer, 'masthead-ships-splash');
+    assert.equal(out.length, 1);
+    assert.ok(Number(out[0].attrs.cx) > x0 + 60, `${out[0].attrs.cx} after ${x0}`);
+    for (let n = 11 + LEAP_STEPS; n <= 40 + LEAP_STEPS; n++) art.step(n, n * 40);
+    assert.equal(find(layer, 'masthead-ships-splash').length, 0);
+  });
+
+  it('keeps to three dolphins at once', () => {
+    const { layer, art } = run(ships, 10);
+    for (let i = 0; i < 6; i++) art.poke(100 + i * 150, 200, 10, 400);
+    assert.equal(find(layer, 'masthead-ships-dolphin').length, 3);
   });
 });

@@ -164,6 +164,13 @@
 .masthead-train-smoke { fill: color-mix(in srgb, var(--_accent) 40%, var(--_border)); }
 
 /* Water: lines across a surface, nearer ones stronger. */
+.masthead-ships { fill: none; }
+.masthead-ships-horizon { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; opacity: 0.6; }
+.masthead-ships-wave { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; stroke-linecap: round; }
+.masthead-ships-ship path { fill: color-mix(in srgb, var(--_accent) 10%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.masthead-ships-puff { fill: color-mix(in srgb, var(--_accent) 30%, var(--_border)); }
+.masthead-ships-dolphin { fill: color-mix(in srgb, var(--_accent) 25%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; stroke-linejoin: round; }
+.masthead-ships-splash { fill: none; stroke: var(--_accent); stroke-width: 1; }
 .masthead-water-line { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; }
 
 /* Wind farm: low hills, towers, and turning rotors. */

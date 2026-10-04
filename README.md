@@ -33,6 +33,7 @@ only puts the art on its page and starts the runner.
 | `pongwars` | Two sides of a field of squares and a ball each, every square a ball touches coming over to its side; the border wanders forever. |
 | `pumpkins` | October: a row of jack-o'-lanterns, their candles flickering. |
 | `rocks` | Rocks drifting and turning; a small ship turns, fires, and splits them. |
+| `ships` | Ships gliding across a low sea in outline: a liner trailing smoke, an aircraft carrier, a tall ship under sail, a sailboat bobbing. |
 | `signalnoise` | Faint scanlines and a rolling band, with brief bursts of interference. |
 | `solari` | A split-flap board showing the front page's other deks, riffling to the next every so often. |
 | `spider` | October: a spider letting itself down on its thread and climbing back up; a cobweb in a corner. |
@@ -105,7 +106,7 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    animation, if it has a fragment of its own (boids scatter from a hawk, the bytecode rain
    bursts, a tunnel appears in the chase, a surge runs through the circuit, city defense fires
    where you click, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
-   the grass, life plants a pattern, signal noise tears, the Solari board riffles on, the terrain
+   the grass, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain
    banks, the train whistles, water skips a stone); the frame has `data-masthead-poke` while it
    does, for a cursor, say.
    Clicks on links, buttons and form controls in the masthead pass through untouched; a

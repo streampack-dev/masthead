@@ -22,6 +22,7 @@ var BLURBS = {
   pongwars: 'Pong Wars: two sides of a field of squares, a ball each, the border between them wandering forever.',
   pumpkins: "October: a row of jack-o'-lanterns, their candles flickering.",
   rocks: 'Asteroids, playing itself: rocks drifting and turning, splitting when the ship hits them.',
+  ships: 'Ships gliding across a low sea: a liner trailing smoke, a carrier, a tall ship, a sailboat bobbing. Click for a dolphin.',
   signalnoise: 'Faint scanlines and a rolling band, with brief bursts of interference. Click to tear the signal.',
   solari: "A split-flap board showing the front page's deks, riffling to the next every so often. Click to riffle it on.",
   spider: 'October: a spider letting itself down on its thread, dangling, and climbing back up; a cobweb in the corner.',

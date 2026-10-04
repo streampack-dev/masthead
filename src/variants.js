@@ -21,6 +21,7 @@ export var variants = {
   pongwars: function () { return import('./variants/pongwars.js'); },
   pumpkins: function () { return import('./variants/pumpkins.js'); },
   rocks: function () { return import('./variants/rocks.js'); },
+  ships: function () { return import('./variants/ships.js'); },
   signalnoise: function () { return import('./variants/signalnoise.js'); },
   solari: function () { return import('./variants/solari.js'); },
   spider: function () { return import('./variants/spider.js'); },
