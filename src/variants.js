@@ -2,6 +2,7 @@
    is make(layer, m); see the README. Adding one is adding its file and its line here. */
 export var variants = {
   bats: function () { return import('./variants/bats.js'); },
+  blockpeek: function () { return import('./variants/blockpeek.js'); },
   boids: function () { return import('./variants/boids.js'); },
   bytecode: function () { return import('./variants/bytecode.js'); },
   chase: function () { return import('./variants/chase.js'); },

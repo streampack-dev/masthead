@@ -14,6 +14,7 @@ only puts the art on its page and starts the runner.
 | Name | What it is |
 |---|---|
 | `bats` | October: bats flapping across in loose, wavering flight, now and then a little flock. |
+| `blockpeek` | Someone on the far side breaking a block to peer through at you, in the blocky style of the block-building games; a faint patch of wall shows around it. |
 | `boids` | Sixteen fireflies flocking. |
 | `bytecode` | The code rain in JVM bytecode: real instructions in hex, now and then one decoded. |
 | `chase` | A fast bird and a canine forever after it along the foot of the masthead: skids, a smack into the frame's edge, an anvil, the train. It always pops back up. |
@@ -103,7 +104,8 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
 
    The runner sets `data-masthead="<name>"` on the SVG and its parent (or `frame`), and
    `.masthead-paused` while paused, for the host's own CSS. Clicking the masthead pokes the
-   animation, if it has a fragment of its own (boids scatter from a hawk, the bytecode rain
+   animation, if it has a fragment of its own (the block peeker mines where you click, and faster
+   for a click on the block, boids scatter from a hawk, the bytecode rain
    bursts, a tunnel appears in the chase, a surge runs through the circuit, city defense fires
    where you click, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
    the grass, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain

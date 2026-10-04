@@ -164,6 +164,13 @@
 .masthead-train-smoke { fill: color-mix(in srgb, var(--_accent) 40%, var(--_border)); }
 
 /* Water: lines across a surface, nearer ones stronger. */
+.masthead-blockpeek-patch { fill: none; }
+.masthead-blockpeek-wall { stroke: color-mix(in srgb, var(--_accent) 40%, var(--_border)); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.masthead-blockpeek-block { fill: color-mix(in srgb, var(--_accent) 8%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.masthead-blockpeek-crack { stroke: var(--_accent); stroke-linecap: round; }
+.masthead-blockpeek-hole path { fill: color-mix(in srgb, var(--_accent) 22%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1; fill-rule: evenodd; vector-effect: non-scaling-stroke; }
+.masthead-blockpeek-face { fill: color-mix(in srgb, var(--_accent) 30%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.masthead-blockpeek-eye { fill: var(--_accent); }
 .masthead-ships { fill: none; }
 .masthead-ships-horizon { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; opacity: 0.6; }
 .masthead-ships-wave { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; stroke-linecap: round; }

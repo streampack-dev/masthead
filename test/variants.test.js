@@ -32,9 +32,10 @@ import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/so
 import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
+import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
 import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -58,7 +59,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1386,5 +1387,96 @@ describe('the ships', () => {
     const { layer, art } = run(ships, 10);
     for (let i = 0; i < 6; i++) art.poke(100 + i * 150, 200, 10, 400);
     assert.equal(find(layer, 'masthead-ships-dolphin').length, 3);
+  });
+});
+
+describe('the block peek', () => {
+  const where = (layer) => {
+    const patch = find(layer, 'masthead-blockpeek-patch')[0];
+    const t = /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(patch.attrs.transform || '');
+    return { shown: Number(patch.attrs.opacity), x: t && Number(t[1]), y: t && Number(t[2]) };
+  };
+  const opacity = (layer, cls) => Number(find(layer, cls)[0].attrs.opacity);
+  const rows = Math.floor(320 / BLOCK);
+
+  it('keeps holes low, or to the sides of the name, at any stretch', () => {
+    for (const stretch of [1, 1.6, 3]) {
+      const spots = candidates(stretch, 1200, 320);
+      assert.ok(spots.length > 10);
+      for (const s of spots) {
+        assert.ok(s.y >= (rows - 2) * BLOCK || Math.abs(s.x - 600) > 360, `${s.x}, ${s.y}`);
+      }
+    }
+    assert.deepEqual(cellAt(10, 10, 1, 320), { x: BLOCK / 2, y: BLOCK / 2 });
+  });
+
+  it('cracks a block in stages, inside the block', () => {
+    let s = 3;
+    const stages = cracks(() => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x100000000; });
+    assert.equal(stages.length, STAGES);
+    for (const stage of stages) {
+      assert.ok(stage.length >= 1);
+      for (const seg of stage) for (const v of seg) assert.ok(Math.abs(v) <= BLOCK / 2, String(v));
+    }
+  });
+
+  it('breaks a block, a face peers through and ducks away, and the wall fades', () => {
+    const { layer, art } = run(blockpeek, 0, { seed: 9 });
+    const seen = { patch: false, hole: false, head: false, gone: false };
+    for (let n = 1; n <= 4000; n++) {
+      art.step(n, n * 40);
+      const at = where(layer);
+      if (at.shown > 0.9) {
+        seen.patch = true;
+        assert.ok(at.y >= (rows - 2) * BLOCK || Math.abs(at.x - 600) > 360 - BLOCK, `${at.x}, ${at.y}`);
+      }
+      if (opacity(layer, 'masthead-blockpeek-hole') === 1) seen.hole = true;
+      if (opacity(layer, 'masthead-blockpeek-head') > 0.9) seen.head = true;
+      if (seen.head && at.shown === 0) seen.gone = true;
+    }
+    assert.deepEqual(seen, { patch: true, hole: true, head: true, gone: true });
+  });
+
+  const untilMining = (art, layer) => {
+    for (let n = 1; n <= 2000; n++) {
+      art.step(n, n * 40);
+      if (where(layer).shown >= 1 && find(layer, 'masthead-blockpeek-crack')[0].attrs.d) return n;
+    }
+    throw new Error('never mined');
+  };
+  const untilBroken = (art, layer, from, poke) => {
+    for (let n = from + 1; n <= from + 2000; n++) {
+      if (poke && n % 10 === 0) { const at = where(layer); art.poke(at.x, at.y, n, n * 40); }
+      art.step(n, n * 40);
+      if (opacity(layer, 'masthead-blockpeek-hole') > 0) return n - from;
+    }
+    throw new Error('never broke');
+  };
+
+  it('breaks the block sooner for clicks on it', () => {
+    const left = run(blockpeek, 0, { seed: 4 });
+    const alone = untilBroken(left.art, left.layer, untilMining(left.art, left.layer), false);
+    const right = run(blockpeek, 0, { seed: 4 });
+    const helped = untilBroken(right.art, right.layer, untilMining(right.art, right.layer), true);
+    assert.ok(helped < alone / 2, `${helped} steps helped, ${alone} alone`);
+  });
+
+  it('mines where you click instead, the cracks there starting afresh', () => {
+    const { layer, art } = run(blockpeek, 0, { seed: 4 });
+    const n = untilMining(art, layer);
+    art.poke(1100, 40, n, n * 40);
+    const at = where(layer);
+    assert.deepEqual([at.x, at.y], [cellAt(1100, 40, 1, 320).x, BLOCK / 2]);
+    assert.equal(find(layer, 'masthead-blockpeek-crack')[0].attrs.d, '');
+  });
+
+  it('has the face duck when you click the hole', () => {
+    const { layer, art } = run(blockpeek, 0, { seed: 9 });
+    let n = 0;
+    while (opacity(layer, 'masthead-blockpeek-head') < 0.9 && n < 4000) { n++; art.step(n, n * 40); }
+    const at = where(layer);
+    art.poke(at.x, at.y, n, n * 40);
+    for (let k = 1; k <= 20; k++) art.step(n + k, (n + k) * 40);
+    assert.equal(opacity(layer, 'masthead-blockpeek-head'), 0);
   });
 });

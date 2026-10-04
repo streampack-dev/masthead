@@ -3,6 +3,7 @@ import { startMasthead, variants } from '../src/index.js';
 
 var BLURBS = {
   bats: 'October: bats flapping across in loose, wavering flight, now and then a little flock.',
+  blockpeek: 'Someone on the far side breaking a block to peer through at you, in the style of the block-building games. Click the block to help, or anywhere else to have them mine there.',
   boids: 'Sixteen fireflies flocking. Click to send a hawk among them.',
   bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded. Click to burst it.',
   chase: 'A fast bird and the canine forever after it: skids, a smack into the frame, an anvil, the train. It always pops back up. Click to paint a tunnel.',
