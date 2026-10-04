@@ -27,7 +27,10 @@ export var HEIGHT = 320;
      { when: <one of those>, weight: n }   the same, with its own weight;
    or another occasion's name. All in the visitor's own time. */
 export var OCCASIONS = {
-  halloween: [10]
+  halloween: [10],
+  // College and professional seasons, from late August to the championship in February. Its
+  // bowls and big games are single dated days to add here, weighing heavily on the day.
+  football: ['08-25..02-15']
 };
 
 /* The seasonal animations and their windows (as above, or occasions by name). Out of season they
@@ -41,7 +44,8 @@ export var SEASONS = {
   ghosts: ['halloween'],
   graveyard: ['halloween'],
   pumpkins: ['halloween'],
-  spider: ['halloween']
+  spider: ['halloween'],
+  football: ['football']
 };
 
 export var REFERENCE_DAYS = 30;

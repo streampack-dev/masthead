@@ -24,6 +24,7 @@ import rocks, { SIZES, outline } from '../src/variants/rocks.js';
 import pongwars, { COLS as WAR_COLS, ROWS as WAR_ROWS, bounce } from '../src/variants/pongwars.js';
 import stix, { GH, GW, claim, field, route } from '../src/variants/stix.js';
 import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
+import football, { FLIGHT, GROUND as FIELD, arc, joints } from '../src/variants/football.js';
 import fractal from '../src/variants/fractal.js';
 import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
 import life, { PLANTS } from '../src/variants/life.js';
@@ -35,7 +36,7 @@ import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/wate
 import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
 import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -59,7 +60,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1478,5 +1479,62 @@ describe('the block peek', () => {
     art.poke(at.x, at.y, n, n * 40);
     for (let k = 1; k <= 20; k++) art.step(n + k, (n + k) * 40);
     assert.equal(opacity(layer, 'masthead-blockpeek-head'), 0);
+  });
+});
+
+describe('football', () => {
+  const at = (g) => {
+    const t = /translate\((-?[\d.]+) (-?[\d.]+)\).*rotate\((-?[\d.]+)\)/.exec(g.attrs.transform || '');
+    return t ? { x: Number(t[1]), y: Number(t[2]), tilt: Number(t[3]) } : null;
+  };
+  // Seeds from the whole range, as real runs have, rather than small ones.
+  const seeds = Array.from({ length: 12 }, (_, i) => Math.imul(i + 1, 2654435761) >>> 1);
+
+  it('is in season through the football season, and weighs as a long season does', () => {
+    const day = (y, m, d) => new Date(y, m - 1, d, 12);
+    assert.ok(inSeason(['football'], day(2026, 10, 4)).length === 1);
+    assert.ok(inSeason(['football'], day(2027, 2, 14)).length === 1);
+    assert.equal(inSeason(['football'], day(2027, 6, 1)).length, 0);
+    assert.equal(weights(['football'], day(2026, 11, 1)).football, 1);
+  });
+
+  it('throws a ball from one end to the other, over the top', () => {
+    const a = arc(0, 250, 300, 230, 70, 0), b = arc(0, 250, 300, 230, 70, FLIGHT), mid = arc(0, 250, 300, 230, 70, FLIGHT / 2);
+    assert.deepEqual([a.x, a.y, b.x, Math.round(b.y)], [0, 250, 300, 230]);
+    assert.ok(mid.y < 230 - 50, String(mid.y));
+  });
+
+  it('stands its players on their feet, reaching up for a catch and hands up to the helmet', () => {
+    const stand = joints(0, 'stand');
+    for (const leg of stand.legs) assert.ok(Math.abs(leg.foot[1]) < 0.5, String(leg.foot[1]));
+    for (const arm of joints(0, 'reach').arms) assert.ok(arm.hand[1] < stand.shoulder[1]);
+    for (const arm of joints(0, 'hands').arms) assert.ok(arm.hand[1] < stand.head[1]);
+  });
+
+  it('takes no clicks', () => {
+    assert.equal(run(football, 0).art.poke, undefined);
+  });
+
+  it('plays passes, caught and dropped, and runs with a hurdle over a diving defender', () => {
+    const seen = { caught: false, dropped: false, hurdle: false, dive: false };
+    for (const seed of seeds) {
+      const { layer, art } = run(football, 0, { seed });
+      for (let n = 1; n <= 2500; n++) {
+        art.step(n, n * 40);
+        const [runner, defender] = find(layer, 'masthead-football-player');
+        const ball = find(layer, 'masthead-football-ball')[0];
+        const r = at(runner), d = at(defender), b = at(ball);
+        if (r && runner.attrs.opacity === '1') {
+          assert.ok(r.y >= FIELD - 40 && r.y <= FIELD, `the runner at ${r.y}`);
+          if (r.y < FIELD - 20) seen.hurdle = true;
+        }
+        if (d && defender.attrs.opacity === '1' && d.tilt > 60) seen.dive = true;
+        if (b && ball.attrs.opacity === '1' && r && defender.attrs.opacity !== '1') {
+          if (b.y > FIELD - 6) seen.dropped = true;
+          else if (Math.abs(b.x - r.x) < 20 && b.y > FIELD - 60) seen.caught = true;
+        }
+      }
+    }
+    assert.deepEqual(seen, { caught: true, dropped: true, hurdle: true, dive: true });
   });
 });

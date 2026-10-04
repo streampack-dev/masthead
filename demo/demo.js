@@ -12,6 +12,7 @@ var BLURBS = {
   deadline: 'A writer at a desk, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard.',
   duel: 'Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth, forever: no touches, no winner.',
   eyes: 'October: eyes in the dark, opening, blinking, glancing about, and closing again.',
+  football: 'Football season: a player in pads running a play. A pass, caught or dropped, or a run with a hurdle over a diving defender.',
   fractal: 'A branching growth tracing round the name, resting when grown, then starting again. Click to sprout a root.',
   ghostrider: 'A wireframe road ahead, bending and rising gently, the hills sliding aside on the bends. Click to open the throttle. For Neil Peart.',
   ghosts: 'October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below.',
