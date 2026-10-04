@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import { variants } from '../src/variants.js';
-import { SEASONS, inSeason } from '../src/runner.js';
+import { OCCASIONS, REFERENCE_DAYS, SEASONS, during, inSeason, isWindow, pick, weights } from '../src/runner.js';
 import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
 import duel, { POSES, STUB, breaks, crossing, facepalms, figure, mixPose } from '../src/variants/duel.js';
@@ -298,24 +298,97 @@ describe('the circuit', () => {
 
 describe('the seasons', () => {
   const names = Object.keys(variants);
+  // Noon, local time, as ?ambientDate gives it.
+  const day = (y, m, d) => new Date(y, m - 1, d, 12);
 
-  it('keeps the October animations to October, and the rest to all year', () => {
-    const october = inSeason(names, new Date(2026, 9, 31));
-    const may = inSeason(names, new Date(2026, 4, 1));
+  it('keeps the Halloween animations to October, and the rest to all year', () => {
+    const october = inSeason(names, day(2026, 10, 31));
+    const may = inSeason(names, day(2026, 5, 1));
     for (const name of ['bats', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider']) {
       assert.ok(october.includes(name) && !may.includes(name), name);
     }
     assert.ok(may.includes('boids') && october.includes('boids'));
     assert.equal(october.length, names.length);
+    // A month is long enough that October's animations simply join the pool.
+    assert.equal(weights(['bats', 'boids'], day(2026, 10, 15)).bats, 1);
   });
 
-  it('lists only animations there are', () => {
-    for (const name of Object.keys(SEASONS)) assert.ok(names.includes(name), name);
+  it('lists only animations there are, in windows it understands', () => {
+    for (const name of Object.keys(SEASONS)) {
+      assert.ok(names.includes(name), name);
+      for (const win of SEASONS[name]) assert.ok(isWindow(win), `${name}: ${JSON.stringify(win)}`);
+    }
+    for (const [name, wins] of Object.entries(OCCASIONS)) {
+      for (const win of wins) assert.ok(isWindow(win), `${name}: ${JSON.stringify(win)}`);
+    }
+  });
+
+  it('knows a window when it sees one, and not otherwise', () => {
+    for (const win of [10, '07-04', '02-29', '12-24..12-26', '12-31..01-01', '2026-12-04',
+      '2026-12-04..2026-12-12', 'halloween', { when: '07-04', weight: 50 }]) {
+      assert.ok(isWindow(win), JSON.stringify(win));
+    }
+    for (const win of [0, 13, 2.5, '13-01', '02-30', '7-4', '2026-02-29', '2026-12-12..2026-12-04',
+      '01-01..02-01..03-01', 'nowhen', { when: '07-04', weight: -1 }, null]) {
+      assert.ok(!isWindow(win), JSON.stringify(win));
+    }
+  });
+
+  it('opens each kind of window on its days, inclusive, and not a day either side', () => {
+    const open = (win, y, m, d) => during(win, day(y, m, d));
+    assert.ok(open('07-04', 2027, 7, 4) && !open('07-04', 2027, 7, 3) && !open('07-04', 2027, 7, 5));
+    assert.ok(open('12-24..12-26', 2026, 12, 24) && open('12-24..12-26', 2026, 12, 26));
+    assert.ok(!open('12-24..12-26', 2026, 12, 23) && !open('12-24..12-26', 2026, 12, 27));
+    // Over the year end, from either side of it.
+    assert.ok(open('12-30..01-02', 2026, 12, 31) && open('12-30..01-02', 2027, 1, 2));
+    assert.ok(!open('12-30..01-02', 2027, 1, 3) && !open('12-30..01-02', 2026, 12, 29));
+    // Once, on its own dates only; a dated range may cross the year end too.
+    assert.ok(open('2027-12-24..2028-01-01', 2027, 12, 24) && open('2027-12-24..2028-01-01', 2028, 1, 1));
+    assert.ok(!open('2027-12-24..2028-01-01', 2028, 12, 24) && !open('2027-12-24..2028-01-01', 2028, 1, 2));
+    assert.ok(open('2026-12-04', 2026, 12, 4) && !open('2026-12-04', 2027, 12, 4));
+    assert.ok(open(2, 2028, 2, 29) && !open(2, 2028, 3, 1));
+  });
+
+  it('weighs a window by how short it is, the shortest open one deciding, or by its own weight', () => {
+    const was = { ...SEASONS };
+    try {
+      SEASONS.boids = ['06-27..07-04', '07-04'];
+      SEASONS.life = ['2026-12-04..2026-12-11'];
+      SEASONS.water = [{ when: '07-04', weight: 2 }];
+      assert.equal(weights(['boids'], day(2027, 6, 28)).boids, REFERENCE_DAYS / 8);
+      assert.equal(weights(['boids'], day(2027, 7, 4)).boids, REFERENCE_DAYS);
+      assert.equal(weights(['boids'], day(2027, 7, 5)).boids, 0);
+      assert.equal(weights(['life'], day(2026, 12, 8)).life, REFERENCE_DAYS / 8);
+      assert.equal(weights(['water'], day(2027, 7, 4)).water, 2);
+      assert.equal(weights(['grass'], day(2027, 7, 4)).grass, 1);
+    } finally {
+      for (const k of Object.keys(SEASONS)) delete SEASONS[k];
+      Object.assign(SEASONS, was);
+    }
+  });
+
+  it('picks by weight: a one-day occasion\'s animation more often than not, nothing out of season', () => {
+    const was = { ...SEASONS };
+    try {
+      SEASONS.boids = ['07-04'];
+      let s = 1;
+      const random = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x100000000; };
+      let picked = 0;
+      for (let i = 0; i < 2000; i++) if (pick(names, day(2027, 7, 4), random) === 'boids') picked++;
+      const others = names.filter((n) => !SEASONS[n]).length;
+      const expected = REFERENCE_DAYS / (REFERENCE_DAYS + others);
+      assert.ok(Math.abs(picked / 2000 - expected) < 0.05, `${picked / 2000} vs ${expected}`);
+      for (let i = 0; i < 200; i++) assert.notEqual(pick(names, day(2027, 7, 5), random), 'boids');
+      assert.equal(pick(['bats'], day(2027, 5, 1)), null);
+    } finally {
+      for (const k of Object.keys(SEASONS)) delete SEASONS[k];
+      Object.assign(SEASONS, was);
+    }
   });
 });
 
 describe('the bytecode rain', () => {
-  it('runs to 0xDEADBEEF in October, and not otherwise', () => {
+  it('runs to 0xDEADBEEF at Halloween, and not otherwise', () => {
     assert.deepEqual(OCTOBER.slice(0, 4).map((b) => b.hex), ['DE', 'AD', 'BE', 'EF']);
     const shown = (date) => {
       const { layer } = run(bytecode, 2000, { date, seed: 11 });

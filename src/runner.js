@@ -17,22 +17,153 @@ var STEP_MS = 24;
 export var WIDTH = 1200;
 export var HEIGHT = 320;
 
-/* The seasonal animations, and the months (1 to 12) they're picked in, in the visitor's own
-   time. Out of season they aren't picked at random, but ?ambient=<name> still runs one. An
-   animation not listed runs all year. */
-export var SEASONS = {
-  bats: [10],
-  eyes: [10],
-  ghosts: [10],
-  graveyard: [10],
-  pumpkins: [10],
-  spider: [10]
+/* Occasions: named windows of the year that animations' seasons, and variants themselves
+   (m.during(name)), refer to, so one occasion's dates are written once. A window is any of:
+     10                         a month, every year (1 to 12);
+     '07-04'                    a day, every year;
+     '12-24..12-26'             days every year, inclusive; '12-31..01-01' wraps the year end;
+     '2026-12-04'               one day, once;
+     '2026-12-04..2026-12-12'   days once, inclusive: list a feast that moves year by year;
+     { when: <one of those>, weight: n }   the same, with its own weight;
+   or another occasion's name. All in the visitor's own time. */
+export var OCCASIONS = {
+  halloween: [10]
 };
+
+/* The seasonal animations and their windows (as above, or occasions by name). Out of season they
+   aren't picked at random, but ?ambient=<name> still runs one. An animation not listed runs all
+   year, with weight 1. In season, an animation weighs more the shorter its window: a month or
+   longer weighs 1, a week about 4, a single day 30 (REFERENCE_DAYS / days), so a short occasion
+   is seen while it lasts. Where several of its windows are open, the shortest decides. */
+export var SEASONS = {
+  bats: ['halloween'],
+  eyes: ['halloween'],
+  ghosts: ['halloween'],
+  graveyard: ['halloween'],
+  pumpkins: ['halloween'],
+  spider: ['halloween']
+};
+
+export var REFERENCE_DAYS = 30;
+
+var DAY_MS = 86400000;
+
+/* The local calendar day of [date] as a day number, so day arithmetic ignores clock changes. */
+function dayNumber(year, month, day) { return Math.round(Date.UTC(year, month - 1, day) / DAY_MS); }
+
+var MONTH_DAY = /^(\d{2})-(\d{2})$/;
+var FULL_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/* The occurrence of one window that contains the day [today] (a day number, in [year]) as
+   { days, weight }, or null when it isn't open. [weight] is the window's own, if it gives one. */
+function openWindow(win, year, today, depth) {
+  var weight = null;
+  if (win && typeof win === 'object') { weight = win.weight; win = win.when; }
+  if (typeof win === 'number') {
+    var first = dayNumber(year, win, 1), last = dayNumber(year, win + 1, 1) - 1;
+    return today >= first && today <= last ? { days: last - first + 1, weight: weight } : null;
+  }
+  if (typeof win !== 'string') return null;
+  if (OCCASIONS.hasOwnProperty(win)) {
+    if ((depth || 0) > 4) return null;
+    var inner = shortest(OCCASIONS[win], year, today, (depth || 0) + 1);
+    return inner && weight != null ? { days: inner.days, weight: weight } : inner;
+  }
+  var parts = win.split('..');
+  if (parts.length > 2) return null;
+  var a = parts[0], b = parts[1] === undefined ? parts[0] : parts[1];
+  var fa = FULL_DATE.exec(a), fb = FULL_DATE.exec(b);
+  if (fa && fb) {
+    var from = dayNumber(+fa[1], +fa[2], +fa[3]), to = dayNumber(+fb[1], +fb[2], +fb[3]);
+    return to >= from && today >= from && today <= to ? { days: to - from + 1, weight: weight } : null;
+  }
+  var ma = MONTH_DAY.exec(a), mb = MONTH_DAY.exec(b);
+  if (!ma || !mb) return null;
+  // This year's occurrence, or for one wrapping the year end, the one that started last year.
+  for (var y = year - 1; y <= year; y++) {
+    var start = dayNumber(y, +ma[1], +ma[2]);
+    var end = dayNumber(+mb[1] * 100 + +mb[2] < +ma[1] * 100 + +ma[2] ? y + 1 : y, +mb[1], +mb[2]);
+    if (today >= start && today <= end) return { days: end - start + 1, weight: weight };
+  }
+  return null;
+}
+
+/* Of [windows], the shortest open on [today], or null. */
+function shortest(windows, year, today, depth) {
+  var best = null;
+  (windows || []).forEach(function (win) {
+    var open = openWindow(win, year, today, depth);
+    if (open && (!best || open.days < best.days)) best = open;
+  });
+  return best;
+}
+
+function dayOf(date) {
+  return { year: date.getFullYear(), today: dayNumber(date.getFullYear(), date.getMonth() + 1, date.getDate()) };
+}
+
+/* Whether [win] is a window this file understands: a real month, day or date range, an occasion,
+   or one of those with a weight. Tests hold every season and occasion to it. */
+export function isWindow(win) {
+  if (win && typeof win === 'object') {
+    return (win.weight === undefined || (typeof win.weight === 'number' && win.weight >= 0)) && isWindow(win.when);
+  }
+  if (typeof win === 'number') return win >= 1 && win <= 12 && Math.floor(win) === win;
+  if (typeof win !== 'string') return false;
+  if (OCCASIONS.hasOwnProperty(win)) return true;
+  var parts = win.split('..');
+  if (parts.length > 2) return false;
+  var full = parts.map(function (p) { return FULL_DATE.exec(p); });
+  var md = parts.map(function (p) { return MONTH_DAY.exec(p); });
+  function real(y, m, d) {
+    var t = new Date(Date.UTC(y, m - 1, d));
+    return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+  }
+  if (full.every(Boolean)) {
+    if (!full.every(function (f) { return real(+f[1], +f[2], +f[3]); })) return false;
+    return parts.length === 1 || dayNumber(+full[1][1], +full[1][2], +full[1][3]) >= dayNumber(+full[0][1], +full[0][2], +full[0][3]);
+  }
+  // A leap year, so 02-29 counts as a day there is.
+  return md.every(function (f) { return f && real(2028, +f[1], +f[2]); });
+}
+
+/* Whether the occasion (or window) [name] is open on [date]. */
+export function during(name, date) {
+  var d = dayOf(date);
+  return !!openWindow(name, d.year, d.today);
+}
+
+/* How likely each of [names] is to be picked at random on [date], relative to the others: 1 all
+   year, 0 out of season, and in season REFERENCE_DAYS / the days of its shortest open window (at
+   least 1), or that window's own weight. */
+export function weights(names, date) {
+  var d = dayOf(date);
+  var out = {};
+  names.forEach(function (name) {
+    if (!SEASONS[name]) { out[name] = 1; return; }
+    var open = shortest(SEASONS[name], d.year, d.today);
+    out[name] = !open ? 0 : open.weight != null ? open.weight : Math.max(1, REFERENCE_DAYS / open.days);
+  });
+  return out;
+}
 
 /* The animations [names] that may be picked at random on [date]. */
 export function inSeason(names, date) {
-  var month = date.getMonth() + 1;
-  return names.filter(function (name) { return !SEASONS[name] || SEASONS[name].indexOf(month) >= 0; });
+  var w = weights(names, date);
+  return names.filter(function (name) { return w[name] > 0; });
+}
+
+/* One of [names], at random by their weights on [date], or null if none may be picked. */
+export function pick(names, date, random) {
+  var w = weights(names, date);
+  var total = names.reduce(function (sum, name) { return sum + w[name]; }, 0);
+  if (!(total > 0)) return null;
+  var at = (random || Math.random)() * total;
+  for (var i = 0; i < names.length; i++) {
+    at -= w[names[i]];
+    if (at < 0 && w[names[i]] > 0) return names[i];
+  }
+  return names.filter(function (name) { return w[name] > 0; }).pop();
 }
 
 /* ?ambientDate=YYYY-MM-DD, as a local date, or null. */
@@ -78,12 +209,12 @@ export function startMasthead(svg, options) {
     : !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   var all = Object.keys(loaders);
   var date = options.date || dateAsked(params.get('ambientDate')) || new Date();
-  // Any animation can be asked for by name; a random pick is from those in season.
+  // Any animation can be asked for by name; a random pick is from those in season, by weight.
   var names = inSeason(all, date);
   var asked = options.name !== undefined ? options.name : params.get('ambient');
   var name = reduced || all.length === 0 ? 'none'
     : all.indexOf(asked) >= 0 ? asked
-    : names.length ? names[Math.floor(Math.random() * names.length)] : 'none';
+    : pick(all, date) || 'none';
   var seedAsked = parseInt(params.get('ambientSeed') || '', 10);
   var seed = options.seed !== undefined ? options.seed : isFinite(seedAsked) ? seedAsked : randomSeed();
   var label = name === 'none' ? 'Animation: none' : 'Animation: ' + name + ' · seed ' + seed;
@@ -117,7 +248,7 @@ export function startMasthead(svg, options) {
     tag.textContent = label;
     frameEl.appendChild(tag);
   }
-  log(reduced ? 'reduced motion: none' : label, { from: names });
+  log(reduced ? 'reduced motion: none' : label, { from: names, weights: weights(names, date) });
 
   var handle = { name: name, seed: seed, label: label, update: function () {}, stop: function () {} };
   if (name === 'none') return handle;
@@ -189,6 +320,7 @@ export function startMasthead(svg, options) {
       seed: function () { return seed; },
       stretch: function () { return stretch; },
       date: function () { return new Date(date.getTime()); },
+      during: function (occasion) { return during(occasion, date); },
       deks: function () { return options.deks ? options.deks() : []; },
       el: function (tag, attrs, parent) {
         var e = document.createElementNS(NS, tag);

@@ -42,12 +42,14 @@ function stream(program) {
 }
 export var STREAMS = PROGRAMS.map(stream);
 
-/* In October, the rain also runs to 0xDEADBEEF, the hex that has marked dead memory for decades. */
+/* At Halloween (October), the rain also runs to 0xDEADBEEF, the hex that has marked dead memory
+   for decades. */
 export var OCTOBER = stream([op([0xde, 0xad, 0xbe, 0xef], '0xDEADBEEF'), op([0xde, 0xad, 0xbe, 0xef], '0xDEADBEEF')]);
 
 export default function bytecode(layer, m) {
   var W = m.width, H = m.height;
-  var streams = m.date && m.date().getMonth() === 9 ? STREAMS.concat([OCTOBER, OCTOBER]) : STREAMS;
+  var halloween = m.during ? m.during('halloween') : !!(m.date && m.date().getMonth() === 9);
+  var streams = halloween ? STREAMS.concat([OCTOBER, OCTOBER]) : STREAMS;
   var rs = (m.seed() >>> 0) || 1;
   function rand() { rs = (Math.imul(rs, 1664525) + 1013904223) >>> 0; return rs / 0x100000000; }
 

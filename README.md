@@ -42,10 +42,19 @@ only puts the art on its page and starts the runner.
 | `water` | A still surface seen from just above; drops land and their rings spread and cross. |
 | `windfarm` | Turbines along low hills, each turning at its own pace in a wind that rises and falls. |
 
-Some are seasonal: they're picked at random only in their months (in the visitor's own time),
-as `SEASONS` in `src/runner.js` lists them; the October ones above, for now. Any animation can
-still be asked for by name, and the demo page shows them all year. Otherwise every animation in
-season is as likely as any other.
+Some are seasonal: they're picked at random only in their windows of the year (in the visitor's
+own time), as `SEASONS` in `src/runner.js` lists them; the October ones above, for now. A window
+is a month (`10`), a day every year (`'07-04'`), days every year (`'12-24..12-26'`, which may wrap
+the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast that moves: list
+the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
+are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
+
+Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
+shorter its window, so a short occasion is seen while it lasts: a month or longer weighs 1, a
+week about 4, a single day 30 (`REFERENCE_DAYS` over the window's days). Where several of an
+animation's windows are open, the shortest decides, so a lead-up window and the day itself build
+to the day. A window may give its own weight instead, `{ when: '07-04', weight: 50 }`. Any
+animation can still be asked for by name, and the demo page shows them all year.
 
 On a page running them, `?ambient=<name>` picks one, `?ambientDate=YYYY-MM-DD` picks as on that
 day, `?ambientSeed=<n>` replays a run, and `?ambientDebug=1` logs the choice and names the
