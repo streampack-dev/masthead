@@ -1,5 +1,5 @@
 /* The specimen page: every variant, each in a masthead-shaped stage, paused while off screen. */
-import { startMasthead, variants } from '../src/index.js';
+import { DRAFTS, startMasthead, variants } from '../src/index.js';
 
 var BLURBS = {
   bats: 'October: bats flapping across in loose, wavering flight, now and then a little flock.',
@@ -118,7 +118,8 @@ function specimen(name, art) {
     '<div class="stage"><div class="stage-text"><p class="stage-date"></p>' +
     '<p class="stage-name">bytecode<span>.</span>news</p>' +
     '<p class="stage-tagline">Programming News &amp; Technical Writing</p></div></div>';
-  figure.querySelector('h2').textContent = name;
+  // A draft runs here, but the sites never pick it.
+  figure.querySelector('h2').textContent = DRAFTS.indexOf(name) >= 0 ? name + ' (draft: not on the sites)' : name;
   figure.querySelector('.specimen-blurb').textContent = BLURBS[name] || '';
   figure.querySelector('.stage-date').textContent = today;
   main.appendChild(figure);

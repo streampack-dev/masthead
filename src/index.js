@@ -1,7 +1,7 @@
 import { startMasthead as start } from './runner.js';
 import { variants } from './variants.js';
 
-export { WIDTH, HEIGHT, OCCASIONS, SEASONS, REFERENCE_DAYS, during, inSeason, isWindow, pick, weights } from './runner.js';
+export { WIDTH, HEIGHT, DRAFTS, OCCASIONS, SEASONS, REFERENCE_DAYS, during, inSeason, isWindow, pick, weights } from './runner.js';
 export { variants };
 
 /* The runner, with the built-in variants unless options.variants says otherwise. */

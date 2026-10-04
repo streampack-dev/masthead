@@ -50,6 +50,10 @@ export var SEASONS = {
 
 export var REFERENCE_DAYS = 30;
 
+/* Animations still being worked on: never picked at random, on any day, though ?ambient=<name>
+   and the demo page still run them. */
+export var DRAFTS = ['blockpeek', 'football', 'ships'];
+
 var DAY_MS = 86400000;
 
 /* The local calendar day of [date] as a day number, so day arithmetic ignores clock changes. */
@@ -138,12 +142,13 @@ export function during(name, date) {
 }
 
 /* How likely each of [names] is to be picked at random on [date], relative to the others: 1 all
-   year, 0 out of season, and in season REFERENCE_DAYS / the days of its shortest open window (at
+   year, 0 out of season or a draft, and in season REFERENCE_DAYS / the days of its shortest open window (at
    least 1), or that window's own weight. */
 export function weights(names, date) {
   var d = dayOf(date);
   var out = {};
   names.forEach(function (name) {
+    if (DRAFTS.indexOf(name) >= 0) { out[name] = 0; return; }
     if (!SEASONS[name]) { out[name] = 1; return; }
     var open = shortest(SEASONS[name], d.year, d.today);
     out[name] = !open ? 0 : open.weight != null ? open.weight : Math.max(1, REFERENCE_DAYS / open.days);

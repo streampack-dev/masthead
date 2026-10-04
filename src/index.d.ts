@@ -75,6 +75,8 @@ export type SeasonWindow = number | string | { when: number | string; weight?: n
 export const OCCASIONS: Record<string, SeasonWindow[]>;
 /** The seasonal animations and their windows; an animation not listed runs all year. */
 export const SEASONS: Record<string, SeasonWindow[]>;
+/** Animations still being worked on: never picked at random, though they run by name. */
+export const DRAFTS: string[];
 /** A window of this many days or more weighs 1; a shorter one, this over its days. */
 export const REFERENCE_DAYS: number;
 /** Whether the occasion or window is open on the day. */

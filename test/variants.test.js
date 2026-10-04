@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import { variants } from '../src/variants.js';
-import { OCCASIONS, REFERENCE_DAYS, SEASONS, during, inSeason, isWindow, pick, weights } from '../src/runner.js';
+import { DRAFTS, OCCASIONS, REFERENCE_DAYS, SEASONS, during, inSeason, isWindow, pick, weights } from '../src/runner.js';
 import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
 import duel, { POSES, STUB, breaks, crossing, facepalms, figure, mixPose } from '../src/variants/duel.js';
@@ -311,9 +311,28 @@ describe('the seasons', () => {
       assert.ok(october.includes(name) && !may.includes(name), name);
     }
     assert.ok(may.includes('boids') && october.includes('boids'));
-    assert.equal(october.length, names.length);
+    // In October every animation may be picked but the drafts (and those out of season).
+    assert.equal(october.length, names.filter((n) => !DRAFTS.includes(n) && (!SEASONS[n] || during(SEASONS[n][0], day(2026, 10, 31)))).length);
     // A month is long enough that October's animations simply join the pool.
     assert.equal(weights(['bats', 'boids'], day(2026, 10, 15)).bats, 1);
+  });
+
+  it('never picks a draft at random, in or out of season', () => {
+    // An animation made a draft drops out of the picking at once.
+    DRAFTS.push('boids');
+    try {
+      assert.ok(!inSeason(names, day(2027, 6, 1)).includes('boids'));
+      assert.equal(weights(['boids'], day(2027, 6, 1)).boids, 0);
+    } finally {
+      DRAFTS.pop();
+    }
+    assert.ok(inSeason(names, day(2027, 6, 1)).includes('boids'));
+    for (const d of [day(2026, 10, 4), day(2027, 6, 1), day(2027, 1, 15)]) {
+      const picked = inSeason(names, d);
+      for (const name of DRAFTS) assert.ok(!picked.includes(name), name);
+      for (let i = 0; i < 50; i++) assert.ok(!DRAFTS.includes(pick(names, d)));
+    }
+    for (const name of DRAFTS) assert.ok(names.includes(name), name);
   });
 
   it('lists only animations there are, in windows it understands', () => {
@@ -1492,10 +1511,10 @@ describe('football', () => {
 
   it('is in season through the football season, and weighs as a long season does', () => {
     const day = (y, m, d) => new Date(y, m - 1, d, 12);
-    assert.ok(inSeason(['football'], day(2026, 10, 4)).length === 1);
-    assert.ok(inSeason(['football'], day(2027, 2, 14)).length === 1);
-    assert.equal(inSeason(['football'], day(2027, 6, 1)).length, 0);
-    assert.equal(weights(['football'], day(2026, 11, 1)).football, 1);
+    // Its season, as the football occasion has it; while it's a draft, it isn't picked at all.
+    assert.ok(during('football', day(2026, 10, 4)) && during('football', day(2027, 2, 14)));
+    assert.ok(!during('football', day(2027, 6, 1)));
+    assert.deepEqual(SEASONS.football, ['football']);
   });
 
   it('throws a ball from one end to the other, over the top', () => {

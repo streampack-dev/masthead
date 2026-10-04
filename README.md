@@ -14,7 +14,7 @@ only puts the art on its page and starts the runner.
 | Name | What it is |
 |---|---|
 | `bats` | October: bats flapping across in loose, wavering flight, now and then a little flock. |
-| `blockpeek` | Someone on the far side breaking a block to peer through at you, in the blocky style of the block-building games; a faint patch of wall shows around it. |
+| `blockpeek` | Draft. Someone on the far side breaking a block to peer through at you, in the blocky style of the block-building games; a faint patch of wall shows around it. |
 | `boids` | Sixteen fireflies flocking. |
 | `bytecode` | The code rain in JVM bytecode: real instructions in hex, now and then one decoded. |
 | `chase` | A fast bird and a canine forever after it along the foot of the masthead: skids, a smack into the frame's edge, an anvil, the train. It always pops back up. |
@@ -23,7 +23,7 @@ only puts the art on its page and starts the runner.
 | `deadline` | A writer at a desk on the left, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard. |
 | `duel` | Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth: no touches, no winner. |
 | `eyes` | October: eyes in the dark, opening, blinking, glancing about, and closing again. |
-| `football` | Football season: a player in pads running a play: a pass, caught or dropped (hands to the helmet), or a run with a hurdle over a diving defender. |
+| `football` | Draft. Football season: a player in pads running a play: a pass, caught or dropped (hands to the helmet), or a run with a hurdle over a diving defender. |
 | `fractal` | A branching growth tracing round the name, resting when grown, then starting again. |
 | `ghostrider` | A wireframe road ahead at a slow cruise, bending and rising gently, hills sliding aside on the bends. For Neil Peart. |
 | `ghosts` | October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below. |
@@ -35,7 +35,7 @@ only puts the art on its page and starts the runner.
 | `pongwars` | Two sides of a field of squares and a ball each, every square a ball touches coming over to its side; the border wanders forever. |
 | `pumpkins` | October: a row of jack-o'-lanterns, their candles flickering. |
 | `rocks` | Rocks drifting and turning; a small ship turns, fires, and splits them. |
-| `ships` | Ships gliding across a low sea in outline: a liner trailing smoke, an aircraft carrier, a tall ship under sail, a sailboat bobbing. |
+| `ships` | Draft. Ships gliding across a low sea in outline: a liner trailing smoke, an aircraft carrier, a tall ship under sail, a sailboat bobbing. |
 | `signalnoise` | Faint scanlines and a rolling band, with brief bursts of interference. |
 | `solari` | A split-flap board showing the front page's other deks, riffling to the next every so often. |
 | `spider` | October: a spider letting itself down on its thread and climbing back up; a cobweb in a corner. |
@@ -51,6 +51,9 @@ is a month (`10`), a day every year (`'07-04'`), days every year (`'12-24..12-26
 the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast that moves: list
 the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
 are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
+
+Animations listed in `DRAFTS` (`blockpeek`, `football` and `ships`, for now) are never picked at
+random: they're still being worked on, and run only by name and on the demo page.
 
 Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
 shorter its window, so a short occasion is seen while it lasts: a month or longer weighs 1, a
