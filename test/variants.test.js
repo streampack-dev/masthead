@@ -24,6 +24,7 @@ import rocks, { SIZES, outline } from '../src/variants/rocks.js';
 import pongwars, { COLS as WAR_COLS, ROWS as WAR_ROWS, bounce } from '../src/variants/pongwars.js';
 import stix, { GH, GW, claim, field, route } from '../src/variants/stix.js';
 import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
+import flyby, { FOCAL, PLANETS, layout as flybyLayout, project as flybyProject, speed as flybySpeed } from '../src/variants/flyby.js';
 import football, { FLIGHT, GROUND as FIELD, arc, joints } from '../src/variants/football.js';
 import fractal from '../src/variants/fractal.js';
 import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
@@ -36,7 +37,7 @@ import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/wate
 import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
 import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -60,7 +61,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1555,5 +1556,60 @@ describe('football', () => {
       }
     }
     assert.deepEqual(seen, { caught: true, dropped: true, hurdle: true, dive: true });
+  });
+});
+
+describe('the flyby', () => {
+  const seeded = (seed) => () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 0x100000000; };
+
+  it('puts each planet on its own orbit, in order out from the sun', () => {
+    const planets = flybyLayout(seeded(3));
+    planets.forEach((p, i) => {
+      assert.ok(Math.abs(Math.hypot(p.x, p.z) - PLANETS[i].r) < 1e-9, `planet ${i}`);
+      assert.ok(p.z > 0, 'on the near side, so the flight passes it');
+    });
+  });
+
+  it('sees what is ahead, smaller with distance, and nothing behind', () => {
+    const near = flybyProject(0.22, 0, 1, 3, 1200, 100, 1), far = flybyProject(0.22, 0, -2, 3, 1200, 100, 1);
+    // The point straight ahead of the camera, below it on the plane, is centred and below the horizon.
+    assert.equal(near.x, 600);
+    assert.ok(near.y > 100 && far.y > 100 && far.y < near.y, `${near.y} ${far.y}`);
+    assert.equal(flybyProject(0, 0, 4, 3, 1200, 100, 1), null);
+    // A stretched masthead squeezes x, so circles stay round.
+    assert.ok(Math.abs(flybyProject(1.22, 0, 0, 3, 1200, 100, 2).x - 600 - FOCAL / 3 / 2) < 1e-9);
+  });
+
+  it('falls in faster nearer the sun', () => {
+    assert.ok(flybySpeed(0.5) > flybySpeed(3) && flybySpeed(3) > flybySpeed(6));
+  });
+
+  it('flies in to the sun and past it, then starts again from the outside, planets placed afresh', () => {
+    const { layer, art } = run(flyby, 0, { seed: 8 });
+    const discs = () => find(layer, 'masthead-flyby-disc').map((d) => d.attrs.cx).join(',');
+    const scene = find(layer, 'masthead-flyby-scene')[0];
+    const first = discs();
+    let faded = false, restarted = false;
+    for (let n = 1; n <= 4000 && !restarted; n++) {
+      art.step(n, n * 40);
+      if (Number(scene.attrs.opacity) < 0.05 && n > 100) faded = true;
+      if (faded && Number(scene.attrs.opacity) > 0.5) restarted = true;
+    }
+    assert.ok(faded && restarted, `faded ${faded}, restarted ${restarted}`);
+    assert.notEqual(discs(), first);
+  });
+
+  it('takes a burn from a click, and gets there sooner', () => {
+    const steps = (pokes) => {
+      const { layer, art } = run(flyby, 0, { seed: 8 });
+      const sun = find(layer, 'masthead-flyby-sun')[0];
+      for (let n = 1; n <= 5000; n++) {
+        if (pokes && n % 40 === 0) art.poke(600, 160, n, n * 40);
+        art.step(n, n * 40);
+        if (sun.attrs.opacity === '0') return n;
+      }
+      return Infinity;
+    };
+    assert.ok(steps(true) < steps(false) * 0.7);
   });
 });
