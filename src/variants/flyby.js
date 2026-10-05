@@ -65,7 +65,7 @@ export default function flyby(layer, m) {
   var W = m.width, H = m.height;
   var rs = (m.seed() >>> 0) || 1;
   function rand() { rs = (Math.imul(rs, 1664525) + 1013904223) >>> 0; return rs / 0x100000000; }
-  var cy = H * 0.34;
+  var cy = H * 0.5;
 
   // Stars, far enough off to stay put however far the camera goes.
   var stars = m.el('g', { 'class': 'masthead-flyby-stars' });
