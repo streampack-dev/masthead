@@ -23,7 +23,7 @@ only puts the art on its page and starts the runner.
 | `deadline` | A writer at a desk on the left, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard. |
 | `duel` | Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth: no touches, no winner. |
 | `eyes` | October: eyes in the dark, opening, blinking, glancing about, and closing again. |
-| `flyby` | Draft. A flight in through the solar system, like Voyager 1 in reverse: orbits and planets (far from scale) sweeping past on the way to the sun, then round again. |
+| `flyby` | A flight in through the solar system, like Voyager 1 in reverse: orbits and planets (far from scale) sweeping past on the way to the sun, then round again. |
 | `football` | Draft. Football season: a player in pads running a play: a pass, caught or dropped (hands to the helmet), or a run with a hurdle over a diving defender. |
 | `fractal` | A branching growth tracing round the name, resting when grown, then starting again. |
 | `ghostrider` | A wireframe road ahead at a slow cruise, bending and rising gently, hills sliding aside on the bends. For Neil Peart. |
@@ -53,7 +53,7 @@ the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast t
 the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
 are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
 
-Animations listed in `DRAFTS` (`blockpeek`, `flyby`, `football` and `ships`, for now) are never picked at
+Animations listed in `DRAFTS` (`blockpeek`, `football` and `ships`, for now) are never picked at
 random: they're still being worked on, and run only by name and on the demo page.
 
 Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
