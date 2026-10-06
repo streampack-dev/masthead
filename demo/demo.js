@@ -19,6 +19,7 @@ var BLURBS = {
   ghosts: 'October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below.',
   grass: 'A field of grass, the wind moving through it in slow swells and passing gusts. Click to send a gust through it.',
   graveyard: 'October: a full moon with clouds passing, headstones and bare trees, fog, and a bat crossing the moon.',
+  grid: 'A monochrome composition in the manner of De Stijl, in the theme\'s own tones: now and then a line slides, a region is cut again, or a tone moves to the next block. Click to cut a rectangle.',
   lander: 'Lunar Lander, flown by its autopilot: a slow descent, short burns, a gentle landing on the pad.',
   life: "Conway's Game of Life, reseeded when it settles. Click to plant a pattern.",
   paddles: 'Pong, playing itself at an easy pace, scores ticking up to eleven.',

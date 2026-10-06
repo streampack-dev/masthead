@@ -30,6 +30,7 @@ only puts the art on its page and starts the runner.
 | `ghosts` | October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below. |
 | `grass` | A field of grass along the foot of the masthead, the wind moving through it. |
 | `graveyard` | October: a moon with clouds passing, headstones and bare trees, fog, a bat crossing the moon. |
+| `grid` | Draft. A monochrome composition in the manner of De Stijl: lines of a few weights cutting the masthead into rectangles, a few small blocks in the corners toned in the theme's own tints and a hatching. Now and then a line slides, a region is cut again, or a tone passes to a neighbouring block. |
 | `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
 | `life` | Conway's Game of Life, reseeded when it settles. |
 | `paddles` | Two paddles and a ball, playing itself at an easy pace, scores ticking up to eleven. |
@@ -53,7 +54,7 @@ the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast t
 the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
 are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
 
-Animations listed in `DRAFTS` (`blockpeek`, `football` and `ships`, for now) are never picked at
+Animations listed in `DRAFTS` (`blockpeek`, `football`, `grid` and `ships`, for now) are never picked at
 random: they're still being worked on, and run only by name and on the demo page.
 
 Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
