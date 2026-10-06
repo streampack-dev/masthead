@@ -29,6 +29,7 @@ import football, { FLIGHT, GROUND as FIELD, arc, joints } from '../src/variants/
 import fractal from '../src/variants/fractal.js';
 import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
 import life, { PLANTS } from '../src/variants/life.js';
+import lighthouse, { REACH, REVOLUTION, SEA, SPREAD, beam, headland, lit } from '../src/variants/lighthouse.js';
 import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
 import terrainflight from '../src/variants/terrainflight.js';
@@ -37,7 +38,7 @@ import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/wate
 import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
 import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, lighthouse, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -61,7 +62,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'lighthouse', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1408,6 +1409,84 @@ describe('the ships', () => {
     const { layer, art } = run(ships, 10);
     for (let i = 0; i < 6; i++) art.poke(100 + i * 150, 200, 10, 400);
     assert.equal(find(layer, 'masthead-ships-dolphin').length, 3);
+  });
+});
+
+describe('the lighthouse', () => {
+  const lampAt = (layer) => /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(find(layer, 'masthead-lighthouse-lamp')[0].attrs.transform).slice(1).map(Number);
+  const beamOf = (layer) => [...find(layer, 'masthead-lighthouse-beam')[0].attrs.d.matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+  // How far the beam reaches toward the far side (+) or the lighthouse's own end (-).
+  const outward = (layer) => {
+    const [lx] = lampAt(layer), inward = lx < 600 ? 1 : -1;
+    const xs = beamOf(layer).map(([x]) => (x - lx) * inward);
+    return Math.abs(Math.max(...xs)) > Math.abs(Math.min(...xs)) ? Math.max(...xs) : Math.min(...xs);
+  };
+
+  it('casts its beam from the lamp, broadside a long wedge, toward the viewer a glare round the lamp', () => {
+    const side = beam(100, 120, 0, 1, 1);
+    assert.ok(side.d.startsWith('M100.0 120.0'), side.d);
+    assert.ok(Math.abs(side.x - REACH) < 1e-9);
+    const glare = beam(100, 120, Math.PI / 2, 1, 1);
+    assert.ok(!glare.d.startsWith('M100.0 120.0'));
+    for (const [x, y] of glare.d.match(/-?[\d.]+ -?[\d.]+/g).map((p) => p.split(' ').map(Number))) {
+      assert.ok(Math.hypot(x - 100, y - 120) < SPREAD * 1.4, `${x}, ${y}`);
+    }
+    // Going away it is smaller than coming toward the viewer.
+    assert.ok(beam(100, 120, -Math.PI / 2, 1, 1).spread < glare.spread);
+  });
+
+  it('stands on a headland that meets the sea, the beam coming from its lantern', () => {
+    let rs = 3;
+    const top = headland(() => ((rs = (rs * 16807) % 2147483647) / 2147483647));
+    assert.equal(top.at(-1)[1], SEA);
+    assert.ok(top.every(([, y]) => y <= SEA));
+    for (const seed of [1, 2, 3, 4]) {
+      const { layer } = run(lighthouse, 40, { seed });
+      const [lx, ly] = lampAt(layer);
+      assert.ok(lx < 120 || lx > 1080, `lamp at ${lx}`);
+      assert.ok(ly > 80 && ly < 140, `lamp at ${ly}`);
+      const tip = beamOf(layer)[0];
+      if (Math.abs(outward(layer)) > 200) assert.deepEqual(tip, [lx, ly]);
+    }
+  });
+
+  it('turns once round in a revolution, out to the far side and back', () => {
+    const { layer, art } = run(lighthouse, 0, { seed: 9 });
+    const reach = [];
+    for (let n = 1; n <= REVOLUTION; n++) { art.step(n, n * 40); reach.push(outward(layer)); }
+    assert.ok(Math.max(...reach) > 1000, 'out across the masthead');
+    assert.ok(Math.min(...reach) < -1000, 'back toward its own end');
+    // Out to the far side in one stretch of the turn, not back and forth.
+    const out = reach.map((r) => r > 500);
+    const starts = out.filter((o, i) => o && !out[(i + REVOLUTION - 1) % REVOLUTION]).length;
+    assert.equal(starts, 1);
+  });
+
+  it('lights the fog inside the beam, not behind the lamp', () => {
+    assert.ok(lit(300, 0, 0) > 0.5);
+    assert.equal(lit(-300, 0, 0), 0);
+    assert.ok(lit(300, SPREAD, 0) < lit(300, 0, 0));
+    assert.equal(lit(300, 0, Math.PI), 0);
+  });
+
+  it('swings the beam round to a poked side and holds it there, then turns on', () => {
+    for (const far of [true, false]) {
+      const { layer, art } = run(lighthouse, 20, { seed: 4 });
+      const [lx] = lampAt(layer);
+      const x = far ? (lx < 600 ? 1100 : 100) : (lx < 600 ? 0 : 1200);
+      art.poke(x, 160, 20, 800);
+      let n = 20, held = 0;
+      while (n < 400 && held < 10) {
+        n++;
+        const before = outward(layer);
+        art.step(n, n * 40);
+        held = outward(layer) === before ? held + 1 : 0;
+      }
+      const r = outward(layer);
+      assert.ok(far ? r > REACH * 0.95 : r < -REACH * 0.95, `held at ${r}`);
+      for (let k = 1; k <= 60; k++) art.step(n + k, (n + k) * 40);
+      assert.notEqual(outward(layer), r, 'turning again');
+    }
   });
 });
 

@@ -192,6 +192,18 @@
 .masthead-ships-splash { fill: none; stroke: var(--_accent); stroke-width: 1; }
 .masthead-water-line { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; }
 
+/* Lighthouse: the headland and tower in outline, the sea in lines, and the beam the one faint fill. */
+.masthead-lighthouse { fill: none; }
+.masthead-lighthouse-star { fill: color-mix(in srgb, var(--_accent) 75%, var(--_border)); }
+.masthead-lighthouse-fog { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1.4; stroke-linecap: round; }
+.masthead-lighthouse-horizon { stroke: color-mix(in srgb, var(--_accent) 40%, var(--_border)); stroke-width: 1; opacity: 0.6; }
+.masthead-lighthouse-glow { stop-color: var(--_accent); }
+.masthead-lighthouse-beam { opacity: 0.3; }
+.masthead-lighthouse-rock { fill: var(--_bg); stroke: color-mix(in srgb, var(--_accent) 65%, var(--_bg)); stroke-width: 1.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.masthead-lighthouse-crag { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_bg)); stroke-width: 1; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.masthead-lighthouse-tower { fill: var(--_bg); stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.masthead-lighthouse-wave { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; stroke-linecap: round; }
+
 /* Wind farm: low hills, towers, and turning rotors. */
 .masthead-windfarm { fill: none; }
 .masthead-windfarm-hills { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_border)); stroke-width: 1.2; }
