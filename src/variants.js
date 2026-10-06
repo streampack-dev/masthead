@@ -18,6 +18,7 @@ export var variants = {
   ghosts: function () { return import('./variants/ghosts.js'); },
   grass: function () { return import('./variants/grass.js'); },
   graveyard: function () { return import('./variants/graveyard.js'); },
+  harmonograph: function () { return import('./variants/harmonograph.js'); },
   lander: function () { return import('./variants/lander.js'); },
   life: function () { return import('./variants/life.js'); },
   paddles: function () { return import('./variants/paddles.js'); },

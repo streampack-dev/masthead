@@ -19,6 +19,7 @@ var BLURBS = {
   ghosts: 'October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below.',
   grass: 'A field of grass, the wind moving through it in slow swells and passing gusts. Click to send a gust through it.',
   graveyard: 'October: a full moon with clouds passing, headstones and bare trees, fog, and a bat crossing the moon.',
+  harmonograph: 'Two harmonographs, one either side: each a single line drawn by damped pendulums, spiralling slowly inward, then fading for the next. Click a side to push its pendulums.',
   lander: 'Lunar Lander, flown by its autopilot: a slow descent, short burns, a gentle landing on the pad.',
   life: "Conway's Game of Life, reseeded when it settles. Click to plant a pattern.",
   paddles: 'Pong, playing itself at an easy pace, scores ticking up to eleven.',

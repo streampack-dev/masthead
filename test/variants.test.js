@@ -35,9 +35,10 @@ import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
 import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
+import harmonograph, { PER_STEP, POINTS, pen, pendulums } from '../src/variants/harmonograph.js';
 import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, harmonograph, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -61,7 +62,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'harmonograph', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1611,5 +1612,67 @@ describe('the flyby', () => {
       return Infinity;
     };
     assert.ok(steps(true) < steps(false) * 0.7);
+  });
+});
+
+describe('the harmonograph', () => {
+  const seeded = (seed) => () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 0x100000000; };
+  const paths = (layer, which) => find(layer, 'masthead-harmonograph-line')[which].children;
+  const points = (layer, which) => paths(layer, which).map((p) => p.attrs.d.split('L').length - 1).reduce((a, b) => a + b, 0);
+
+  it('stays in its box, dying down inward as it goes', () => {
+    for (let k = 1; k <= 20; k++) {
+      const set = pendulums(seeded(k));
+      let early = 0, late = 0;
+      for (let i = 0; i <= 400; i++) {
+        const t = (i / 400) * 84, p = pen(set, t);
+        assert.ok(Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1);
+        if (i < 80) early = Math.max(early, Math.hypot(p.x, p.y));
+        if (i > 320) late = Math.max(late, Math.hypot(p.x, p.y));
+      }
+      assert.ok(late < early * 0.6, `${k}: ${early} -> ${late}`);
+    }
+  });
+
+  it('draws one unbroken line in a few paths, a few points a step, then fades and starts again', () => {
+    const { layer, art } = run(harmonograph, 200);
+    assert.equal(points(layer, 0), 200 * PER_STEP - 1);
+    const steps = POINTS / PER_STEP;
+    for (let i = 201; i <= steps + 1; i++) art.step(i, i * 40);
+    const lines = paths(layer, 0);
+    assert.ok(lines.length <= 12, lines.length);
+    for (let k = 1; k < lines.length; k++) {
+      const end = lines[k - 1].attrs.d.split('L').pop();
+      assert.equal(lines[k].attrs.d.split('L')[0], 'M' + end);
+    }
+    const figure = find(layer, 'masthead-harmonograph-figure')[0];
+    let i = steps + 2;
+    for (; i < steps + 400 && figure.attrs.opacity !== '0.000'; i++) art.step(i, i * 40);
+    assert.equal(figure.attrs.opacity, '0.000');
+    for (let k = 0; k < 40; k++, i++) art.step(i, i * 40);
+    assert.ok(points(layer, 0) > 0 && points(layer, 0) < 50 * PER_STEP);
+    assert.equal(figure.attrs.opacity, '1');
+  });
+
+  it('keeps its shape and its place by the edge when the art is stretched', () => {
+    const narrow = run(harmonograph, 100, { seed: 5 }).layer, wide = run(harmonograph, 100, { seed: 5, stretch: 2 }).layer;
+    const moved = (layer) => find(layer, 'masthead-harmonograph-line')[0].attrs.transform;
+    assert.match(moved(narrow), /scale\(1\.0000 1\)/);
+    assert.match(moved(wide), /scale\(0\.5000 1\)/);
+    assert.equal(paths(narrow, 0)[0].attrs.d, paths(wide, 0)[0].attrs.d);
+  });
+
+  it('takes a push on the side clicked, bending the line from there, and wakes a resting side', () => {
+    const plain = run(harmonograph, 100, { seed: 3 }), pushed = run(harmonograph, 100, { seed: 3 });
+    pushed.art.poke(100, 160, 100, 4000);
+    for (let i = 101; i <= 160; i++) { plain.art.step(i, i * 40); pushed.art.step(i, i * 40); }
+    const pts = (r) => paths(r.layer, 0).map((p) => p.attrs.d.slice(1)).join('L').split('L');
+    const a = pts(plain), b = pts(pushed);
+    assert.equal(a.length, b.length);
+    const first = a.findIndex((p, i) => p !== b[i]);
+    assert.ok(first >= 100 * 4 && first < 110 * 4, String(first));
+    assert.equal(points(pushed.layer, 1), 0);
+    pushed.art.poke(1100, 160, 161, 161 * 40);
+    assert.ok(points(pushed.layer, 1) > 0);
   });
 });
