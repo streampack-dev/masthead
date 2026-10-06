@@ -78,9 +78,10 @@ describe('every variant', () => {
 });
 
 describe('flowfield', () => {
-  it('is strongest low and faintest behind the name', () => {
+  it('fills the masthead, easing off only a little behind the name', () => {
     assert.equal(flowWeight(300), 1);
-    assert.ok(flowWeight(160) < 0.2 && flowWeight(10) < 0.5 && flowWeight(10) > flowWeight(160));
+    assert.equal(flowWeight(10), 1);
+    assert.ok(flowWeight(160) >= 0.75 && flowWeight(160) < 1);
   });
 
   it('gives a unit direction everywhere, swirling round an eddy', () => {

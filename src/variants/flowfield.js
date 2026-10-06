@@ -11,14 +11,13 @@
 export var MOTES = 40, TAIL = 12, STROKE = 13;
 var SPEED = 2, EDDY_STEPS = 110, EDDY_RADIUS = 70;
 
-/* How strongly a height shows, 0 to 1: full below the tagline, faint behind the name, a little
-   more along the top. */
+/* How strongly a height shows, 0 to 1: the current fills the masthead, easing off a little
+   behind the name. */
 export function weight(y) {
-  if (y >= 236) return 1;
-  if (y >= 206) return 0.16 + 0.84 * (y - 206) / 30;
-  if (y >= 70) return 0.16;
-  if (y >= 40) return 0.16 + 0.2 * (70 - y) / 30;
-  return 0.36;
+  if (y >= 236 || y < 40) return 1;
+  if (y >= 206) return 0.78 + 0.22 * (y - 206) / 30;
+  if (y >= 70) return 0.78;
+  return 0.78 + 0.22 * (70 - y) / 30;
 }
 
 /* The field's own shape, from [rand]: the waves' sizes, slants, speeds and phases. */
@@ -61,23 +60,25 @@ export default function flowfield(layer, m) {
 
   var field = shape(rand);
 
-  // The strokes: a jittered grid, closer together low. Three bands, each one path.
-  var rows = [16, 44, 84, 124, 164, 204, 234, 254, 274, 294, 312];
+  // The strokes: a jittered grid over the whole masthead. Three bands (top, behind the name,
+  // low), each one path.
+  var rows = [];
+  for (var ry0 = 12; ry0 < H; ry0 += 24) rows.push(ry0);
   var bands = [0, 1, 2].map(function (k) {
     return { el: m.el('path', { 'class': 'masthead-flowfield-grid masthead-flowfield-band-' + k }), points: [] };
   });
   rows.forEach(function (ry) {
-    var cols = ry >= 230 ? 64 : 40, band = ry >= 230 ? 2 : ry < 60 ? 1 : 0;
+    var cols = 56, band = ry >= 230 ? 2 : ry < 60 ? 1 : 0;
     for (var c = 0; c < cols; c++) {
       bands[band].points.push({ x: (c + 0.2 + rand() * 0.6) * W / cols, y: ry + (rand() - 0.5) * 10, len: STROKE * (0.7 + rand() * 0.6) });
     }
   });
 
-  // The motes: mostly born low, a few anywhere (where the name dims them).
+  // The motes, born anywhere.
   var motes = [];
   function birth(mote, n, x, y) {
     mote.x = x !== undefined ? x : rand() * W;
-    mote.y = y !== undefined ? y : rand() < 0.75 ? 228 + rand() * 90 : 10 + rand() * 300;
+    mote.y = y !== undefined ? y : 6 + rand() * (H - 12);
     mote.age = 0;
     mote.life = 90 + Math.floor(rand() * 140);
     mote.speed = SPEED * (0.7 + rand() * 0.6);

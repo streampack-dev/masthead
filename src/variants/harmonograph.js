@@ -58,9 +58,10 @@ export default function harmonograph(layer, m) {
   function side(which, delay) {
     var g = m.el('g', { 'class': 'masthead-harmonograph-figure' });
     var lines = m.el('g', { 'class': 'masthead-harmonograph-line' }, g);
-    var glow = m.el('circle', { r: 6, fill: m.pulse, opacity: 0, 'class': 'masthead-harmonograph-glow' }, g);
-    var tip = m.el('circle', { r: 1.4, opacity: 0, 'class': 'masthead-spark masthead-harmonograph-tip' }, g);
-    return { which: which, g: g, lines: lines, glow: glow, tip: tip, wait: delay, phase: 'rest', set: null };
+    var glow = m.el('circle', { r: 12, fill: m.pulse, opacity: 0, 'class': 'masthead-harmonograph-glow' }, g);
+    var core = m.el('circle', { r: 4.5, fill: m.pulse, opacity: 0, 'class': 'masthead-harmonograph-glow' }, g);
+    var tip = m.el('circle', { r: 2.4, opacity: 0, 'class': 'masthead-spark masthead-harmonograph-tip' }, g);
+    return { which: which, g: g, lines: lines, glow: glow, core: core, tip: tip, wait: delay, phase: 'rest', set: null };
   }
   var sides = [side(-1, 0), side(1, (POINTS / PER_STEP + HOLD + FADE + REST) / 2)];
 
@@ -102,11 +103,13 @@ export default function harmonograph(layer, m) {
     s.path.setAttribute('d', s.d);
     var tx = (cx + (s.at.x * RADIUS) / stretch).toFixed(1), ty = (H / 2 + s.at.y * RADIUS).toFixed(1);
     var shown = s.drawn <= POINTS ? 1 : 0;
-    [s.glow, s.tip].forEach(function (c) {
+    [s.glow, s.core, s.tip].forEach(function (c) {
       c.setAttribute('cx', tx);
       c.setAttribute('cy', ty);
       c.setAttribute('opacity', shown);
     });
+    // The pen is a firefly: its glow breathes as it draws.
+    if (shown) s.glow.setAttribute('opacity', (0.8 + 0.2 * Math.sin(s.drawn * 0.09)).toFixed(2));
   }
 
   function step(s) {

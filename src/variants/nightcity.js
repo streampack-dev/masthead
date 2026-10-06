@@ -36,15 +36,17 @@ export default function nightcity(layer, m) {
   var haze = m.el('path', { 'class': 'masthead-nightcity-haze' }, view);
   var flare = m.el('path', { 'class': 'masthead-nightcity-flare', opacity: 0 }, view);
 
+  var farCar = m.el('path', { 'class': 'masthead-nightcity-far-car' }, view);
+  // Bands farthest first, so the nearer towers' faces, filled with the background, hide what's
+  // behind them: the skyline, the lights below, and the towers further on.
   var outlines = [], windows = [];
-  for (var b = 0; b < BANDS.length; b++) {
+  for (var b = BANDS.length - 1; b >= 0; b--) {
     var g = m.el('g', { 'class': 'masthead-nightcity-band masthead-nightcity-band-' + b }, view);
-    outlines.push(m.el('path', { 'class': 'masthead-nightcity-tower' }, g));
-    windows.push(m.el('path', { 'class': 'masthead-nightcity-windows' }, g));
+    outlines[b] = m.el('path', { 'class': 'masthead-nightcity-tower' }, g);
+    windows[b] = m.el('path', { 'class': 'masthead-nightcity-windows' }, g);
   }
   var beacons = m.el('path', { 'class': 'masthead-nightcity-beacon' }, view);
   var cars = m.el('path', { 'class': 'masthead-nightcity-car' }, view);
-  var farCar = m.el('path', { 'class': 'masthead-nightcity-far-car' }, view);
 
   /* A face's lit windows, as (bay, storey) pairs: some floors dark all along, the rest lit here
      and there. */
@@ -118,7 +120,7 @@ export default function nightcity(layer, m) {
       o.push('M' + at(inner, 0, z0) + 'L' + at(inner, 0, z1) + 'L' + at(inner, h, z1) + 'L' + at(inner, h, z0) + 'Z');
       // The front, closed, while it's still ahead of you; and the roof, when you're above it.
       if (t.z >= NEAR) o.push('M' + at(inner, 0, z0) + 'L' + at(inner, h, z0) + 'L' + at(outer, h, z0) + 'L' + at(outer, 0, z0) + 'Z');
-      if (h < EYE) o.push('M' + at(outer, h, z0) + 'L' + at(outer, h, z1) + 'L' + at(inner, h, z1));
+      if (h < EYE) o.push('M' + at(outer, h, z0) + 'L' + at(outer, h, z1) + 'L' + at(inner, h, z1) + 'L' + at(inner, h, z0) + 'Z');
       if (t.z >= WINDOWS_TO) return;
       // The windows, each a short dash on its face, projected as the face's corners are, so it
       // runs toward the vanishing point on the face along the gap and level on the front.
