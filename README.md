@@ -43,6 +43,7 @@ only puts the art on its page and starts the runner.
 | `stix` | The C64 claim-the-field game playing itself: a marker cuts into the field, claiming the side without the wandering Stix, hatched. |
 | `terrainflight` | Ridgelines rolling toward you from the horizon. |
 | `train` | An ASCII-art train running along a track at the foot of the masthead, trailing smoke. |
+| `truchet` | Draft. Truchet tiles: quarter-circle arcs winding paths across the masthead, one tile at a time easing round a quarter turn and rewiring them; now and then a glow runs along a path. |
 | `water` | A still surface seen from just above; drops land and their rings spread and cross. |
 | `windfarm` | Turbines along low hills, each turning at its own pace in a wind that rises and falls. |
 
@@ -53,8 +54,8 @@ the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast t
 the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
 are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
 
-Animations listed in `DRAFTS` (`blockpeek`, `football` and `ships`, for now) are never picked at
-random: they're still being worked on, and run only by name and on the demo page.
+Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `truchet`, for now) are never
+picked at random: they're still being worked on, and run only by name and on the demo page.
 
 Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
 shorter its window, so a short occasion is seen while it lasts: a month or longer weighs 1, a

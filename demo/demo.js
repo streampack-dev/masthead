@@ -32,6 +32,7 @@ var BLURBS = {
   stix: 'Stix (the C64 Qix), playing itself: cuts into the field, claimed ground hatched, the Stix wandering.',
   terrainflight: 'Ridgelines rolling toward you from the horizon. Click to bank.',
   train: 'An ASCII train along the foot of the masthead, trailing smoke; then the empty track. Click to blow the whistle, or call a train.',
+  truchet: 'Quarter-circle tiles winding paths across the masthead, one tile now and then easing round a quarter turn and rewiring them; now and then a glow runs along a path. Click to turn a tile, and its neighbours after it.',
   water: 'A still surface, seen from just above, that drops land on now and then. Click to skip a stone.',
   windfarm: 'Turbines along low hills, each turning at its own pace in a wind that rises and falls.'
 };
