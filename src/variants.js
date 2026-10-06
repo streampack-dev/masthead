@@ -11,6 +11,7 @@ export var variants = {
   deadline: function () { return import('./variants/deadline.js'); },
   duel: function () { return import('./variants/duel.js'); },
   eyes: function () { return import('./variants/eyes.js'); },
+  flowfield: function () { return import('./variants/flowfield.js'); },
   flyby: function () { return import('./variants/flyby.js'); },
   football: function () { return import('./variants/football.js'); },
   fractal: function () { return import('./variants/fractal.js'); },
