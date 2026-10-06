@@ -20,6 +20,7 @@ export var variants = {
   grass: function () { return import('./variants/grass.js'); },
   graveyard: function () { return import('./variants/graveyard.js'); },
   lander: function () { return import('./variants/lander.js'); },
+  lighthouse: function () { return import('./variants/lighthouse.js'); },
   life: function () { return import('./variants/life.js'); },
   nightcity: function () { return import('./variants/nightcity.js'); },
   paddles: function () { return import('./variants/paddles.js'); },

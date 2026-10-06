@@ -21,6 +21,7 @@ var BLURBS = {
   grass: 'A field of grass, the wind moving through it in slow swells and passing gusts. Click to send a gust through it.',
   graveyard: 'October: a full moon with clouds passing, headstones and bare trees, fog, and a bat crossing the moon.',
   lander: 'Lunar Lander, flown by its autopilot: a slow descent, short burns, a gentle landing on the pad.',
+  lighthouse: 'A lighthouse at night on a rocky headland, its beam turning: swinging out across the sea and sky, flaring as it faces you. Click to swing the beam round to that side.',
   life: "Conway's Game of Life, reseeded when it settles. Click to plant a pattern.",
   nightcity: 'A slow flight between towers at night: lit windows sliding past, a warning light blinking on a roof, a flying car far off. Click to bank toward that side and send a car streaking past.',
   paddles: 'Pong, playing itself at an easy pace, scores ticking up to eleven.',

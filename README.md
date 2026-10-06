@@ -32,6 +32,7 @@ only puts the art on its page and starts the runner.
 | `grass` | A field of grass along the foot of the masthead, the wind moving through it. |
 | `graveyard` | October: a moon with clouds passing, headstones and bare trees, fog, a bat crossing the moon. |
 | `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
+| `lighthouse` | Draft. A lighthouse at night on a rocky headland at one end, the sea in lines along the foot, the lamp's beam slowly turning; stars come out and the fog lights as the beam passes. |
 | `life` | Conway's Game of Life, reseeded when it settles. |
 | `nightcity` | Draft. A slow flight down an avenue between wireframe towers at night: rows of lit windows sliding past, warning lights blinking on the roofs, a skyline and a flying car far off. |
 | `paddles` | Two paddles and a ball, playing itself at an easy pace, scores ticking up to eleven. |
@@ -62,6 +63,7 @@ Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `triangles`,
 Animations listed in `DRAFTS` (`blockpeek`, `flowfield`, `football` and `ships`, for now) are never picked at
 Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `skyline`, for now) are never picked at
 Animations listed in `DRAFTS` (`blockpeek`, `football`, `nightcity` and `ships`, for now) are never picked at
+Animations listed in `DRAFTS` (`blockpeek`, `football`, `lighthouse` and `ships`, for now) are never picked at
 random: they're still being worked on, and run only by name and on the demo page.
 Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `truchet`, for now) are never
 picked at random: they're still being worked on, and run only by name and on the demo page.
@@ -129,6 +131,8 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    the grass, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the skyline lights windows or calls lightning, the Solari board riffles on, the terrain
    where you click, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
    the grass, life plants a pattern, the night city banks and a flying car streaks past, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain
+   where you click, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
+   the grass, the lighthouse swings its beam round to that side, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain
    banks, the train whistles, water skips a stone); the frame has `data-masthead-poke` while it
    does, for a cursor, say.
    Clicks on links, buttons and form controls in the masthead pass through untouched; a
