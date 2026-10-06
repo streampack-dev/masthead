@@ -117,11 +117,11 @@
 .masthead-ghostrider-hills { stroke: color-mix(in srgb, var(--_accent) 50%, var(--_border)); stroke-width: 1.1; }
 .masthead-ghostrider-horizon { stroke: color-mix(in srgb, var(--_accent) 35%, var(--_border)); stroke-width: 1; opacity: 0.6; }
 
-/* Night city: wireframe towers along an avenue, fainter with distance; lit windows, roof lights. */
+/* Night city: wireframe towers either side, fainter with distance; lit windows, roof lights, and
+   the city floor's lights far below. */
 .masthead-nightcity { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .masthead-nightcity-skyline { stroke: color-mix(in srgb, var(--_accent) 40%, var(--_border)); stroke-width: 0.9; opacity: 0.45; }
-.masthead-nightcity-curb { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; opacity: 0.55; }
-.masthead-nightcity-lane { stroke: color-mix(in srgb, var(--_accent) 50%, var(--_border)); stroke-width: 1.2; opacity: 0.5; }
+.masthead-nightcity-haze { stroke: var(--_accent); stroke-width: 1.3; opacity: 0.3; }
 .masthead-nightcity-flare { stroke: var(--_accent); stroke-width: 1.1; }
 .masthead-nightcity-tower { stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.2; }
 .masthead-nightcity-windows { stroke: var(--_accent); }
