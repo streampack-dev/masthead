@@ -39,6 +39,7 @@ only puts the art on its page and starts the runner.
 | `rocks` | Rocks drifting and turning; a small ship turns, fires, and splits them. |
 | `ships` | Draft. Ships gliding across a low sea in outline: a liner trailing smoke, an aircraft carrier, a tall ship under sail, a sailboat bobbing. |
 | `signalnoise` | Faint scanlines and a rolling band, with brief bursts of interference. |
+| `skyline` | Draft. A city at night in outline, windows lighting and going dark one at a time; now and then a shower of faint slanting rain, and rarely lightning off to one side. |
 | `solari` | A split-flap board showing the front page's other deks, riffling to the next every so often. |
 | `spider` | October: a spider letting itself down on its thread and climbing back up; a cobweb in a corner. |
 | `stix` | The C64 claim-the-field game playing itself: a marker cuts into the field, claiming the side without the wandering Stix, hatched. |
@@ -58,6 +59,7 @@ are written once. Variants can ask about an occasion too, with `m.during('hallow
 
 Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `triangles`, for now) are never picked at
 Animations listed in `DRAFTS` (`blockpeek`, `flowfield`, `football` and `ships`, for now) are never picked at
+Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `skyline`, for now) are never picked at
 random: they're still being worked on, and run only by name and on the demo page.
 Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `truchet`, for now) are never
 picked at random: they're still being worked on, and run only by name and on the demo page.
@@ -121,6 +123,9 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    where you click, the flow field takes an eddy, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
    the grass, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain
    banks, the train whistles, a ripple runs through the triangles, water skips a stone); the frame has `data-masthead-poke` while it
+   where you click, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
+   the grass, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the skyline lights windows or calls lightning, the Solari board riffles on, the terrain
+   banks, the train whistles, water skips a stone); the frame has `data-masthead-poke` while it
    does, for a cursor, say.
    Clicks on links, buttons and form controls in the masthead pass through untouched; a
    masthead that is itself a link home passes `poke: false`. A host serving the variant files

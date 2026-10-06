@@ -55,6 +55,7 @@ export var REFERENCE_DAYS = 30;
 export var DRAFTS = ['blockpeek', 'football', 'ships', 'triangles'];
 export var DRAFTS = ['blockpeek', 'football', 'ships', 'truchet'];
 export var DRAFTS = ['blockpeek', 'flowfield', 'football', 'ships'];
+export var DRAFTS = ['blockpeek', 'football', 'ships', 'skyline'];
 
 var DAY_MS = 86400000;
 

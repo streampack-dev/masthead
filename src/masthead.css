@@ -210,6 +210,16 @@
 .masthead-truchet-turning { stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); }
 .masthead-truchet-glow { stroke: var(--_accent); stroke-width: 6; stroke-opacity: 0.35; filter: blur(3px); }
 .masthead-truchet-lit { stroke: var(--_accent); stroke-width: 1.8; }
+/* Skyline: two rows of buildings in outline, lit windows, rain, and now and then lightning. */
+.masthead-skyline { fill: none; }
+.masthead-skyline-building { fill: color-mix(in srgb, var(--_accent) 6%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1.1; }
+.masthead-skyline-roof { fill: none; stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; }
+.masthead-skyline-far .masthead-skyline-building, .masthead-skyline-far .masthead-skyline-roof { stroke: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke-width: 1; }
+.masthead-skyline-window { fill: var(--_accent); fill-opacity: 0.55; }
+.masthead-skyline-ground { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_border)); stroke-width: 1.2; }
+.masthead-skyline-glint { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; stroke-linecap: round; }
+.masthead-skyline-rain { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 0.9; stroke-linecap: round; opacity: 0.6; }
+.masthead-skyline-bolt { stroke: var(--_accent); stroke-width: 1.3; stroke-linejoin: round; }
 
 /* Wind farm: low hills, towers, and turning rotors. */
 .masthead-windfarm { fill: none; }
