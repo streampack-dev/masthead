@@ -36,8 +36,16 @@ import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
 import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
 import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
+import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as flowWeight } from '../src/variants/flowfield.js';
+import grid, { MIN_H, MIN_W } from '../src/variants/grid.js';
+import harmonograph, { PER_STEP, POINTS, pen, pendulums } from '../src/variants/harmonograph.js';
+import lighthouse, { REACH, REVOLUTION, SEA, SPREAD, beam, headland, lit } from '../src/variants/lighthouse.js';
+import nightcity from '../src/variants/nightcity.js';
+import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } from '../src/variants/skyline.js';
+import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
+import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, football, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, nightcity, paddles, pongwars, rocks, ships, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -61,12 +69,44 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'nightcity', 'paddles', 'pongwars', 'rocks', 'ships', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
     });
   }
+});
+
+describe('flowfield', () => {
+  it('fills the masthead, easing off only a little behind the name', () => {
+    assert.equal(flowWeight(300), 1);
+    assert.equal(flowWeight(10), 1);
+    assert.ok(flowWeight(160) >= 0.75 && flowWeight(160) < 1);
+  });
+
+  it('gives a unit direction everywhere, swirling round an eddy', () => {
+    let s = 9;
+    const field = flowShape(() => ((s = (s * 16807) % 2147483647) / 2147483647));
+    for (const [x, y] of [[0, 0], [700, 160], [2400, 320]]) {
+      const v = flowCurrent(field, x, y, 123, []);
+      assert.ok(Math.abs(Math.hypot(v.x, v.y) - 1) < 1e-9);
+    }
+    // Right beside a strong eddy, the current runs round it, not toward it.
+    const v = flowCurrent(field, 520, 200, 0, [{ x: 500, y: 200, strength: 1, spin: 1 }]);
+    assert.ok(Math.abs(v.x) < 0.5 && v.y > 0.8, JSON.stringify(v));
+  });
+
+  it('keeps its motes few, and keeps the length of its strokes on screen however the masthead is stretched', () => {
+    const { layer } = run(flowfield, 50);
+    assert.equal(find(layer, 'masthead-flowfield-mote').length, MOTES);
+    const angles = (stretch) => {
+      const p = find(run(flowfield, 2, { stretch }).layer, 'masthead-flowfield-grid')[2];
+      return [...p.attrs.d.matchAll(/l(-?[\d.]+) (-?[\d.]+)/g)].slice(0, 5).map((m) => [Number(m[1]) * stretch, Number(m[2])]);
+    };
+    // Stretched, the field is sampled at other screen points, so only the lengths on screen are compared.
+    const one = angles(1), two = angles(2);
+    one.concat(two).forEach(([dx, dy]) => assert.ok(Math.hypot(dx, dy) > 8 && Math.hypot(dx, dy) < 18, `${dx} ${dy}`));
+  });
 });
 
 describe('a poke', () => {
@@ -252,6 +292,22 @@ describe('a poke', () => {
     assert.ok(Number(end[2]) < GROUND - 9, 'it climbs toward a point above the ground');
   });
 
+  it('drops an eddy in the flow field where clicked, swirling the strokes there, then dies away', () => {
+    // The strokes near (600, 270), each as its direction.
+    const near = (layer) => find(layer, 'masthead-flowfield-grid').flatMap((p) =>
+      [...p.attrs.d.matchAll(/M(-?[\d.]+) (-?[\d.]+)l(-?[\d.]+) (-?[\d.]+)/g)].map((s) => s.slice(1).map(Number)))
+      .filter(([x, y, dx, dy]) => Math.hypot(x + dx / 2 - 600, y + dy / 2 - 270) < 50);
+    const still = run(flowfield, 10, { seed: 5 }), swirled = run(flowfield, 10, { seed: 5 });
+    swirled.art.poke(600, 270, 10, 400);
+    for (let i = 11; i <= 14; i++) { still.art.step(i, i * 40); swirled.art.step(i, i * 40); }
+    const a = near(still.layer), b = near(swirled.layer);
+    assert.ok(a.length >= 4);
+    const turned = a.filter((s, k) => Math.abs(Math.atan2(s[3], s[2]) - Math.atan2(b[k][3], b[k][2])) > 0.3).length;
+    assert.ok(turned >= a.length / 2, `${turned} of ${a.length} turned`);
+    for (let i = 15; i <= 200; i++) { still.art.step(i, i * 40); swirled.art.step(i, i * 40); }
+    assert.deepEqual(near(swirled.layer), near(still.layer));
+  });
+
   it('banks the terrain toward the side clicked, then levels out', () => {
     const { layer, art } = run(terrainflight, 0);
     const view = find(layer, 'masthead-terrain-view')[0];
@@ -398,7 +454,8 @@ describe('the seasons', () => {
       const random = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x100000000; };
       let picked = 0;
       for (let i = 0; i < 2000; i++) if (pick(names, day(2027, 7, 4), random) === 'boids') picked++;
-      const others = names.filter((n) => !SEASONS[n]).length;
+      // Drafts weigh nothing: only the year-round animations on the sites compete.
+      const others = names.filter((n) => !SEASONS[n] && !DRAFTS.includes(n)).length;
       const expected = REFERENCE_DAYS / (REFERENCE_DAYS + others);
       assert.ok(Math.abs(picked / 2000 - expected) < 0.05, `${picked / 2000} vs ${expected}`);
       for (let i = 0; i < 200; i++) assert.notEqual(pick(names, day(2027, 7, 5), random), 'boids');
@@ -1137,6 +1194,47 @@ describe('the duel', () => {
   });
 });
 
+describe('nightcity', () => {
+  const points = (d) => [...(d || '').matchAll(/[ML](-?[\d.]+) (-?[\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+
+  it('draws into a fixed set of elements, however long it flies', () => {
+    const { layer, art } = run(nightcity, 0);
+    const count = serialize(layer).split('[').length;
+    for (let i = 1; i <= 3000; i++) art.step(i, i * 40);
+    assert.equal(serialize(layer).split('[').length, count);
+  });
+
+  it('draws the brightest windows, the nearest, only off to the sides of the name', () => {
+    const { layer, art } = run(nightcity, 0, { seed: 3 });
+    for (let i = 1; i <= 1500; i++) {
+      art.step(i, i * 40);
+      const g = find(layer, 'masthead-nightcity-band-0')[0];
+      const win = find(g, 'masthead-nightcity-windows')[0];
+      for (const [x] of points(win.attrs.d)) assert.ok(Math.abs(x - 600) > 200, `${x} at ${i}`);
+    }
+  });
+
+  it('banks toward the side clicked and sends a car past on that side, out of the frame', () => {
+    const { layer, art } = run(nightcity, 0);
+    const view = find(layer, 'masthead-nightcity-view')[0];
+    const car = find(layer, 'masthead-nightcity-car')[0];
+    art.poke(1000, 120, 0, 0);
+    let last = 600;
+    for (let i = 1; i <= 25; i++) {
+      art.step(i, i * 40);
+      const [x] = points(car.attrs.d)[0];
+      assert.ok(x > last, `${x} after ${last}`);
+      last = x;
+    }
+    assert.ok(Number(/rotate\((-?[\d.]+)/.exec(view.attrs.transform)[1]) < -1);
+    for (let i = 26; i <= 200; i++) art.step(i, i * 40);
+    assert.equal(view.attrs.transform, '');
+    art.poke(100, 120, 200, 200 * 40);
+    art.step(201, 201 * 40);
+    assert.ok(points(car.attrs.d)[0][0] < 600);
+  });
+});
+
 describe('ghostrider', () => {
   const road = (curve, height = () => 0) => ({ curve: () => curve, height });
   const seeded = (seed) => () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 0x100000000);
@@ -1249,6 +1347,130 @@ describe('the water', () => {
     assert.ok(first.startsWith('M0.0 ') && /L1200\.0 /.test(first));
     art.step(1, 40);
     assert.notEqual(lines[9].attrs.d, first);
+  });
+});
+
+describe('the triangles', () => {
+  const seeded = (seed) => () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 0x100000000; };
+
+  it('meshes the whole frame, each cell two triangles, each edge once', () => {
+    const { points, tris, edges } = mesh(seeded(5), 1200, 320);
+    assert.equal(points.length, (TRI_COLS + 1) * (TRI_ROWS + 1));
+    assert.equal(tris.length, TRI_COLS * TRI_ROWS * 2);
+    const keys = edges.map(([a, b]) => Math.min(a, b) + '-' + Math.max(a, b));
+    assert.equal(new Set(keys).size, keys.length);
+    for (const t of tris) for (let i = 0; i < 3; i++) {
+      const a = t[i], b = t[(i + 1) % 3];
+      assert.ok(keys.includes(Math.min(a, b) + '-' + Math.max(a, b)));
+    }
+    const xs = points.map((p) => p.x0), ys = points.map((p) => p.y0);
+    assert.deepEqual([Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)], [0, 1200, 0, 320]);
+  });
+
+  it('breathes without ever folding a triangle, even rippled', () => {
+    for (const seed of [1, 7, 42, 99, 1234]) {
+      const { points, tris } = mesh(seeded(seed), 1200, 320);
+      const rest = tris.map((t) => Math.sign(winding(points.map((p) => ({ x: p.x0, y: p.y0 })), t)));
+      for (let n = 0; n <= 4000; n += 3) {
+        const at = Math.floor(n / 150) * 150;
+        place(points, n, { x: (at * 37) % 1200, y: (at * 13) % 320, n: at });
+        tris.forEach((t, i) => assert.equal(Math.sign(winding(points, t)), rest[i], `seed ${seed}, step ${n}`));
+      }
+    }
+  });
+
+  it('moves from the first step', () => {
+    const { layer, art } = run(triangles, 0);
+    const edges = () => find(layer, 'masthead-triangles-edge').map((e) => e.attrs.d).join('');
+    const first = edges();
+    art.step(1, 40);
+    assert.notEqual(edges(), first);
+  });
+
+  it('lights a triangle now and then, faintly', () => {
+    const { layer, art } = run(triangles, 0);
+    const fills = find(layer, 'masthead-triangles-fill');
+    let most = 0;
+    for (let n = 1; n <= 1000; n++) {
+      art.step(n, n * 40);
+      for (const f of fills) most = Math.max(most, Number(f.attrs.opacity));
+    }
+    assert.ok(most > 0.05 && most <= 0.3, String(most));
+  });
+
+  it('sends a ring of lit triangles out from a click, and settles', () => {
+    const { layer, art } = run(triangles, 10);
+    const ring = find(layer, 'masthead-triangles-ring')[0];
+    assert.equal(ring.attrs.opacity, '0');
+    art.poke(600, 160, 10, 400);
+    art.step(11, 440);
+    art.step(12, 480);
+    assert.ok(Number(ring.attrs.opacity) > 0 && ring.attrs.d.length > 0);
+    for (let n = 13; n <= 300; n++) art.step(n, n * 40);
+    assert.equal(ring.attrs.opacity, '0');
+  });
+});
+
+describe('truchet', () => {
+  const angle = (tile) => Number(/rotate\(([-\d.]+)\)/.exec(tile.attrs.transform)[1]);
+
+  it('joins each edge to one other, both ways, in either orientation', () => {
+    for (const joins of JOINS) {
+      joins.forEach((to, from) => { assert.notEqual(to, from); assert.equal(joins[to], from); });
+    }
+  });
+
+  it('keeps its tiles about square on screen, however wide the masthead', () => {
+    const h = 320 / TRUCHET_ROWS;
+    for (const stretch of [1, 1.6, 3]) {
+      const w = 1200 / columns(1200, 320, stretch) * stretch;
+      assert.ok(Math.abs(w / h - 1) < 0.1, `${stretch}: ${w} x ${h}`);
+    }
+    const { layer } = run(truchet, 0, { stretch: 2 });
+    assert.equal(find(layer, 'masthead-truchet-tile').length, columns(1200, 320, 2) * TRUCHET_ROWS);
+  });
+
+  it('follows a path tile to tile, entering each by the edge the last left by', () => {
+    const cols = 8, turns = Array.from({ length: cols * TRUCHET_ROWS }, (_, i) => (i * 7) % 4);
+    const path = follow(turns, cols, TRUCHET_ROWS, 3, 5, 2, 40);
+    assert.ok(path.length > 1);
+    for (let k = 1; k < path.length; k++) {
+      const a = path[k - 1], b = path[k];
+      assert.equal(Math.abs(a.c - b.c) + Math.abs(a.r - b.r), 1);
+      assert.equal(b.from, (a.to + 2) % 4);
+    }
+  });
+
+  it('is fainter behind the name than at the foot', () => {
+    assert.ok(truchetStrength(2, TRUCHET_ROWS) < 0.5);
+    assert.ok(truchetStrength(TRUCHET_ROWS - 1, TRUCHET_ROWS) > truchetStrength(0, TRUCHET_ROWS));
+  });
+
+  it('turns one tile at a time, a quarter, easing round to rest', () => {
+    const { layer, art } = run(truchet, 0);
+    const tiles = find(layer, 'masthead-truchet-tile');
+    const before = tiles.map(angle);
+    let most = 0;
+    for (let n = 1; n <= 600; n++) {
+      art.step(n, n * 40);
+      most = Math.max(most, find(layer, 'masthead-truchet-turning').length);
+    }
+    assert.equal(most, 1);
+    const turned = tiles.filter((t, i) => angle(t) % 90 !== 0 || angle(t) !== before[i]);
+    assert.ok(turned.length >= 10, `${turned.length} turned`);
+    assert.ok(tiles.every((t) => angle(t) % 90 === 0 || t.attrs.class.includes('turning')));
+  });
+
+  it('turns the tile poked, then its neighbours', () => {
+    const { layer, art } = run(truchet, 0);
+    const tiles = find(layer, 'masthead-truchet-tile');
+    const cols = tiles.length / TRUCHET_ROWS, tw = 1200 / cols, th = 320 / TRUCHET_ROWS;
+    const at = 3 * cols + 10, before = tiles.map(angle);
+    art.poke(10.5 * tw, 3.5 * th, 0, 0);
+    art.step(1, 40);
+    assert.notEqual(angle(tiles[at]), before[at]);
+    for (let n = 2; n <= 12 + TURN_STEPS + 2; n++) art.step(n, n * 40);
+    for (const i of [at - cols - 1, at - 1, at + 1, at + cols, at + cols + 1]) assert.equal(angle(tiles[i]) % 360, (before[i] + 90) % 360, `tile ${i}`);
   });
 });
 
@@ -1408,6 +1630,187 @@ describe('the ships', () => {
     const { layer, art } = run(ships, 10);
     for (let i = 0; i < 6; i++) art.poke(100 + i * 150, 200, 10, 400);
     assert.equal(find(layer, 'masthead-ships-dolphin').length, 3);
+  });
+});
+
+describe('the skyline', () => {
+  const lcg = (r) => () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000);
+
+  it('stands its buildings shoulder to shoulder across the foot, low behind the name', () => {
+    for (const seed of [1, 7, 42]) {
+      const near = city(lcg(seed), 1200, false);
+      assert.ok(near[0].x <= 10 && near.at(-1).x + near.at(-1).w >= 1200);
+      for (const b of near.filter((b) => Math.abs(b.x + b.w / 2 - 600) < 250)) assert.ok(b.h <= 60, `${b.h} behind the name`);
+      for (const b of city(lcg(seed), 1200, true)) assert.ok(STREET - b.h > 120, 'the far row stays below the top of the name');
+    }
+  });
+
+  it('draws every building and window on the ground, windows inside their walls', () => {
+    const { layer } = run(skyline, 0);
+    for (const p of find(layer, 'masthead-skyline-building')) assert.match(p.attrs.d, new RegExp('^M[\\d.-]+ ' + STREET + 'V.*V' + STREET + '$'));
+    const windows = find(layer, 'masthead-skyline-window');
+    assert.ok(windows.length > 40);
+    for (const w of windows) assert.ok(Number(w.attrs.y) + 4 < STREET && Number(w.attrs.y) > 160);
+  });
+
+  it('lights and darkens windows one at a time, about a third lit', () => {
+    const { layer, art } = run(skyline, 0);
+    const lit = () => find(layer, 'masthead-skyline-window').filter((w) => w.attrs.opacity === '1').length;
+    const total = find(layer, 'masthead-skyline-window').length;
+    let changes = 0, before = lit();
+    for (let n = 1; n <= 2000; n++) {
+      art.step(n, n * 50);
+      const now = lit();
+      assert.ok(Math.abs(now - before) <= 1);
+      if (now !== before) changes++;
+      before = now;
+    }
+    assert.ok(changes > 50, `${changes} changes`);
+    assert.ok(before > total * 0.15 && before < total * 0.6, `${before} of ${total}`);
+  });
+
+  it('rains in showers that come and go, slanting the same way at any stretch', () => {
+    const { layer, art } = run(skyline, 0, { seed: 3, stretch: 2 });
+    const falling = () => find(layer, 'masthead-skyline-rain')[0].children.filter((d) => d.attrs.d);
+    let most = 0, dryAfter = false;
+    for (let n = 1; n <= 12000; n++) {
+      art.step(n, n * 50);
+      const now = falling().length;
+      if (most > 20 && now === 0) dryAfter = true;
+      most = Math.max(most, now);
+    }
+    assert.ok(most > 20 && most <= DROPS && dryAfter);
+    const slants = (stretch) => {
+      const { layer, art } = run(skyline, 0, { seed: 3, stretch });
+      for (let n = 1; n <= 600; n++) art.step(n, n * 50);
+      return find(layer, 'masthead-skyline-rain')[0].children.filter((d) => d.attrs.d)
+        .map((d) => d.attrs.d.split('l')[1].split(' ').map(Number)).map(([dx, dy]) => dx / dy * stretch);
+    };
+    for (const s of [...slants(1), ...slants(2)]) assert.ok(Math.abs(Math.abs(s) - 0.3) < 0.02, s);
+  });
+
+  it('strikes lightning now and then in a shower, briefly, off to the side of the name', () => {
+    const { layer, art } = run(skyline, 0, { seed: 3 });
+    const boltEl = find(layer, 'masthead-skyline-bolt')[0], glow = find(layer, 'masthead-skyline-glow')[0];
+    const strikes = [];
+    let lit = 0;
+    for (let n = 1; n <= 40000; n++) {
+      art.step(n, n * 50);
+      if (Number(boltEl.attrs.opacity) > 0) {
+        lit++;
+        if (!strikes.length || n - strikes.at(-1) > GLOW_STEPS) strikes.push(n);
+        const x = Number(/translate\(([\d.]+)/.exec(boltEl.attrs.transform)[1]);
+        assert.ok(Math.abs(x - 600) > 280, `a bolt at ${x}`);
+      }
+      assert.ok(Number(glow.attrs.opacity) <= 0.3);
+    }
+    assert.ok(strikes.length >= 2, `${strikes.length} strikes`);
+    for (let i = 1; i < strikes.length; i++) assert.ok(strikes[i] - strikes[i - 1] >= 400, '20 seconds at least between strikes');
+    assert.ok(lit <= strikes.length * BOLT_STEPS);
+    assert.ok(strikes.length < 40000 / 400);
+  });
+
+  it('draws a bolt downward to its end, with a fork', () => {
+    const d = bolt(lcg(5), 180);
+    const ys = [...d.matchAll(/[ML](-?[\d.]+) (-?[\d.]+)/g)].map((m) => Number(m[2]));
+    assert.equal(Math.max(...ys.slice(0, ys.indexOf(180) + 1)), 180);
+    assert.equal(d.split('M').length - 1, 2);
+  });
+
+  it('lights the windows round a click on a building, and calls lightning to a click in the sky', () => {
+    const { layer, art } = run(skyline, 10);
+    const windows = find(layer, 'masthead-skyline-window');
+    windows.forEach((w) => { w.attrs.opacity = '0'; });
+    const w = windows[0];
+    art.poke(Number(w.attrs.x) + 1, Number(w.attrs.y) + 2, 10, 500);
+    assert.ok(windows.filter((v) => v.attrs.opacity === '1').length >= 1);
+    assert.ok(windows.indexOf(w) >= 0 && w.attrs.opacity === '1');
+    const boltEl = find(layer, 'masthead-skyline-bolt')[0];
+    art.poke(600, 40, 10, 500);
+    art.step(11, 550);
+    assert.ok(Number(boltEl.attrs.opacity) > 0);
+    assert.match(boltEl.attrs.transform, /^translate\(600\.0 0\)/);
+    for (let n = 12; n <= 12 + GLOW_STEPS; n++) art.step(n, n * 50);
+    assert.equal(boltEl.attrs.opacity, '0');
+    assert.equal(find(layer, 'masthead-skyline-glow')[0].attrs.opacity, '0.000');
+  });
+});
+
+describe('the lighthouse', () => {
+  const lampAt = (layer) => /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(find(layer, 'masthead-lighthouse-lamp')[0].attrs.transform).slice(1).map(Number);
+  const beamOf = (layer) => [...find(layer, 'masthead-lighthouse-beam')[0].attrs.d.matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+  // How far the beam reaches toward the far side (+) or the lighthouse's own end (-).
+  const outward = (layer) => {
+    const [lx] = lampAt(layer), inward = lx < 600 ? 1 : -1;
+    const xs = beamOf(layer).map(([x]) => (x - lx) * inward);
+    return Math.abs(Math.max(...xs)) > Math.abs(Math.min(...xs)) ? Math.max(...xs) : Math.min(...xs);
+  };
+
+  it('casts its beam from the lamp, broadside a long wedge, toward the viewer a glare round the lamp', () => {
+    const side = beam(100, 120, 0, 1, 1);
+    assert.ok(side.d.startsWith('M100.0 120.0'), side.d);
+    assert.ok(Math.abs(side.x - REACH) < 1e-9);
+    const glare = beam(100, 120, Math.PI / 2, 1, 1);
+    assert.ok(!glare.d.startsWith('M100.0 120.0'));
+    for (const [x, y] of glare.d.match(/-?[\d.]+ -?[\d.]+/g).map((p) => p.split(' ').map(Number))) {
+      assert.ok(Math.hypot(x - 100, y - 120) < SPREAD * 1.4, `${x}, ${y}`);
+    }
+    // Going away it is smaller than coming toward the viewer.
+    assert.ok(beam(100, 120, -Math.PI / 2, 1, 1).spread < glare.spread);
+  });
+
+  it('stands on a headland that meets the sea, the beam coming from its lantern', () => {
+    let rs = 3;
+    const top = headland(() => ((rs = (rs * 16807) % 2147483647) / 2147483647));
+    assert.equal(top.at(-1)[1], SEA);
+    assert.ok(top.every(([, y]) => y <= SEA));
+    for (const seed of [1, 2, 3, 4]) {
+      const { layer } = run(lighthouse, 40, { seed });
+      const [lx, ly] = lampAt(layer);
+      assert.ok(lx < 120 || lx > 1080, `lamp at ${lx}`);
+      assert.ok(ly > 80 && ly < 140, `lamp at ${ly}`);
+      const tip = beamOf(layer)[0];
+      if (Math.abs(outward(layer)) > 200) assert.deepEqual(tip, [lx, ly]);
+    }
+  });
+
+  it('turns once round in a revolution, out to the far side and back', () => {
+    const { layer, art } = run(lighthouse, 0, { seed: 9 });
+    const reach = [];
+    for (let n = 1; n <= REVOLUTION; n++) { art.step(n, n * 40); reach.push(outward(layer)); }
+    assert.ok(Math.max(...reach) > 1000, 'out across the masthead');
+    assert.ok(Math.min(...reach) < -1000, 'back toward its own end');
+    // Out to the far side in one stretch of the turn, not back and forth.
+    const out = reach.map((r) => r > 500);
+    const starts = out.filter((o, i) => o && !out[(i + REVOLUTION - 1) % REVOLUTION]).length;
+    assert.equal(starts, 1);
+  });
+
+  it('lights the fog inside the beam, not behind the lamp', () => {
+    assert.ok(lit(300, 0, 0) > 0.5);
+    assert.equal(lit(-300, 0, 0), 0);
+    assert.ok(lit(300, SPREAD, 0) < lit(300, 0, 0));
+    assert.equal(lit(300, 0, Math.PI), 0);
+  });
+
+  it('swings the beam round to a poked side and holds it there, then turns on', () => {
+    for (const far of [true, false]) {
+      const { layer, art } = run(lighthouse, 20, { seed: 4 });
+      const [lx] = lampAt(layer);
+      const x = far ? (lx < 600 ? 1100 : 100) : (lx < 600 ? 0 : 1200);
+      art.poke(x, 160, 20, 800);
+      let n = 20, held = 0;
+      while (n < 400 && held < 10) {
+        n++;
+        const before = outward(layer);
+        art.step(n, n * 40);
+        held = outward(layer) === before ? held + 1 : 0;
+      }
+      const r = outward(layer);
+      assert.ok(far ? r > REACH * 0.95 : r < -REACH * 0.95, `held at ${r}`);
+      for (let k = 1; k <= 60; k++) art.step(n + k, (n + k) * 40);
+      assert.notEqual(outward(layer), r, 'turning again');
+    }
   });
 });
 
@@ -1611,5 +2014,138 @@ describe('the flyby', () => {
       return Infinity;
     };
     assert.ok(steps(true) < steps(false) * 0.7);
+  });
+});
+
+describe('the harmonograph', () => {
+  const seeded = (seed) => () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 0x100000000; };
+  const paths = (layer, which) => find(layer, 'masthead-harmonograph-line')[which].children;
+  const points = (layer, which) => paths(layer, which).map((p) => p.attrs.d.split('L').length - 1).reduce((a, b) => a + b, 0);
+
+  it('stays in its box, dying down inward as it goes', () => {
+    for (let k = 1; k <= 20; k++) {
+      const set = pendulums(seeded(k));
+      let early = 0, late = 0;
+      for (let i = 0; i <= 400; i++) {
+        const t = (i / 400) * 84, p = pen(set, t);
+        assert.ok(Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1);
+        if (i < 80) early = Math.max(early, Math.hypot(p.x, p.y));
+        if (i > 320) late = Math.max(late, Math.hypot(p.x, p.y));
+      }
+      assert.ok(late < early * 0.6, `${k}: ${early} -> ${late}`);
+    }
+  });
+
+  it('draws one unbroken line in a few paths, a few points a step, then fades and starts again', () => {
+    const { layer, art } = run(harmonograph, 200);
+    assert.equal(points(layer, 0), 200 * PER_STEP - 1);
+    const steps = POINTS / PER_STEP;
+    for (let i = 201; i <= steps + 1; i++) art.step(i, i * 40);
+    const lines = paths(layer, 0);
+    assert.ok(lines.length <= 12, lines.length);
+    for (let k = 1; k < lines.length; k++) {
+      const end = lines[k - 1].attrs.d.split('L').pop();
+      assert.equal(lines[k].attrs.d.split('L')[0], 'M' + end);
+    }
+    const figure = find(layer, 'masthead-harmonograph-figure')[0];
+    let i = steps + 2;
+    for (; i < steps + 400 && figure.attrs.opacity !== '0.000'; i++) art.step(i, i * 40);
+    assert.equal(figure.attrs.opacity, '0.000');
+    for (let k = 0; k < 40; k++, i++) art.step(i, i * 40);
+    assert.ok(points(layer, 0) > 0 && points(layer, 0) < 50 * PER_STEP);
+    assert.equal(figure.attrs.opacity, '1');
+  });
+
+  it('keeps its shape and its place by the edge when the art is stretched', () => {
+    const narrow = run(harmonograph, 100, { seed: 5 }).layer, wide = run(harmonograph, 100, { seed: 5, stretch: 2 }).layer;
+    const moved = (layer) => find(layer, 'masthead-harmonograph-line')[0].attrs.transform;
+    assert.match(moved(narrow), /scale\(1\.0000 1\)/);
+    assert.match(moved(wide), /scale\(0\.5000 1\)/);
+    assert.equal(paths(narrow, 0)[0].attrs.d, paths(wide, 0)[0].attrs.d);
+  });
+
+  it('takes a push on the side clicked, bending the line from there, and wakes a resting side', () => {
+    const plain = run(harmonograph, 100, { seed: 3 }), pushed = run(harmonograph, 100, { seed: 3 });
+    pushed.art.poke(100, 160, 100, 4000);
+    for (let i = 101; i <= 160; i++) { plain.art.step(i, i * 40); pushed.art.step(i, i * 40); }
+    const pts = (r) => paths(r.layer, 0).map((p) => p.attrs.d.slice(1)).join('L').split('L');
+    const a = pts(plain), b = pts(pushed);
+    assert.equal(a.length, b.length);
+    const first = a.findIndex((p, i) => p !== b[i]);
+    assert.ok(first >= 100 * 4 && first < 110 * 4, String(first));
+    assert.equal(points(pushed.layer, 1), 0);
+    pushed.art.poke(1100, 160, 161, 161 * 40);
+    assert.ok(points(pushed.layer, 1) > 0);
+  });
+});
+
+describe('the grid', () => {
+  const ends = (layer) => find(layer, 'masthead-grid-line').map((l) => ({
+    x1: Number(l.attrs.x1), y1: Number(l.attrs.y1), x2: Number(l.attrs.x2), y2: Number(l.attrs.y2),
+    v: l.attrs.x1 === l.attrs.x2, growing: l.attrs.class.includes('masthead-grid-growing'), cls: l.attrs.class
+  }));
+  const near = (a, b) => Math.abs(a - b) < 0.11;
+  // An end of a line meets the masthead's edge or a line across it.
+  const joined = (all, x, y, v) => (v ? near(y, 0) || near(y, 320) : near(x, 0) || near(x, 1200)) ||
+    all.some((o) => o.v !== v && !o.growing && (v
+      ? near(o.y1, y) && o.x1 - 0.11 <= x && o.x2 + 0.11 >= x
+      : near(o.x1, x) && o.y1 - 0.11 <= y && o.y2 + 0.11 >= y));
+
+  it('keeps every line joined at both ends, as lines slide, grow and go', () => {
+    for (const seed of [1, 7, 42]) {
+      const { layer, art } = run(grid, 0, { seed });
+      const before = serialize(layer);
+      for (let i = 1; i <= 3000; i++) {
+        art.step(i, i * 40);
+        if (i % 7) continue;
+        const all = ends(layer);
+        for (const l of all) {
+          if (l.growing) continue;
+          assert.ok(joined(all, l.x1, l.y1, l.v), `${seed} ${i} ${JSON.stringify(l)}`);
+          assert.ok(joined(all, l.x2, l.y2, l.v), `${seed} ${i} ${JSON.stringify(l)}`);
+        }
+      }
+      assert.notEqual(serialize(layer), before);
+    }
+  });
+
+  it('keeps its tones clear of the name, and only thin lines through it', () => {
+    for (const seed of [1, 7, 42, 99]) {
+      const { layer, art } = run(grid, 0, { seed });
+      const tones = find(layer, 'masthead-grid-tone');
+      assert.ok(tones.length >= 4 && tones.length <= 8, seed);
+      for (let i = 1; i <= 3000; i++) {
+        art.step(i, i * 40);
+        if (i % 11) continue;
+        for (const t of tones) {
+          if (t.attrs.opacity === '0' || t.attrs.x === undefined) continue;
+          const x = Number(t.attrs.x), y = Number(t.attrs.y), w = Number(t.attrs.width), h = Number(t.attrs.height);
+          assert.ok(x >= 959.9 || x + w <= 240.1 || y >= 255.9 || y + h <= 64.1, `${seed} ${i} ${x} ${y} ${w} ${h}`);
+        }
+        for (const l of ends(layer)) {
+          const through = l.v
+            ? l.x1 > 288 && l.x1 < 912 && Math.min(l.y1, l.y2) < 236.8 && Math.max(l.y1, l.y2) > 83.2
+            : l.y1 > 83.2 && l.y1 < 236.8 && Math.min(l.x1, l.x2) < 912 && Math.max(l.x1, l.x2) > 288;
+          if (through) assert.ok(l.cls.includes('masthead-grid-thin'), `${seed} ${i} ${l.cls}`);
+        }
+      }
+    }
+  });
+
+  it('cuts the rectangle clicked with a new line growing across it', () => {
+    const { layer, art } = run(grid, 0, { seed: 7 });
+    const count = () => find(layer, 'masthead-grid-line').length;
+    const before = count();
+    art.poke(40, 300, 0, 0);
+    let i = 1;
+    for (; i <= 200 && count() === before; i++) art.step(i, i * 40);
+    assert.equal(count(), before + 1);
+    const cut = find(layer, 'masthead-grid-growing')[0];
+    assert.ok(cut);
+    for (let k = 0; k < 60; k++, i++) art.step(i, i * 40);
+    assert.ok(!cut.attrs.class.includes('masthead-grid-growing'));
+    const all = ends(layer);
+    assert.ok(joined(all, cut.attrs.x1 * 1, cut.attrs.y1 * 1, cut.attrs.x1 === cut.attrs.x2));
+    assert.ok(MIN_W > 0 && MIN_H > 0);
   });
 });

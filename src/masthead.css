@@ -117,6 +117,27 @@
 .masthead-ghostrider-hills { stroke: color-mix(in srgb, var(--_accent) 50%, var(--_border)); stroke-width: 1.1; }
 .masthead-ghostrider-horizon { stroke: color-mix(in srgb, var(--_accent) 35%, var(--_border)); stroke-width: 1; opacity: 0.6; }
 
+/* Night city: wireframe towers either side, fainter with distance; lit windows, roof lights, and
+   the city floor's lights far below. */
+.masthead-nightcity { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.masthead-nightcity-skyline { stroke: color-mix(in srgb, var(--_accent) 40%, var(--_border)); stroke-width: 0.9; opacity: 0.45; }
+.masthead-nightcity-haze { stroke: var(--_accent); stroke-width: 1.3; opacity: 0.3; }
+.masthead-nightcity-flare { stroke: var(--_accent); stroke-width: 1.1; }
+.masthead-nightcity-tower { fill: var(--_bg); stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.2; }
+.masthead-nightcity-windows { stroke: var(--_accent); }
+.masthead-nightcity-band-0 .masthead-nightcity-tower, .masthead-nightcity-band-0 .masthead-nightcity-windows { stroke-opacity: 0.9; }
+.masthead-nightcity-band-0 .masthead-nightcity-windows { stroke-width: 2; }
+.masthead-nightcity-band-1 .masthead-nightcity-tower, .masthead-nightcity-band-1 .masthead-nightcity-windows { stroke-opacity: 0.46; }
+.masthead-nightcity-band-1 .masthead-nightcity-windows { stroke-width: 1.9; }
+.masthead-nightcity-band-2 .masthead-nightcity-tower, .masthead-nightcity-band-2 .masthead-nightcity-windows { stroke-opacity: 0.3; }
+.masthead-nightcity-band-2 .masthead-nightcity-windows { stroke-width: 1.5; }
+.masthead-nightcity-band-3 .masthead-nightcity-tower, .masthead-nightcity-band-3 .masthead-nightcity-windows { stroke-opacity: 0.2; }
+.masthead-nightcity-band-3 .masthead-nightcity-windows { stroke-width: 1.2; }
+.masthead-nightcity-band-4 .masthead-nightcity-tower, .masthead-nightcity-band-4 .masthead-nightcity-windows { stroke-opacity: 0.12; }
+.masthead-nightcity-beacon { stroke: var(--_accent); stroke-width: 4; }
+.masthead-nightcity-car { stroke: var(--_accent); stroke-width: 2; }
+.masthead-nightcity-far-car { stroke: var(--_accent); stroke-width: 1.4; opacity: 0.6; }
+
 /* Grass: three depths of blade, the nearest strongest. */
 .masthead-grass { fill: none; stroke-linecap: round; }
 .masthead-grass-blades { stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); }
@@ -157,6 +178,17 @@
 .masthead-stix-line { stroke: var(--_accent); stroke-width: 1.3; }
 .masthead-stix-marker { fill: var(--_accent); }
 
+/* Grid: lines of three weights in one ink, and the toned blocks: a faint tint, a hatching, a
+   stronger tint. */
+.masthead-grid-line { stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-linecap: butt; vector-effect: non-scaling-stroke; }
+.masthead-grid-thin { stroke-width: 1.25; }
+.masthead-grid-mid { stroke-width: 2.5; }
+.masthead-grid-heavy { stroke-width: 5; }
+.masthead-grid-tint { fill: color-mix(in srgb, var(--_accent) 14%, var(--_bg)); }
+.masthead-grid-strong { fill: color-mix(in srgb, var(--_accent) 30%, var(--_bg)); }
+.masthead-grid-hatch-ground { fill: var(--_surface); }
+.masthead-grid-hatching { fill: none; stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; }
+
 /* Train: ASCII art along a track at the foot of the masthead, trailing smoke. */
 .masthead-train { font: 600 12px var(--masthead-mono, ui-monospace, monospace); }
 .masthead-train-cars { fill: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); }
@@ -171,6 +203,13 @@
 .masthead-blockpeek-hole path { fill: color-mix(in srgb, var(--_accent) 22%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1; fill-rule: evenodd; vector-effect: non-scaling-stroke; }
 .masthead-blockpeek-face { fill: color-mix(in srgb, var(--_accent) 30%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 .masthead-blockpeek-eye { fill: var(--_accent); }
+/* Flow field: faint strokes turning with the current, strongest low, and the motes riding it. */
+.masthead-flowfield { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.masthead-flowfield-grid { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_border)); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.masthead-flowfield-band-0 { opacity: 0.32; }
+.masthead-flowfield-band-1 { opacity: 0.4; }
+.masthead-flowfield-band-2 { opacity: 0.45; }
+.masthead-flowfield-mote { stroke: var(--_accent); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .masthead-flyby-stars circle { fill: color-mix(in srgb, var(--_accent) 45%, var(--_border)); opacity: 0.6; }
 .masthead-flyby-orbit { fill: none; stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; stroke-linejoin: round; opacity: 0.7; }
 .masthead-flyby-sun { fill: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; }
@@ -183,6 +222,11 @@
 .masthead-football-pads, .masthead-football-helmet { fill: color-mix(in srgb, var(--_accent) 20%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); stroke-width: 1.2; }
 .masthead-football-ball ellipse { fill: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke: var(--_accent); stroke-width: 1; }
 .masthead-football-ball path { stroke: var(--_accent); stroke-width: 0.7; }
+/* The harmonograph's line is thin and clear of the name, so it's lifted a little out of the art's
+   strength, as the fractal's is. Its strokes don't widen when the figure is counter-scaled. */
+.masthead-art[data-masthead="harmonograph"] { opacity: max(var(--masthead-strength, 0.55), 0.8); }
+.masthead-harmonograph-line { fill: none; stroke: var(--_accent); stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; opacity: 0.62; }
+.masthead-harmonograph-line path { vector-effect: non-scaling-stroke; }
 .masthead-ships { fill: none; }
 .masthead-ships-horizon { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; opacity: 0.6; }
 .masthead-ships-wave { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; stroke-linecap: round; }
@@ -190,7 +234,40 @@
 .masthead-ships-puff { fill: color-mix(in srgb, var(--_accent) 30%, var(--_border)); }
 .masthead-ships-dolphin { fill: color-mix(in srgb, var(--_accent) 25%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; stroke-linejoin: round; }
 .masthead-ships-splash { fill: none; stroke: var(--_accent); stroke-width: 1; }
+.masthead-triangles { fill: none; }
+.masthead-triangles-edge { stroke: color-mix(in srgb, var(--_accent) 60%, var(--_border)); stroke-width: 0.8; stroke-linecap: round; }
+.masthead-triangles-fill, .masthead-triangles-ring { fill: var(--_accent); stroke: none; }
 .masthead-water-line { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; }
+
+/* Truchet: quarter-circle tiles in fine lines, a turning tile a little brighter, and a soft glow
+   run along a path now and then. The tiles are scaled to their cells, so their lines keep their
+   width. */
+.masthead-truchet { fill: none; stroke-linecap: round; }
+.masthead-truchet-tile { stroke: color-mix(in srgb, var(--_accent) 62%, var(--_bg)); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.masthead-truchet-turning { stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); }
+.masthead-truchet-glow { stroke: var(--_accent); stroke-width: 6; stroke-opacity: 0.35; filter: blur(3px); }
+.masthead-truchet-lit { stroke: var(--_accent); stroke-width: 1.8; }
+/* Skyline: two rows of buildings in outline, lit windows, rain, and now and then lightning. */
+.masthead-skyline { fill: none; }
+.masthead-skyline-building { fill: color-mix(in srgb, var(--_accent) 6%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1.1; }
+.masthead-skyline-roof { fill: none; stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; }
+.masthead-skyline-far .masthead-skyline-building, .masthead-skyline-far .masthead-skyline-roof { stroke: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke-width: 1; }
+.masthead-skyline-window { fill: var(--_accent); fill-opacity: 0.55; }
+.masthead-skyline-ground { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_border)); stroke-width: 1.2; }
+.masthead-skyline-glint { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; stroke-linecap: round; }
+.masthead-skyline-rain { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 0.9; stroke-linecap: round; opacity: 0.6; }
+.masthead-skyline-bolt { stroke: var(--_accent); stroke-width: 1.3; stroke-linejoin: round; }
+/* Lighthouse: the headland and tower in outline, the sea in lines, and the beam the one faint fill. */
+.masthead-lighthouse { fill: none; }
+.masthead-lighthouse-star { fill: color-mix(in srgb, var(--_accent) 75%, var(--_border)); }
+.masthead-lighthouse-fog { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1.4; stroke-linecap: round; }
+.masthead-lighthouse-horizon { stroke: color-mix(in srgb, var(--_accent) 40%, var(--_border)); stroke-width: 1; opacity: 0.6; }
+.masthead-lighthouse-glow { stop-color: var(--_accent); }
+.masthead-lighthouse-beam { opacity: 0.3; }
+.masthead-lighthouse-rock { fill: var(--_bg); stroke: color-mix(in srgb, var(--_accent) 65%, var(--_bg)); stroke-width: 1.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.masthead-lighthouse-crag { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_bg)); stroke-width: 1; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.masthead-lighthouse-tower { fill: var(--_bg); stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.masthead-lighthouse-wave { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; stroke-linecap: round; }
 
 /* Wind farm: low hills, towers, and turning rotors. */
 .masthead-windfarm { fill: none; }
