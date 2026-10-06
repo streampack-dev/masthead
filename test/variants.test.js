@@ -39,6 +39,7 @@ import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
+import grid, { MIN_H, MIN_W } from '../src/variants/grid.js';
 import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
 import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } from '../src/variants/skyline.js';
 import harmonograph, { PER_STEP, POINTS, pen, pendulums } from '../src/variants/harmonograph.js';
@@ -51,6 +52,7 @@ const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, 
 const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, nightcity, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, lighthouse, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, harmonograph, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, grid, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -81,6 +83,7 @@ describe('every variant', () => {
   for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'nightcity', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
   for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'lighthouse', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
   for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'harmonograph', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'grid', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -2079,5 +2082,73 @@ describe('the harmonograph', () => {
     assert.equal(points(pushed.layer, 1), 0);
     pushed.art.poke(1100, 160, 161, 161 * 40);
     assert.ok(points(pushed.layer, 1) > 0);
+describe('the grid', () => {
+  const ends = (layer) => find(layer, 'masthead-grid-line').map((l) => ({
+    x1: Number(l.attrs.x1), y1: Number(l.attrs.y1), x2: Number(l.attrs.x2), y2: Number(l.attrs.y2),
+    v: l.attrs.x1 === l.attrs.x2, growing: l.attrs.class.includes('masthead-grid-growing'), cls: l.attrs.class
+  }));
+  const near = (a, b) => Math.abs(a - b) < 0.11;
+  // An end of a line meets the masthead's edge or a line across it.
+  const joined = (all, x, y, v) => (v ? near(y, 0) || near(y, 320) : near(x, 0) || near(x, 1200)) ||
+    all.some((o) => o.v !== v && !o.growing && (v
+      ? near(o.y1, y) && o.x1 - 0.11 <= x && o.x2 + 0.11 >= x
+      : near(o.x1, x) && o.y1 - 0.11 <= y && o.y2 + 0.11 >= y));
+
+  it('keeps every line joined at both ends, as lines slide, grow and go', () => {
+    for (const seed of [1, 7, 42]) {
+      const { layer, art } = run(grid, 0, { seed });
+      const before = serialize(layer);
+      for (let i = 1; i <= 3000; i++) {
+        art.step(i, i * 40);
+        if (i % 7) continue;
+        const all = ends(layer);
+        for (const l of all) {
+          if (l.growing) continue;
+          assert.ok(joined(all, l.x1, l.y1, l.v), `${seed} ${i} ${JSON.stringify(l)}`);
+          assert.ok(joined(all, l.x2, l.y2, l.v), `${seed} ${i} ${JSON.stringify(l)}`);
+        }
+      }
+      assert.notEqual(serialize(layer), before);
+    }
+  });
+
+  it('keeps its tones clear of the name, and only thin lines through it', () => {
+    for (const seed of [1, 7, 42, 99]) {
+      const { layer, art } = run(grid, 0, { seed });
+      const tones = find(layer, 'masthead-grid-tone');
+      assert.ok(tones.length >= 4 && tones.length <= 8, seed);
+      for (let i = 1; i <= 3000; i++) {
+        art.step(i, i * 40);
+        if (i % 11) continue;
+        for (const t of tones) {
+          if (t.attrs.opacity === '0' || t.attrs.x === undefined) continue;
+          const x = Number(t.attrs.x), y = Number(t.attrs.y), w = Number(t.attrs.width), h = Number(t.attrs.height);
+          assert.ok(x >= 959.9 || x + w <= 240.1 || y >= 255.9 || y + h <= 64.1, `${seed} ${i} ${x} ${y} ${w} ${h}`);
+        }
+        for (const l of ends(layer)) {
+          const through = l.v
+            ? l.x1 > 288 && l.x1 < 912 && Math.min(l.y1, l.y2) < 236.8 && Math.max(l.y1, l.y2) > 83.2
+            : l.y1 > 83.2 && l.y1 < 236.8 && Math.min(l.x1, l.x2) < 912 && Math.max(l.x1, l.x2) > 288;
+          if (through) assert.ok(l.cls.includes('masthead-grid-thin'), `${seed} ${i} ${l.cls}`);
+        }
+      }
+    }
+  });
+
+  it('cuts the rectangle clicked with a new line growing across it', () => {
+    const { layer, art } = run(grid, 0, { seed: 7 });
+    const count = () => find(layer, 'masthead-grid-line').length;
+    const before = count();
+    art.poke(40, 300, 0, 0);
+    let i = 1;
+    for (; i <= 200 && count() === before; i++) art.step(i, i * 40);
+    assert.equal(count(), before + 1);
+    const cut = find(layer, 'masthead-grid-growing')[0];
+    assert.ok(cut);
+    for (let k = 0; k < 60; k++, i++) art.step(i, i * 40);
+    assert.ok(!cut.attrs.class.includes('masthead-grid-growing'));
+    const all = ends(layer);
+    assert.ok(joined(all, cut.attrs.x1 * 1, cut.attrs.y1 * 1, cut.attrs.x1 === cut.attrs.x2));
+    assert.ok(MIN_W > 0 && MIN_H > 0);
   });
 });

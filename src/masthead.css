@@ -178,6 +178,17 @@
 .masthead-stix-line { stroke: var(--_accent); stroke-width: 1.3; }
 .masthead-stix-marker { fill: var(--_accent); }
 
+/* Grid: lines of three weights in one ink, and the toned blocks: a faint tint, a hatching, a
+   stronger tint. */
+.masthead-grid-line { stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-linecap: butt; vector-effect: non-scaling-stroke; }
+.masthead-grid-thin { stroke-width: 1.25; }
+.masthead-grid-mid { stroke-width: 2.5; }
+.masthead-grid-heavy { stroke-width: 5; }
+.masthead-grid-tint { fill: color-mix(in srgb, var(--_accent) 14%, var(--_bg)); }
+.masthead-grid-strong { fill: color-mix(in srgb, var(--_accent) 30%, var(--_bg)); }
+.masthead-grid-hatch-ground { fill: var(--_surface); }
+.masthead-grid-hatching { fill: none; stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; }
+
 /* Train: ASCII art along a track at the foot of the masthead, trailing smoke. */
 .masthead-train { font: 600 12px var(--masthead-mono, ui-monospace, monospace); }
 .masthead-train-cars { fill: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); }

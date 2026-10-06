@@ -32,6 +32,7 @@ only puts the art on its page and starts the runner.
 | `grass` | A field of grass along the foot of the masthead, the wind moving through it. |
 | `graveyard` | October: a moon with clouds passing, headstones and bare trees, fog, a bat crossing the moon. |
 | `harmonograph` | Draft. Two harmonographs either side of the name, taking turns: one slow line drawn by damped pendulums, spiralling inward as they die down, then fading for a new set. |
+| `grid` | Draft. A monochrome composition in the manner of De Stijl: lines of a few weights cutting the masthead into rectangles, a few small blocks in the corners toned in the theme's own tints and a hatching. Now and then a line slides, a region is cut again, or a tone passes to a neighbouring block. |
 | `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
 | `lighthouse` | Draft. A lighthouse at night on a rocky headland at one end, the sea in lines along the foot, the lamp's beam slowly turning; stars come out and the fog lights as the beam passes. |
 | `life` | Conway's Game of Life, reseeded when it settles. |
@@ -66,6 +67,7 @@ Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `skyline`, f
 Animations listed in `DRAFTS` (`blockpeek`, `football`, `nightcity` and `ships`, for now) are never picked at
 Animations listed in `DRAFTS` (`blockpeek`, `football`, `lighthouse` and `ships`, for now) are never picked at
 Animations listed in `DRAFTS` (`blockpeek`, `football`, `harmonograph` and `ships`, for now) are never picked at
+Animations listed in `DRAFTS` (`blockpeek`, `football`, `grid` and `ships`, for now) are never picked at
 random: they're still being worked on, and run only by name and on the demo page.
 Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `truchet`, for now) are never
 picked at random: they're still being worked on, and run only by name and on the demo page.
