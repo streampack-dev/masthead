@@ -24,6 +24,7 @@ import rocks, { SIZES, outline } from '../src/variants/rocks.js';
 import pongwars, { COLS as WAR_COLS, ROWS as WAR_ROWS, bounce } from '../src/variants/pongwars.js';
 import stix, { GH, GW, claim, field, route } from '../src/variants/stix.js';
 import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
+import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as flowWeight } from '../src/variants/flowfield.js';
 import flyby, { FOCAL, PLANETS, layout as flybyLayout, project as flybyProject, speed as flybySpeed } from '../src/variants/flyby.js';
 import football, { FLIGHT, GROUND as FIELD, arc, joints } from '../src/variants/football.js';
 import fractal from '../src/variants/fractal.js';
@@ -37,7 +38,7 @@ import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/wate
 import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
 import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -61,12 +62,43 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
     });
   }
+});
+
+describe('flowfield', () => {
+  it('is strongest low and faintest behind the name', () => {
+    assert.equal(flowWeight(300), 1);
+    assert.ok(flowWeight(160) < 0.2 && flowWeight(10) < 0.5 && flowWeight(10) > flowWeight(160));
+  });
+
+  it('gives a unit direction everywhere, swirling round an eddy', () => {
+    let s = 9;
+    const field = flowShape(() => ((s = (s * 16807) % 2147483647) / 2147483647));
+    for (const [x, y] of [[0, 0], [700, 160], [2400, 320]]) {
+      const v = flowCurrent(field, x, y, 123, []);
+      assert.ok(Math.abs(Math.hypot(v.x, v.y) - 1) < 1e-9);
+    }
+    // Right beside a strong eddy, the current runs round it, not toward it.
+    const v = flowCurrent(field, 520, 200, 0, [{ x: 500, y: 200, strength: 1, spin: 1 }]);
+    assert.ok(Math.abs(v.x) < 0.5 && v.y > 0.8, JSON.stringify(v));
+  });
+
+  it('keeps its motes few, and keeps the length of its strokes on screen however the masthead is stretched', () => {
+    const { layer } = run(flowfield, 50);
+    assert.equal(find(layer, 'masthead-flowfield-mote').length, MOTES);
+    const angles = (stretch) => {
+      const p = find(run(flowfield, 2, { stretch }).layer, 'masthead-flowfield-grid')[2];
+      return [...p.attrs.d.matchAll(/l(-?[\d.]+) (-?[\d.]+)/g)].slice(0, 5).map((m) => [Number(m[1]) * stretch, Number(m[2])]);
+    };
+    // Stretched, the field is sampled at other screen points, so only the lengths on screen are compared.
+    const one = angles(1), two = angles(2);
+    one.concat(two).forEach(([dx, dy]) => assert.ok(Math.hypot(dx, dy) > 8 && Math.hypot(dx, dy) < 18, `${dx} ${dy}`));
+  });
 });
 
 describe('a poke', () => {
@@ -250,6 +282,22 @@ describe('a poke', () => {
     const end = /L(-?[\d.]+) (-?[\d.]+)$/.exec(low.attrs.d);
     assert.match(low.attrs.d, new RegExp('^M70 ' + (GROUND - 9) + 'L'));
     assert.ok(Number(end[2]) < GROUND - 9, 'it climbs toward a point above the ground');
+  });
+
+  it('drops an eddy in the flow field where clicked, swirling the strokes there, then dies away', () => {
+    // The strokes near (600, 270), each as its direction.
+    const near = (layer) => find(layer, 'masthead-flowfield-grid').flatMap((p) =>
+      [...p.attrs.d.matchAll(/M(-?[\d.]+) (-?[\d.]+)l(-?[\d.]+) (-?[\d.]+)/g)].map((s) => s.slice(1).map(Number)))
+      .filter(([x, y, dx, dy]) => Math.hypot(x + dx / 2 - 600, y + dy / 2 - 270) < 50);
+    const still = run(flowfield, 10, { seed: 5 }), swirled = run(flowfield, 10, { seed: 5 });
+    swirled.art.poke(600, 270, 10, 400);
+    for (let i = 11; i <= 14; i++) { still.art.step(i, i * 40); swirled.art.step(i, i * 40); }
+    const a = near(still.layer), b = near(swirled.layer);
+    assert.ok(a.length >= 4);
+    const turned = a.filter((s, k) => Math.abs(Math.atan2(s[3], s[2]) - Math.atan2(b[k][3], b[k][2])) > 0.3).length;
+    assert.ok(turned >= a.length / 2, `${turned} of ${a.length} turned`);
+    for (let i = 15; i <= 200; i++) { still.art.step(i, i * 40); swirled.art.step(i, i * 40); }
+    assert.deepEqual(near(swirled.layer), near(still.layer));
   });
 
   it('banks the terrain toward the side clicked, then levels out', () => {

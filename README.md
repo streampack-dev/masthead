@@ -23,6 +23,7 @@ only puts the art on its page and starts the runner.
 | `deadline` | A writer at a desk on the left, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard. |
 | `duel` | Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth: no touches, no winner. |
 | `eyes` | October: eyes in the dark, opening, blinking, glancing about, and closing again. |
+| `flowfield` | Draft. A slow current drifting across the masthead, like wind over water: faint strokes turning with it, a few motes riding it with short tails, livelier low. |
 | `flyby` | A flight in through the solar system, like Voyager 1 in reverse: orbits and planets (far from scale) sweeping past on the way to the sun, then round again. |
 | `football` | Draft. Football season: a player in pads running a play: a pass, caught or dropped (hands to the helmet), or a run with a hurdle over a diving defender. |
 | `fractal` | A branching growth tracing round the name, resting when grown, then starting again. |
@@ -53,7 +54,7 @@ the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast t
 the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
 are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
 
-Animations listed in `DRAFTS` (`blockpeek`, `football` and `ships`, for now) are never picked at
+Animations listed in `DRAFTS` (`blockpeek`, `flowfield`, `football` and `ships`, for now) are never picked at
 random: they're still being worked on, and run only by name and on the demo page.
 
 Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
@@ -112,7 +113,7 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    animation, if it has a fragment of its own (the block peeker mines where you click, and faster
    for a click on the block, boids scatter from a hawk, the bytecode rain
    bursts, a tunnel appears in the chase, a surge runs through the circuit, city defense fires
-   where you click, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
+   where you click, the flow field takes an eddy, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
    the grass, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain
    banks, the train whistles, water skips a stone); the frame has `data-masthead-poke` while it
    does, for a cursor, say.

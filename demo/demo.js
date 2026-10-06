@@ -12,6 +12,7 @@ var BLURBS = {
   deadline: 'A writer at a desk, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard.',
   duel: 'Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth, forever: no touches, no winner.',
   eyes: 'October: eyes in the dark, opening, blinking, glancing about, and closing again.',
+  flowfield: 'A slow current across the masthead, like wind over water: faint strokes turning with it and a few motes riding it, livelier low. Click to drop an eddy.',
   flyby: 'A flight in through the solar system, like Voyager 1 in reverse: orbits and planets (far from scale) sweeping past on the way to the sun, then round again. Click for a burn.',
   football: 'Football season: a player in pads running a play. A pass, caught or dropped, or a run with a hurdle over a diving defender.',
   fractal: 'A branching growth tracing round the name, resting when grown, then starting again. Click to sprout a root.',
