@@ -25,6 +25,7 @@ export var variants = {
   pumpkins: function () { return import('./variants/pumpkins.js'); },
   rocks: function () { return import('./variants/rocks.js'); },
   ships: function () { return import('./variants/ships.js'); },
+  skyline: function () { return import('./variants/skyline.js'); },
   signalnoise: function () { return import('./variants/signalnoise.js'); },
   solari: function () { return import('./variants/solari.js'); },
   spider: function () { return import('./variants/spider.js'); },

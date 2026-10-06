@@ -35,9 +35,10 @@ import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
 import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
+import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } from '../src/variants/skyline.js';
 import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -61,7 +62,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1408,6 +1409,109 @@ describe('the ships', () => {
     const { layer, art } = run(ships, 10);
     for (let i = 0; i < 6; i++) art.poke(100 + i * 150, 200, 10, 400);
     assert.equal(find(layer, 'masthead-ships-dolphin').length, 3);
+  });
+});
+
+describe('the skyline', () => {
+  const lcg = (r) => () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000);
+
+  it('stands its buildings shoulder to shoulder across the foot, low behind the name', () => {
+    for (const seed of [1, 7, 42]) {
+      const near = city(lcg(seed), 1200, false);
+      assert.ok(near[0].x <= 10 && near.at(-1).x + near.at(-1).w >= 1200);
+      for (const b of near.filter((b) => Math.abs(b.x + b.w / 2 - 600) < 250)) assert.ok(b.h <= 60, `${b.h} behind the name`);
+      for (const b of city(lcg(seed), 1200, true)) assert.ok(STREET - b.h > 120, 'the far row stays below the top of the name');
+    }
+  });
+
+  it('draws every building and window on the ground, windows inside their walls', () => {
+    const { layer } = run(skyline, 0);
+    for (const p of find(layer, 'masthead-skyline-building')) assert.match(p.attrs.d, new RegExp('^M[\\d.-]+ ' + STREET + 'V.*V' + STREET + '$'));
+    const windows = find(layer, 'masthead-skyline-window');
+    assert.ok(windows.length > 40);
+    for (const w of windows) assert.ok(Number(w.attrs.y) + 4 < STREET && Number(w.attrs.y) > 160);
+  });
+
+  it('lights and darkens windows one at a time, about a third lit', () => {
+    const { layer, art } = run(skyline, 0);
+    const lit = () => find(layer, 'masthead-skyline-window').filter((w) => w.attrs.opacity === '1').length;
+    const total = find(layer, 'masthead-skyline-window').length;
+    let changes = 0, before = lit();
+    for (let n = 1; n <= 2000; n++) {
+      art.step(n, n * 50);
+      const now = lit();
+      assert.ok(Math.abs(now - before) <= 1);
+      if (now !== before) changes++;
+      before = now;
+    }
+    assert.ok(changes > 50, `${changes} changes`);
+    assert.ok(before > total * 0.15 && before < total * 0.6, `${before} of ${total}`);
+  });
+
+  it('rains in showers that come and go, slanting the same way at any stretch', () => {
+    const { layer, art } = run(skyline, 0, { seed: 3, stretch: 2 });
+    const falling = () => find(layer, 'masthead-skyline-rain')[0].children.filter((d) => d.attrs.d);
+    let most = 0, dryAfter = false;
+    for (let n = 1; n <= 12000; n++) {
+      art.step(n, n * 50);
+      const now = falling().length;
+      if (most > 20 && now === 0) dryAfter = true;
+      most = Math.max(most, now);
+    }
+    assert.ok(most > 20 && most <= DROPS && dryAfter);
+    const slants = (stretch) => {
+      const { layer, art } = run(skyline, 0, { seed: 3, stretch });
+      for (let n = 1; n <= 600; n++) art.step(n, n * 50);
+      return find(layer, 'masthead-skyline-rain')[0].children.filter((d) => d.attrs.d)
+        .map((d) => d.attrs.d.split('l')[1].split(' ').map(Number)).map(([dx, dy]) => dx / dy * stretch);
+    };
+    for (const s of [...slants(1), ...slants(2)]) assert.ok(Math.abs(Math.abs(s) - 0.3) < 0.02, s);
+  });
+
+  it('strikes lightning now and then in a shower, briefly, off to the side of the name', () => {
+    const { layer, art } = run(skyline, 0, { seed: 3 });
+    const boltEl = find(layer, 'masthead-skyline-bolt')[0], glow = find(layer, 'masthead-skyline-glow')[0];
+    const strikes = [];
+    let lit = 0;
+    for (let n = 1; n <= 40000; n++) {
+      art.step(n, n * 50);
+      if (Number(boltEl.attrs.opacity) > 0) {
+        lit++;
+        if (!strikes.length || n - strikes.at(-1) > GLOW_STEPS) strikes.push(n);
+        const x = Number(/translate\(([\d.]+)/.exec(boltEl.attrs.transform)[1]);
+        assert.ok(Math.abs(x - 600) > 280, `a bolt at ${x}`);
+      }
+      assert.ok(Number(glow.attrs.opacity) <= 0.3);
+    }
+    assert.ok(strikes.length >= 2, `${strikes.length} strikes`);
+    for (let i = 1; i < strikes.length; i++) assert.ok(strikes[i] - strikes[i - 1] >= 400, '20 seconds at least between strikes');
+    assert.ok(lit <= strikes.length * BOLT_STEPS);
+    assert.ok(strikes.length < 40000 / 400);
+  });
+
+  it('draws a bolt downward to its end, with a fork', () => {
+    const d = bolt(lcg(5), 180);
+    const ys = [...d.matchAll(/[ML](-?[\d.]+) (-?[\d.]+)/g)].map((m) => Number(m[2]));
+    assert.equal(Math.max(...ys.slice(0, ys.indexOf(180) + 1)), 180);
+    assert.equal(d.split('M').length - 1, 2);
+  });
+
+  it('lights the windows round a click on a building, and calls lightning to a click in the sky', () => {
+    const { layer, art } = run(skyline, 10);
+    const windows = find(layer, 'masthead-skyline-window');
+    windows.forEach((w) => { w.attrs.opacity = '0'; });
+    const w = windows[0];
+    art.poke(Number(w.attrs.x) + 1, Number(w.attrs.y) + 2, 10, 500);
+    assert.ok(windows.filter((v) => v.attrs.opacity === '1').length >= 1);
+    assert.ok(windows.indexOf(w) >= 0 && w.attrs.opacity === '1');
+    const boltEl = find(layer, 'masthead-skyline-bolt')[0];
+    art.poke(600, 40, 10, 500);
+    art.step(11, 550);
+    assert.ok(Number(boltEl.attrs.opacity) > 0);
+    assert.match(boltEl.attrs.transform, /^translate\(600\.0 0\)/);
+    for (let n = 12; n <= 12 + GLOW_STEPS; n++) art.step(n, n * 50);
+    assert.equal(boltEl.attrs.opacity, '0');
+    assert.equal(find(layer, 'masthead-skyline-glow')[0].attrs.opacity, '0.000');
   });
 });
 

@@ -27,6 +27,7 @@ var BLURBS = {
   rocks: 'Asteroids, playing itself: rocks drifting and turning, splitting when the ship hits them.',
   ships: 'Ships gliding across a low sea: a liner trailing smoke, a carrier, a tall ship, a sailboat bobbing. Click for a dolphin.',
   signalnoise: 'Faint scanlines and a rolling band, with brief bursts of interference. Click to tear the signal.',
+  skyline: 'A city at night in outline, its windows lighting and going dark; now and then a shower, and rarely a far-off flash of lightning. Click a building to light its windows, or the sky for lightning.',
   solari: "A split-flap board showing the front page's deks, riffling to the next every so often. Click to riffle it on.",
   spider: 'October: a spider letting itself down on its thread, dangling, and climbing back up; a cobweb in the corner.',
   stix: 'Stix (the C64 Qix), playing itself: cuts into the field, claimed ground hatched, the Stix wandering.',
