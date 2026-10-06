@@ -52,7 +52,7 @@ export var REFERENCE_DAYS = 30;
 
 /* Animations still being worked on: never picked at random, on any day, though ?ambient=<name>
    and the demo page still run them. */
-export var DRAFTS = ['blockpeek', 'flowfield', 'football', 'grid', 'harmonograph', 'lighthouse', 'nightcity', 'ships', 'skyline', 'triangles', 'truchet'];
+export var DRAFTS = ['blockpeek', 'football', 'ships'];
 
 var DAY_MS = 86400000;
 
