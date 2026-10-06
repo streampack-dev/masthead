@@ -21,7 +21,7 @@ only puts the art on its page and starts the runner.
 | `circuit` | Fireflies running the traces of a circuit board, moving by SVG alone. |
 | `citydefense` | Missile defense playing itself, slowly: trails from above, counter-missiles bursting into rings, cities falling and rebuilt. |
 | `deadline` | A writer at a desk on the left, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard. |
-| `drips` | Draft. Wet paint in real colours along the top edge, a drip letting go now and then: fast at first, slowing and thickening to a round bead, and staying; now and then a bead falls and spots the masthead lower down. When it's well painted the paint fades and a fresh band gathers. The colours are the paint palette (below). |
+| `drips` | Wet paint in real colours along the top edge, a drip letting go now and then: fast at first, slowing and thickening to a round bead, and staying; now and then a bead falls and spots the masthead lower down. When it's well painted the paint fades and a fresh band gathers. The colours are the paint palette (below). |
 | `duel` | Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth: no touches, no winner. |
 | `eyes` | October: eyes in the dark, opening, blinking, glancing about, and closing again. |
 | `flowfield` | A slow current drifting across the masthead, like wind over water: faint strokes turning with it, a few motes riding it with short tails, livelier low. |
@@ -32,11 +32,11 @@ only puts the art on its page and starts the runner.
 | `ghosts` | October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below. |
 | `grass` | A field of grass along the foot of the masthead, the wind moving through it. |
 | `graveyard` | October: a moon with clouds passing, headstones and bare trees, fog, a bat crossing the moon. |
-| `harmonograph` | Two harmonographs either side of the name, taking turns: one slow line drawn by damped pendulums, spiralling inward as they die down, then fading for a new set. |
 | `grid` | A monochrome composition in the manner of De Stijl: lines of a few weights cutting the masthead into rectangles, a few small blocks in the corners toned in the theme's own tints and a hatching. Now and then a line slides, a region is cut again, or a tone passes to a neighbouring block. |
+| `harmonograph` | Two harmonographs either side of the name, taking turns: one slow line drawn by damped pendulums, spiralling inward as they die down, then fading for a new set. |
 | `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
-| `lighthouse` | A lighthouse at night on a rocky headland at one end, the sea in lines along the foot, the lamp's beam slowly turning; stars come out and the fog lights as the beam passes. |
 | `life` | Conway's Game of Life, reseeded when it settles. |
+| `lighthouse` | A lighthouse at night on a rocky headland at one end, the sea in lines along the foot, the lamp's beam slowly turning; stars come out and the fog lights as the beam passes. |
 | `nightcity` | A slow flight down an avenue between wireframe towers at night: rows of lit windows sliding past, warning lights blinking on the roofs, a skyline and a flying car far off. |
 | `paddles` | Two paddles and a ball, playing itself at an easy pace, scores ticking up to eleven. |
 | `pongwars` | Two sides of a field of squares and a ball each, every square a ball touches coming over to its side; the border wanders forever. |
@@ -62,7 +62,7 @@ the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast t
 the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
 are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
 
-Animations listed in `DRAFTS` (`blockpeek`, `drips`, `football` and `ships`, for now) are never picked at
+Animations listed in `DRAFTS` (`blockpeek`, `football` and `ships`, for now) are never picked at
 random: they're still being worked on, and run only by name and on the demo page.
 
 Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
