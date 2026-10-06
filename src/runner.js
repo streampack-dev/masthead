@@ -58,6 +58,7 @@ export var DRAFTS = ['blockpeek', 'flowfield', 'football', 'ships'];
 export var DRAFTS = ['blockpeek', 'football', 'ships', 'skyline'];
 export var DRAFTS = ['blockpeek', 'football', 'nightcity', 'ships'];
 export var DRAFTS = ['blockpeek', 'football', 'lighthouse', 'ships'];
+export var DRAFTS = ['blockpeek', 'football', 'harmonograph', 'ships'];
 
 var DAY_MS = 86400000;
 

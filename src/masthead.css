@@ -211,6 +211,11 @@
 .masthead-football-pads, .masthead-football-helmet { fill: color-mix(in srgb, var(--_accent) 20%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); stroke-width: 1.2; }
 .masthead-football-ball ellipse { fill: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke: var(--_accent); stroke-width: 1; }
 .masthead-football-ball path { stroke: var(--_accent); stroke-width: 0.7; }
+/* The harmonograph's line is thin and clear of the name, so it's lifted a little out of the art's
+   strength, as the fractal's is. Its strokes don't widen when the figure is counter-scaled. */
+.masthead-art[data-masthead="harmonograph"] { opacity: max(var(--masthead-strength, 0.55), 0.8); }
+.masthead-harmonograph-line { fill: none; stroke: var(--_accent); stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; opacity: 0.62; }
+.masthead-harmonograph-line path { vector-effect: non-scaling-stroke; }
 .masthead-ships { fill: none; }
 .masthead-ships-horizon { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; opacity: 0.6; }
 .masthead-ships-wave { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; stroke-linecap: round; }
