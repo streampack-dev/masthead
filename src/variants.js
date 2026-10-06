@@ -9,6 +9,7 @@ export var variants = {
   circuit: function () { return import('./variants/circuit.js'); },
   citydefense: function () { return import('./variants/citydefense.js'); },
   deadline: function () { return import('./variants/deadline.js'); },
+  drips: function () { return import('./variants/drips.js'); },
   duel: function () { return import('./variants/duel.js'); },
   eyes: function () { return import('./variants/eyes.js'); },
   flowfield: function () { return import('./variants/flowfield.js'); },
