@@ -186,7 +186,8 @@ if (reducedAsked) {
 fetch(new URL('../src/art.svg', import.meta.url))
   .then(function (r) { return r.text(); })
   .then(function (art) {
-    Object.keys(variants).forEach(function (name) {
+    // Alphabetical, whatever order variants.js lists them in.
+    Object.keys(variants).sort().forEach(function (name) {
       var s = specimen(name, art);
       watcher.observe(s.stage);
       s.start();
