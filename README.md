@@ -21,6 +21,7 @@ only puts the art on its page and starts the runner.
 | `circuit` | Fireflies running the traces of a circuit board, moving by SVG alone. |
 | `citydefense` | Missile defense playing itself, slowly: trails from above, counter-missiles bursting into rings, cities falling and rebuilt. |
 | `deadline` | A writer at a desk on the left, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard. |
+| `drips` | Draft. Wet paint in real colours along the top edge, a drip letting go now and then: fast at first, slowing and thickening to a round bead, and staying; now and then a bead falls and spots the masthead lower down. When it's well painted the paint fades and a fresh band gathers. The colours are the paint palette (below). |
 | `duel` | Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth: no touches, no winner. |
 | `eyes` | October: eyes in the dark, opening, blinking, glancing about, and closing again. |
 | `flowfield` | A slow current drifting across the masthead, like wind over water: faint strokes turning with it, a few motes riding it with short tails, livelier low. |
@@ -61,7 +62,7 @@ the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast t
 the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
 are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
 
-Animations listed in `DRAFTS` (`blockpeek`, `football` and `ships`, for now) are never picked at
+Animations listed in `DRAFTS` (`blockpeek`, `drips`, `football` and `ships`, for now) are never picked at
 random: they're still being worked on, and run only by name and on the demo page.
 
 Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
@@ -102,6 +103,20 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    }
    ```
 
+   One animation, `drips`, is in real colours rather than the theme's: a paint palette,
+   `--masthead-paint-1` to `--masthead-paint-9`, with defaults of artists' pigments (cadmium red,
+   cadmium orange, cadmium yellow, sap green, viridian, cerulean, ultramarine, dioxazine violet,
+   quinacridone rose) that read at the half strength it paints with on a light page or a dark one.
+   Where the page sets `color-scheme: dark`, the defaults are lifted a little. A host may set any
+   of them, like the others, to paint in its own colours:
+
+   ```css
+   .masthead {
+     --masthead-paint-1: #c0392b;
+     --masthead-paint-6: #2980b9;
+   }
+   ```
+
 4. **Start it** once the art is in the page, and stop it when the masthead leaves:
 
    ```js
@@ -120,7 +135,7 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    animation, if it has a fragment of its own (the block peeker mines where you click, and faster
    for a click on the block, boids scatter from a hawk, the bytecode rain
    bursts, a tunnel appears in the chase, a surge runs through the circuit, city defense fires
-   where you click, the flow field takes an eddy, the flyby fires a burn, the fractal sprouts a root,
+   where you click, paint splatters on the drips and runs, the flow field takes an eddy, the flyby fires a burn, the fractal sprouts a root,
    ghostrider opens the throttle, a gust runs through the grass, the grid cuts the rectangle clicked,
    a harmonograph's pendulums take a push, the lighthouse swings its beam round to that side, life
    plants a pattern, the night city banks and a flying car streaks past, a dolphin leaps from the
@@ -161,7 +176,9 @@ export default function name(layer, m) {
 
 Animations use no libraries and draw only into their layer. Colours come from the classes above
 or from rules on `.masthead-<name>` in `masthead.css` using its `--_accent`, `--_bg`, `--_border`
-and `--_surface`, never fixed values, so they follow each site's theme. Add tests in
+and `--_surface`, never fixed values, so they follow each site's theme. An animation in real
+colours takes them from the paint palette, `--_paint-1` to `--_paint-9`, by class, as `drips`
+does, so a site can still change them. Add tests in
 `test/variants.test.js`: the fakes in `test/fake.js` run a variant without a browser.
 
 ## Working on it

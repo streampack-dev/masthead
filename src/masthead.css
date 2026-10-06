@@ -7,6 +7,9 @@
      --masthead-surface   the Solari board's flaps
      --masthead-mono      the Solari board's font
      --masthead-strength  the art's opacity: 0.55 sits behind a masthead's text; 1 is full
+     --masthead-paint-1 to --masthead-paint-9
+                          the paint palette, for the one animation in real colours (drips):
+                          artists' pigments that read at half strength on light and dark alike
 
    The art fills its container, so the host places and sizes the container. */
 .masthead-art {
@@ -14,6 +17,15 @@
   --_bg: var(--masthead-bg, #ffffff);
   --_border: var(--masthead-border, #d4d4d8);
   --_surface: var(--masthead-surface, #f4f4f5);
+  --_paint-1: var(--masthead-paint-1, #d4422f); /* cadmium red */
+  --_paint-2: var(--masthead-paint-2, #e97a26); /* cadmium orange */
+  --_paint-3: var(--masthead-paint-3, #e6b323); /* cadmium yellow */
+  --_paint-4: var(--masthead-paint-4, #5e9b3c); /* sap green */
+  --_paint-5: var(--masthead-paint-5, #23917a); /* viridian */
+  --_paint-6: var(--masthead-paint-6, #2b8dc8); /* cerulean */
+  --_paint-7: var(--masthead-paint-7, #4a52c4); /* ultramarine */
+  --_paint-8: var(--masthead-paint-8, #8146b0); /* dioxazine violet */
+  --_paint-9: var(--masthead-paint-9, #cc3f7e); /* quinacridone rose */
   position: absolute;
   inset: 0;
   width: 100%;
@@ -21,6 +33,22 @@
   z-index: -1;
   color: color-mix(in srgb, var(--_accent) 25%, var(--_border));
   opacity: var(--masthead-strength, 0.55);
+}
+
+/* Where the page says it's dark (color-scheme: dark), the default paints are lifted a little, so
+   they read at half strength on a dark page as on a light one. A site's own paints are kept. */
+@supports (color: light-dark(#000, #fff)) {
+  .masthead-art {
+    --_paint-1: var(--masthead-paint-1, light-dark(#d4422f, #f2735e));
+    --_paint-2: var(--masthead-paint-2, light-dark(#e97a26, #f7a04e));
+    --_paint-3: var(--masthead-paint-3, light-dark(#e6b323, #f5cf55));
+    --_paint-4: var(--masthead-paint-4, light-dark(#5e9b3c, #8cc767));
+    --_paint-5: var(--masthead-paint-5, light-dark(#23917a, #4cc4a4));
+    --_paint-6: var(--masthead-paint-6, light-dark(#2b8dc8, #5bb6ea));
+    --_paint-7: var(--masthead-paint-7, light-dark(#4a52c4, #8790f0));
+    --_paint-8: var(--masthead-paint-8, light-dark(#8146b0, #b483e0));
+    --_paint-9: var(--masthead-paint-9, light-dark(#cc3f7e, #f07aaa));
+  }
 }
 
 /* The circuit. #masthead-pulse, the glow, is art.svg's; #masthead-fade is the circuit's own. */
@@ -275,6 +303,26 @@
 .masthead-windfarm-tower { fill: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); }
 .masthead-windfarm-blade { fill: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 80%, var(--_bg)); stroke-width: 0.9; }
 .masthead-windfarm-hub { fill: var(--_accent); }
+
+/* Drips: the one animation in real colours, from the paint palette above. Each colour's paint is
+   a group of its own, held at half strength, so paint of one colour runs together seamlessly and
+   paint of two colours multiplies where they overlap, as pigment mixes (blue over yellow goes
+   green). The wet paint is isolated, so it multiplies only with other paint, never with the page:
+   that reads on a light theme and a dark one alike, without knowing which it is. */
+/* The paint is held at half strength itself, so it is lifted out of the art's fade, as the
+   fractal is. */
+.masthead-art[data-masthead="drips"] { opacity: max(var(--masthead-strength, 0.55), 0.85); }
+.masthead-drips-wet { isolation: isolate; }
+.masthead-drips-paint { stroke: none; opacity: 0.5; mix-blend-mode: multiply; }
+.masthead-drips-paint-1 { fill: var(--_paint-1); }
+.masthead-drips-paint-2 { fill: var(--_paint-2); }
+.masthead-drips-paint-3 { fill: var(--_paint-3); }
+.masthead-drips-paint-4 { fill: var(--_paint-4); }
+.masthead-drips-paint-5 { fill: var(--_paint-5); }
+.masthead-drips-paint-6 { fill: var(--_paint-6); }
+.masthead-drips-paint-7 { fill: var(--_paint-7); }
+.masthead-drips-paint-8 { fill: var(--_paint-8); }
+.masthead-drips-paint-9 { fill: var(--_paint-9); }
 
 /* October. */
 /* Bats: dark wings against the masthead. */

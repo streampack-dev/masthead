@@ -10,6 +10,7 @@ var BLURBS = {
   circuit: 'Fireflies running the traces of a circuit board. Click to send a surge through it.',
   citydefense: 'The old missile-defense game, playing itself, slowly: trails from above, rings bursting, cities falling and rebuilt. Click to fire.',
   deadline: 'A writer at a desk, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard.',
+  drips: 'Wet paint in real colours along the top, a drip letting go now and then: fast at first, slowing and thickening to a round bead, and staying. Now and then a bead falls. When the masthead is well painted it fades and starts again. Click to splatter paint.',
   duel: 'Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth, forever: no touches, no winner.',
   eyes: 'October: eyes in the dark, opening, blinking, glancing about, and closing again.',
   flowfield: 'A slow current across the masthead, like wind over water: faint strokes turning with it and a few motes riding it, livelier low. Click to drop an eddy.',

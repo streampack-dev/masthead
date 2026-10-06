@@ -1,10 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { variants } from '../src/variants.js';
 import { DRAFTS, OCCASIONS, REFERENCE_DAYS, SEASONS, during, inSeason, isWindow, pick, weights } from '../src/runner.js';
 import bats, { bat, flight } from '../src/variants/bats.js';
 import eyes, { openness } from '../src/variants/eyes.js';
+import drips, { CAP as DRIP_CAP, FADE as DRIP_FADE, PAINTS, dripPath, fall as dripFall } from '../src/variants/drips.js';
 import duel, { POSES, STUB, breaks, crossing, facepalms, figure, mixPose } from '../src/variants/duel.js';
 import deadline, { ANVIL, POSES as DESK_POSES, SCENES, anvilAt, writer } from '../src/variants/deadline.js';
 import ghosts, { round, sheet } from '../src/variants/ghosts.js';
@@ -45,7 +46,7 @@ import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } 
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, football, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, nightcity, paddles, pongwars, rocks, ships, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, football, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, nightcity, paddles, pongwars, rocks, ships, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -69,12 +70,114 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'nightcity', 'paddles', 'pongwars', 'rocks', 'ships', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'nightcity', 'paddles', 'pongwars', 'rocks', 'ships', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
     });
   }
+});
+
+describe('drips', () => {
+  const css = readFileSync(new URL('../src/masthead.css', import.meta.url), 'utf8');
+  const paints = (layer) => find(layer, 'masthead-drips-paint');
+  const shapes = (layer, kind) => find(layer, 'masthead-drips-' + kind);
+  const wet = (layer) => find(layer, 'masthead-drips-wet')[0];
+  // About the foot of a drip: where its body meets the bead, and the bead's radius below that.
+  const tip = (d) => { const a = /A[\d.]+ ([\d.]+) 0 1 0 -?[\d.]+ (-?[\d.]+)/.exec(d); return Number(a[2]) + Number(a[1]); };
+
+  it('paints from a palette of at least eight, by class, never in colours of its own', () => {
+    assert.ok(PAINTS >= 8);
+    for (let i = 1; i <= PAINTS; i++) {
+      assert.match(css, new RegExp(`--_paint-${i}: var\\(--masthead-paint-${i}, #[0-9a-f]{6}\\)`), `paint ${i}`);
+      assert.match(css, new RegExp(`\\.masthead-drips-paint-${i} \\{ fill: var\\(--_paint-${i}\\); \\}`), `rule ${i}`);
+    }
+    const { layer, art } = run(drips, 1500);
+    art.poke(600, 160, 1500, 0);
+    assert.equal(paints(layer).length, PAINTS);
+    assert.ok(!/#[0-9a-f]{3,6}|rgb|hsl|"fill"|"stroke"/i.test(serialize(layer)));
+    // Every shape is in one paint's group, and several paints are used.
+    const used = paints(layer).filter((g) => g.children.length > 0);
+    assert.ok(used.length >= 6, used.length);
+  });
+
+  it('runs fast at first, then slows to a stop', () => {
+    assert.equal(dripFall(0), 0);
+    assert.equal(dripFall(1), 1);
+    assert.ok(dripFall(0.25) > 0.5);
+    for (let u = 0; u < 1; u += 0.05) assert.ok(dripFall(u + 0.05) >= dripFall(u));
+    // Its bead stays round however the masthead is stretched.
+    const [, rx, ry] = /A([\d.]+) ([\d.]+)/.exec(dripPath(100, 20, 60, 4, 6, 10, 0, 2)).map(Number);
+    assert.ok(Math.abs(rx * 2 - ry) < 0.2, `${rx} ${ry}`);
+  });
+
+  it('lets drips go down from the band, and leaves them where they stop', () => {
+    const { layer, art } = run(drips, 400);
+    const all = shapes(layer, 'drip');
+    assert.ok(all.length >= 3, all.length);
+    const before = all.map((d) => d.attrs.d);
+    const tips = all.map((d) => tip(d.attrs.d));
+    for (let i = 401; i <= 700; i++) art.step(i, i * 40);
+    let stayed = 0;
+    all.forEach((d, i) => {
+      // Only ever down (a bead letting go leaves the tip a little shorter).
+      assert.ok(tip(d.attrs.d) >= tips[i] - 10, 'only ever down');
+      if (d.attrs.d === before[i]) stayed++;
+    });
+    // The first ones have stopped, and stay as they were.
+    assert.ok(stayed >= 2, stayed);
+    assert.ok(all.every((d) => layer.children.includes(wet(layer)) && find(wet(layer), 'masthead-drips-drip').includes(d)));
+    // Most drips are short; the band stays mostly clear below.
+    const deep = shapes(layer, 'drip').filter((d) => tip(d.attrs.d) > 200);
+    assert.ok(deep.length <= shapes(layer, 'drip').length / 3);
+  });
+
+  it('fills, fades out, and starts a fresh band', () => {
+    const { layer, art } = run(drips, 1);
+    let faded = false, reset = false, most = 0;
+    for (let i = 2; i <= 4000 && !reset; i++) {
+      art.step(i, i * 40);
+      const n = shapes(layer, 'drip').length;
+      const o = wet(layer).attrs.opacity;
+      if (o !== undefined && Number(o) < 0.5) faded = true;
+      if (faded && n === 0) reset = true;
+      most = Math.max(most, n);
+      assert.ok(find(layer, 'masthead-drips-wet').length === 1);
+    }
+    assert.ok(most >= 20, most);
+    assert.ok(faded && reset);
+    assert.equal(wet(layer).attrs.opacity, undefined);
+  });
+
+  it('keeps to a modest number of shapes, however it is poked', () => {
+    const { layer, art } = run(drips, 10);
+    for (let i = 11; i <= 3000; i++) {
+      if (i % 7 === 0) art.poke((i * 37) % 1200, (i * 13) % 320, i, i * 40);
+      art.step(i, i * 40);
+      const count = paints(layer).reduce((sum, g) => sum + g.children.length, 0);
+      assert.ok(count <= DRIP_CAP + 40, `${count} at ${i}`);
+    }
+  });
+
+  it('splatters paint where poked, round on a stretched masthead, and runs from it', () => {
+    const { layer, art } = run(drips, 100, { stretch: 2 });
+    const drops = shapes(layer, 'drip').length;
+    art.poke(600, 120, 100, 4000);
+    const splat = shapes(layer, 'splat');
+    assert.ok(splat.length >= 7, splat.length);
+    // One colour, or two.
+    const colours = new Set(paints(layer).filter((g) => find(g, 'masthead-drips-splat').length).map((g) => g.attrs.class));
+    assert.ok(colours.size >= 1 && colours.size <= 2);
+    splat.forEach((e) => assert.ok(Math.abs(Number(e.attrs.rx) * 2 - Number(e.attrs.ry)) < 0.2, `${e.attrs.rx} ${e.attrs.ry}`));
+    // Near where it landed: the blob at the click, the droplets around it.
+    assert.equal(splat[0].attrs.cx, '600.0');
+    assert.equal(splat[0].attrs.cy, '120.0');
+    splat.forEach((e) => assert.ok(Math.abs(Number(e.attrs.cy) - 120) < 60));
+    const runs = shapes(layer, 'drip').slice(drops);
+    assert.ok(runs.length >= 1);
+    for (let i = 101; i <= 300; i++) art.step(i, i * 40);
+    runs.forEach((d) => assert.ok(tip(d.attrs.d) > 130));
+  });
 });
 
 describe('flowfield', () => {
