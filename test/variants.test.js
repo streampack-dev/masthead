@@ -24,35 +24,28 @@ import rocks, { SIZES, outline } from '../src/variants/rocks.js';
 import pongwars, { COLS as WAR_COLS, ROWS as WAR_ROWS, bounce } from '../src/variants/pongwars.js';
 import stix, { GH, GW, claim, field, route } from '../src/variants/stix.js';
 import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
-import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as flowWeight } from '../src/variants/flowfield.js';
 import flyby, { FOCAL, PLANETS, layout as flybyLayout, project as flybyProject, speed as flybySpeed } from '../src/variants/flyby.js';
 import football, { FLIGHT, GROUND as FIELD, arc, joints } from '../src/variants/football.js';
 import fractal from '../src/variants/fractal.js';
 import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
-import nightcity from '../src/variants/nightcity.js';
 import life, { PLANTS } from '../src/variants/life.js';
-import lighthouse, { REACH, REVOLUTION, SEA, SPREAD, beam, headland, lit } from '../src/variants/lighthouse.js';
 import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
 import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
+import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
+import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
+import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
+import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as flowWeight } from '../src/variants/flowfield.js';
+import grid, { MIN_H, MIN_W } from '../src/variants/grid.js';
+import harmonograph, { PER_STEP, POINTS, pen, pendulums } from '../src/variants/harmonograph.js';
+import lighthouse, { REACH, REVOLUTION, SEA, SPREAD, beam, headland, lit } from '../src/variants/lighthouse.js';
+import nightcity from '../src/variants/nightcity.js';
+import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } from '../src/variants/skyline.js';
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
-import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
-import grid, { MIN_H, MIN_W } from '../src/variants/grid.js';
-import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
-import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } from '../src/variants/skyline.js';
-import harmonograph, { PER_STEP, POINTS, pen, pendulums } from '../src/variants/harmonograph.js';
-import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, triangles, water };
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, water };
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, nightcity, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, lighthouse, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, harmonograph, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
-const all = { bats, blockpeek, grid, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, football, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, nightcity, paddles, pongwars, rocks, ships, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -76,14 +69,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'triangles', 'water']) {
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'water']) {
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'nightcity', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'lighthouse', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'harmonograph', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
-  for (const name of ['bats', 'blockpeek', 'grid', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'nightcity', 'paddles', 'pongwars', 'rocks', 'ships', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -467,7 +453,8 @@ describe('the seasons', () => {
       const random = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x100000000; };
       let picked = 0;
       for (let i = 0; i < 2000; i++) if (pick(names, day(2027, 7, 4), random) === 'boids') picked++;
-      const others = names.filter((n) => !SEASONS[n]).length;
+      // Drafts weigh nothing: only the year-round animations on the sites compete.
+      const others = names.filter((n) => !SEASONS[n] && !DRAFTS.includes(n)).length;
       const expected = REFERENCE_DAYS / (REFERENCE_DAYS + others);
       assert.ok(Math.abs(picked / 2000 - expected) < 0.05, `${picked / 2000} vs ${expected}`);
       for (let i = 0; i < 200; i++) assert.notEqual(pick(names, day(2027, 7, 5), random), 'boids');
@@ -1420,6 +1407,9 @@ describe('the triangles', () => {
     assert.ok(Number(ring.attrs.opacity) > 0 && ring.attrs.d.length > 0);
     for (let n = 13; n <= 300; n++) art.step(n, n * 40);
     assert.equal(ring.attrs.opacity, '0');
+  });
+});
+
 describe('truchet', () => {
   const angle = (tile) => Number(/rotate\(([-\d.]+)\)/.exec(tile.attrs.transform)[1]);
 
@@ -1742,6 +1732,9 @@ describe('the skyline', () => {
     for (let n = 12; n <= 12 + GLOW_STEPS; n++) art.step(n, n * 50);
     assert.equal(boltEl.attrs.opacity, '0');
     assert.equal(find(layer, 'masthead-skyline-glow')[0].attrs.opacity, '0.000');
+  });
+});
+
 describe('the lighthouse', () => {
   const lampAt = (layer) => /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(find(layer, 'masthead-lighthouse-lamp')[0].attrs.transform).slice(1).map(Number);
   const beamOf = (layer) => [...find(layer, 'masthead-lighthouse-beam')[0].attrs.d.matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
@@ -2082,6 +2075,9 @@ describe('the harmonograph', () => {
     assert.equal(points(pushed.layer, 1), 0);
     pushed.art.poke(1100, 160, 161, 161 * 40);
     assert.ok(points(pushed.layer, 1) > 0);
+  });
+});
+
 describe('the grid', () => {
   const ends = (layer) => find(layer, 'masthead-grid-line').map((l) => ({
     x1: Number(l.attrs.x1), y1: Number(l.attrs.y1), x2: Number(l.attrs.x2), y2: Number(l.attrs.y2),

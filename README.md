@@ -61,16 +61,8 @@ the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast t
 the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
 are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
 
-Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `triangles`, for now) are never picked at
-Animations listed in `DRAFTS` (`blockpeek`, `flowfield`, `football` and `ships`, for now) are never picked at
-Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `skyline`, for now) are never picked at
-Animations listed in `DRAFTS` (`blockpeek`, `football`, `nightcity` and `ships`, for now) are never picked at
-Animations listed in `DRAFTS` (`blockpeek`, `football`, `lighthouse` and `ships`, for now) are never picked at
-Animations listed in `DRAFTS` (`blockpeek`, `football`, `harmonograph` and `ships`, for now) are never picked at
-Animations listed in `DRAFTS` (`blockpeek`, `football`, `grid` and `ships`, for now) are never picked at
-random: they're still being worked on, and run only by name and on the demo page.
-Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `truchet`, for now) are never
-picked at random: they're still being worked on, and run only by name and on the demo page.
+Animations listed in `DRAFTS` (`blockpeek`, `flowfield`, `football`, `grid`, `harmonograph`, `lighthouse`, `nightcity`, `ships`, `skyline`, `triangles` and `truchet`, for now) are never picked at random: they're still being
+worked on, and run only by name and on the demo page.
 
 Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
 shorter its window, so a short occasion is seen while it lasts: a month or longer weighs 1, a
@@ -128,18 +120,14 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    animation, if it has a fragment of its own (the block peeker mines where you click, and faster
    for a click on the block, boids scatter from a hawk, the bytecode rain
    bursts, a tunnel appears in the chase, a surge runs through the circuit, city defense fires
-   where you click, the flow field takes an eddy, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
-   the grass, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain
-   banks, the train whistles, a ripple runs through the triangles, water skips a stone); the frame has `data-masthead-poke` while it
-   where you click, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
-   the grass, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the skyline lights windows or calls lightning, the Solari board riffles on, the terrain
-   where you click, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
-   the grass, life plants a pattern, the night city banks and a flying car streaks past, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain
-   where you click, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
-   the grass, the lighthouse swings its beam round to that side, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain
-   where you click, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
-   the grass, a harmonograph's pendulums take a push, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain
-   banks, the train whistles, water skips a stone); the frame has `data-masthead-poke` while it
+   where you click, the flow field takes an eddy, the flyby fires a burn, the fractal sprouts a root,
+   ghostrider opens the throttle, a gust runs through the grass, the grid cuts the rectangle clicked,
+   a harmonograph's pendulums take a push, the lighthouse swings its beam round to that side, life
+   plants a pattern, the night city banks and a flying car streaks past, a dolphin leaps from the
+   sea under the ships, signal noise tears, the skyline lights windows or calls lightning, the
+   Solari board riffles on, the terrain banks, the train whistles, a ripple runs through the
+   triangles, the truchet tiles turn round the click, water skips a stone); the frame has
+   `data-masthead-poke` while it
    does, for a cursor, say.
    Clicks on links, buttons and form controls in the masthead pass through untouched; a
    masthead that is itself a link home passes `poke: false`. A host serving the variant files
