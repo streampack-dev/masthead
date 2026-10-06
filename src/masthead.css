@@ -195,6 +195,15 @@
 .masthead-triangles-fill, .masthead-triangles-ring { fill: var(--_accent); stroke: none; }
 .masthead-water-line { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; }
 
+/* Truchet: quarter-circle tiles in fine lines, a turning tile a little brighter, and a soft glow
+   run along a path now and then. The tiles are scaled to their cells, so their lines keep their
+   width. */
+.masthead-truchet { fill: none; stroke-linecap: round; }
+.masthead-truchet-tile { stroke: color-mix(in srgb, var(--_accent) 62%, var(--_bg)); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.masthead-truchet-turning { stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); }
+.masthead-truchet-glow { stroke: var(--_accent); stroke-width: 6; stroke-opacity: 0.35; filter: blur(3px); }
+.masthead-truchet-lit { stroke: var(--_accent); stroke-width: 1.8; }
+
 /* Wind farm: low hills, towers, and turning rotors. */
 .masthead-windfarm { fill: none; }
 .masthead-windfarm-hills { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_border)); stroke-width: 1.2; }

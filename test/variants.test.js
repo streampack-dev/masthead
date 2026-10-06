@@ -34,11 +34,13 @@ import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/so
 import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
+import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
 import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
 import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
 const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, triangles, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -63,6 +65,7 @@ describe('every variant', () => {
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
   for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'triangles', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1311,6 +1314,66 @@ describe('the triangles', () => {
     assert.ok(Number(ring.attrs.opacity) > 0 && ring.attrs.d.length > 0);
     for (let n = 13; n <= 300; n++) art.step(n, n * 40);
     assert.equal(ring.attrs.opacity, '0');
+describe('truchet', () => {
+  const angle = (tile) => Number(/rotate\(([-\d.]+)\)/.exec(tile.attrs.transform)[1]);
+
+  it('joins each edge to one other, both ways, in either orientation', () => {
+    for (const joins of JOINS) {
+      joins.forEach((to, from) => { assert.notEqual(to, from); assert.equal(joins[to], from); });
+    }
+  });
+
+  it('keeps its tiles about square on screen, however wide the masthead', () => {
+    const h = 320 / TRUCHET_ROWS;
+    for (const stretch of [1, 1.6, 3]) {
+      const w = 1200 / columns(1200, 320, stretch) * stretch;
+      assert.ok(Math.abs(w / h - 1) < 0.1, `${stretch}: ${w} x ${h}`);
+    }
+    const { layer } = run(truchet, 0, { stretch: 2 });
+    assert.equal(find(layer, 'masthead-truchet-tile').length, columns(1200, 320, 2) * TRUCHET_ROWS);
+  });
+
+  it('follows a path tile to tile, entering each by the edge the last left by', () => {
+    const cols = 8, turns = Array.from({ length: cols * TRUCHET_ROWS }, (_, i) => (i * 7) % 4);
+    const path = follow(turns, cols, TRUCHET_ROWS, 3, 5, 2, 40);
+    assert.ok(path.length > 1);
+    for (let k = 1; k < path.length; k++) {
+      const a = path[k - 1], b = path[k];
+      assert.equal(Math.abs(a.c - b.c) + Math.abs(a.r - b.r), 1);
+      assert.equal(b.from, (a.to + 2) % 4);
+    }
+  });
+
+  it('is fainter behind the name than at the foot', () => {
+    assert.ok(truchetStrength(2, TRUCHET_ROWS) < 0.5);
+    assert.ok(truchetStrength(TRUCHET_ROWS - 1, TRUCHET_ROWS) > truchetStrength(0, TRUCHET_ROWS));
+  });
+
+  it('turns one tile at a time, a quarter, easing round to rest', () => {
+    const { layer, art } = run(truchet, 0);
+    const tiles = find(layer, 'masthead-truchet-tile');
+    const before = tiles.map(angle);
+    let most = 0;
+    for (let n = 1; n <= 600; n++) {
+      art.step(n, n * 40);
+      most = Math.max(most, find(layer, 'masthead-truchet-turning').length);
+    }
+    assert.equal(most, 1);
+    const turned = tiles.filter((t, i) => angle(t) % 90 !== 0 || angle(t) !== before[i]);
+    assert.ok(turned.length >= 10, `${turned.length} turned`);
+    assert.ok(tiles.every((t) => angle(t) % 90 === 0 || t.attrs.class.includes('turning')));
+  });
+
+  it('turns the tile poked, then its neighbours', () => {
+    const { layer, art } = run(truchet, 0);
+    const tiles = find(layer, 'masthead-truchet-tile');
+    const cols = tiles.length / TRUCHET_ROWS, tw = 1200 / cols, th = 320 / TRUCHET_ROWS;
+    const at = 3 * cols + 10, before = tiles.map(angle);
+    art.poke(10.5 * tw, 3.5 * th, 0, 0);
+    art.step(1, 40);
+    assert.notEqual(angle(tiles[at]), before[at]);
+    for (let n = 2; n <= 12 + TURN_STEPS + 2; n++) art.step(n, n * 40);
+    for (const i of [at - cols - 1, at - 1, at + 1, at + cols, at + cols + 1]) assert.equal(angle(tiles[i]) % 360, (before[i] + 90) % 360, `tile ${i}`);
   });
 });
 
