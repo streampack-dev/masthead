@@ -31,6 +31,7 @@ export var variants = {
   stix: function () { return import('./variants/stix.js'); },
   terrainflight: function () { return import('./variants/terrainflight.js'); },
   train: function () { return import('./variants/train.js'); },
+  triangles: function () { return import('./variants/triangles.js'); },
   water: function () { return import('./variants/water.js'); },
   windfarm: function () { return import('./variants/windfarm.js'); }
 };

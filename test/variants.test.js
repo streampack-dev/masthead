@@ -33,11 +33,12 @@ import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
 import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
+import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
 import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
 import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -61,7 +62,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1249,6 +1250,67 @@ describe('the water', () => {
     assert.ok(first.startsWith('M0.0 ') && /L1200\.0 /.test(first));
     art.step(1, 40);
     assert.notEqual(lines[9].attrs.d, first);
+  });
+});
+
+describe('the triangles', () => {
+  const seeded = (seed) => () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 0x100000000; };
+
+  it('meshes the whole frame, each cell two triangles, each edge once', () => {
+    const { points, tris, edges } = mesh(seeded(5), 1200, 320);
+    assert.equal(points.length, (TRI_COLS + 1) * (TRI_ROWS + 1));
+    assert.equal(tris.length, TRI_COLS * TRI_ROWS * 2);
+    const keys = edges.map(([a, b]) => Math.min(a, b) + '-' + Math.max(a, b));
+    assert.equal(new Set(keys).size, keys.length);
+    for (const t of tris) for (let i = 0; i < 3; i++) {
+      const a = t[i], b = t[(i + 1) % 3];
+      assert.ok(keys.includes(Math.min(a, b) + '-' + Math.max(a, b)));
+    }
+    const xs = points.map((p) => p.x0), ys = points.map((p) => p.y0);
+    assert.deepEqual([Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)], [0, 1200, 0, 320]);
+  });
+
+  it('breathes without ever folding a triangle, even rippled', () => {
+    for (const seed of [1, 7, 42, 99, 1234]) {
+      const { points, tris } = mesh(seeded(seed), 1200, 320);
+      const rest = tris.map((t) => Math.sign(winding(points.map((p) => ({ x: p.x0, y: p.y0 })), t)));
+      for (let n = 0; n <= 4000; n += 3) {
+        const at = Math.floor(n / 150) * 150;
+        place(points, n, { x: (at * 37) % 1200, y: (at * 13) % 320, n: at });
+        tris.forEach((t, i) => assert.equal(Math.sign(winding(points, t)), rest[i], `seed ${seed}, step ${n}`));
+      }
+    }
+  });
+
+  it('moves from the first step', () => {
+    const { layer, art } = run(triangles, 0);
+    const edges = () => find(layer, 'masthead-triangles-edge').map((e) => e.attrs.d).join('');
+    const first = edges();
+    art.step(1, 40);
+    assert.notEqual(edges(), first);
+  });
+
+  it('lights a triangle now and then, faintly', () => {
+    const { layer, art } = run(triangles, 0);
+    const fills = find(layer, 'masthead-triangles-fill');
+    let most = 0;
+    for (let n = 1; n <= 1000; n++) {
+      art.step(n, n * 40);
+      for (const f of fills) most = Math.max(most, Number(f.attrs.opacity));
+    }
+    assert.ok(most > 0.05 && most <= 0.3, String(most));
+  });
+
+  it('sends a ring of lit triangles out from a click, and settles', () => {
+    const { layer, art } = run(triangles, 10);
+    const ring = find(layer, 'masthead-triangles-ring')[0];
+    assert.equal(ring.attrs.opacity, '0');
+    art.poke(600, 160, 10, 400);
+    art.step(11, 440);
+    art.step(12, 480);
+    assert.ok(Number(ring.attrs.opacity) > 0 && ring.attrs.d.length > 0);
+    for (let n = 13; n <= 300; n++) art.step(n, n * 40);
+    assert.equal(ring.attrs.opacity, '0');
   });
 });
 

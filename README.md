@@ -43,6 +43,7 @@ only puts the art on its page and starts the runner.
 | `stix` | The C64 claim-the-field game playing itself: a marker cuts into the field, claiming the side without the wandering Stix, hatched. |
 | `terrainflight` | Ridgelines rolling toward you from the horizon. |
 | `train` | An ASCII-art train running along a track at the foot of the masthead, trailing smoke. |
+| `triangles` | Draft. A low-poly mesh, breathing: its points drift on small orbits, and now and then a triangle or a few fill faintly and fade. |
 | `water` | A still surface seen from just above; drops land and their rings spread and cross. |
 | `windfarm` | Turbines along low hills, each turning at its own pace in a wind that rises and falls. |
 
@@ -53,7 +54,7 @@ the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast t
 the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
 are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
 
-Animations listed in `DRAFTS` (`blockpeek`, `football` and `ships`, for now) are never picked at
+Animations listed in `DRAFTS` (`blockpeek`, `football`, `ships` and `triangles`, for now) are never picked at
 random: they're still being worked on, and run only by name and on the demo page.
 
 Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
@@ -114,7 +115,7 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    bursts, a tunnel appears in the chase, a surge runs through the circuit, city defense fires
    where you click, the flyby fires a burn, the fractal sprouts a root, ghostrider opens the throttle, a gust runs through
    the grass, life plants a pattern, a dolphin leaps from the sea under the ships, signal noise tears, the Solari board riffles on, the terrain
-   banks, the train whistles, water skips a stone); the frame has `data-masthead-poke` while it
+   banks, the train whistles, a ripple runs through the triangles, water skips a stone); the frame has `data-masthead-poke` while it
    does, for a cursor, say.
    Clicks on links, buttons and form controls in the masthead pass through untouched; a
    masthead that is itself a link home passes `poke: false`. A host serving the variant files

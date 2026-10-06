@@ -190,6 +190,9 @@
 .masthead-ships-puff { fill: color-mix(in srgb, var(--_accent) 30%, var(--_border)); }
 .masthead-ships-dolphin { fill: color-mix(in srgb, var(--_accent) 25%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; stroke-linejoin: round; }
 .masthead-ships-splash { fill: none; stroke: var(--_accent); stroke-width: 1; }
+.masthead-triangles { fill: none; }
+.masthead-triangles-edge { stroke: color-mix(in srgb, var(--_accent) 60%, var(--_border)); stroke-width: 0.8; stroke-linecap: round; }
+.masthead-triangles-fill, .masthead-triangles-ring { fill: var(--_accent); stroke: none; }
 .masthead-water-line { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; }
 
 /* Wind farm: low hills, towers, and turning rotors. */
