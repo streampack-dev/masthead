@@ -29,6 +29,7 @@ import flyby, { FOCAL, PLANETS, layout as flybyLayout, project as flybyProject, 
 import football, { FLIGHT, GROUND as FIELD, arc, joints } from '../src/variants/football.js';
 import fractal from '../src/variants/fractal.js';
 import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
+import nightcity from '../src/variants/nightcity.js';
 import life, { PLANTS } from '../src/variants/life.js';
 import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
@@ -45,6 +46,7 @@ const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, 
 const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, water };
 const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, paddles, pongwars, rocks, ships, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flyby, football, fractal, ghostrider, grass, lander, nightcity, paddles, pongwars, rocks, ships, stix, windfarm, life, signalnoise, solari, terrainflight, train, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -72,6 +74,7 @@ describe('every variant', () => {
   for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'water']) {
   for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
   for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'paddles', 'pongwars', 'rocks', 'ships', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'lander', 'nightcity', 'paddles', 'pongwars', 'rocks', 'ships', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1191,6 +1194,47 @@ describe('the duel', () => {
     assert.ok(lo > 60 && hi < 1140, `${lo} ${hi}`);
     assert.ok(hi - lo > 150, `travels ${lo} to ${hi}`);
     assert.ok(sparks > 50, String(sparks));
+  });
+});
+
+describe('nightcity', () => {
+  const points = (d) => [...(d || '').matchAll(/[ML](-?[\d.]+) (-?[\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+
+  it('draws into a fixed set of elements, however long it flies', () => {
+    const { layer, art } = run(nightcity, 0);
+    const count = serialize(layer).split('[').length;
+    for (let i = 1; i <= 3000; i++) art.step(i, i * 40);
+    assert.equal(serialize(layer).split('[').length, count);
+  });
+
+  it('draws the brightest windows, the nearest, only off to the sides of the name', () => {
+    const { layer, art } = run(nightcity, 0, { seed: 3 });
+    for (let i = 1; i <= 1500; i++) {
+      art.step(i, i * 40);
+      const g = find(layer, 'masthead-nightcity-band-0')[0];
+      const win = find(g, 'masthead-nightcity-windows')[0];
+      for (const [x] of points(win.attrs.d)) assert.ok(Math.abs(x - 600) > 200, `${x} at ${i}`);
+    }
+  });
+
+  it('banks toward the side clicked and sends a car past on that side, out of the frame', () => {
+    const { layer, art } = run(nightcity, 0);
+    const view = find(layer, 'masthead-nightcity-view')[0];
+    const car = find(layer, 'masthead-nightcity-car')[0];
+    art.poke(1000, 120, 0, 0);
+    let last = 600;
+    for (let i = 1; i <= 25; i++) {
+      art.step(i, i * 40);
+      const [x] = points(car.attrs.d)[0];
+      assert.ok(x > last, `${x} after ${last}`);
+      last = x;
+    }
+    assert.ok(Number(/rotate\((-?[\d.]+)/.exec(view.attrs.transform)[1]) < -1);
+    for (let i = 26; i <= 200; i++) art.step(i, i * 40);
+    assert.equal(view.attrs.transform, '');
+    art.poke(100, 120, 200, 200 * 40);
+    art.step(201, 201 * 40);
+    assert.ok(points(car.attrs.d)[0][0] < 600);
   });
 });
 

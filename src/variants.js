@@ -21,6 +21,7 @@ export var variants = {
   graveyard: function () { return import('./variants/graveyard.js'); },
   lander: function () { return import('./variants/lander.js'); },
   life: function () { return import('./variants/life.js'); },
+  nightcity: function () { return import('./variants/nightcity.js'); },
   paddles: function () { return import('./variants/paddles.js'); },
   pongwars: function () { return import('./variants/pongwars.js'); },
   pumpkins: function () { return import('./variants/pumpkins.js'); },

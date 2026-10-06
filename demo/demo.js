@@ -22,6 +22,7 @@ var BLURBS = {
   graveyard: 'October: a full moon with clouds passing, headstones and bare trees, fog, and a bat crossing the moon.',
   lander: 'Lunar Lander, flown by its autopilot: a slow descent, short burns, a gentle landing on the pad.',
   life: "Conway's Game of Life, reseeded when it settles. Click to plant a pattern.",
+  nightcity: 'A slow flight between towers at night: lit windows sliding past, a warning light blinking on a roof, a flying car far off. Click to bank toward that side and send a car streaking past.',
   paddles: 'Pong, playing itself at an easy pace, scores ticking up to eleven.',
   pongwars: 'Pong Wars: two sides of a field of squares, a ball each, the border between them wandering forever.',
   pumpkins: "October: a row of jack-o'-lanterns, their candles flickering.",
