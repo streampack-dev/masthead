@@ -185,6 +185,7 @@ does, so a site can still change them. Add tests in
 
 ```sh
 just test      # node:test, no dependencies
+just coverage  # the same, with Node's coverage table (target 70% of lines, not enforced)
 just demo      # the demo page at http://localhost:8642
 ```
 
