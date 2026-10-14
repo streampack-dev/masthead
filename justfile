@@ -5,6 +5,11 @@ default:
 test:
     npm test
 
+# Run the tests and report coverage (#17): Node's own, no dependencies. The target is 70% of
+# lines, reported, not enforced. Only files the tests load are counted (not src/index.js).
+coverage:
+    npm run coverage
+
 # Serve the demo page at http://localhost:8642.
 demo:
     npm run demo
