@@ -37,6 +37,7 @@ only puts the art on its page and starts the runner.
 | `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
 | `life` | Conway's Game of Life, reseeded when it settles. |
 | `lighthouse` | A lighthouse at night on a rocky headland at one end, the sea in lines along the foot, the lamp's beam slowly turning; stars come out and the fog lights as the beam passes. |
+| `menorah` | Hanukkah: a menorah at one end, the shamash lit and then the night's candles, newest first, their flames flickering. |
 | `nightcity` | A slow flight down an avenue between wireframe towers at night: rows of lit windows sliding past, warning lights blinking on the roofs, a skyline and a flying car far off. |
 | `paddles` | Two paddles and a ball, playing itself at an easy pace, scores ticking up to eleven. |
 | `pongwars` | Two sides of a field of squares and a ball each, every square a ball touches coming over to its side; the border wanders forever. |
@@ -56,11 +57,18 @@ only puts the art on its page and starts the runner.
 | `windfarm` | Turbines along low hills, each turning at its own pace in a wind that rises and falls. |
 
 Some are seasonal: they're picked at random only in their windows of the year (in the visitor's
-own time), as `SEASONS` in `src/runner.js` lists them; the October ones above, for now. A window
-is a month (`10`), a day every year (`'07-04'`), days every year (`'12-24..12-26'`, which may wrap
-the year end), one dated day or range (`'2026-12-04..2026-12-12'`, for a feast that moves: list
-the coming years), or a named occasion from `OCCASIONS` (`'halloween'`), so an occasion's dates
-are written once. Variants can ask about an occasion too, with `m.during('halloween')`.
+own time), as `SEASONS` in `src/runner.js` lists them: the October ones above, and the menorah at
+Hanukkah. A window is a month (`10`), a day every year (`'07-04'`), days every year
+(`'12-24..12-26'`, which may wrap the year end), one dated day or range
+(`'2026-12-04..2026-12-12'`, for a feast that moves: list the coming years), or a named occasion
+from `OCCASIONS` (`'halloween'`), so an occasion's dates are written once. Variants can ask about an
+occasion too, with `m.during('halloween')`, or about another day, with
+`m.during('hanukkah', date)`.
+
+Hanukkah moves, so `OCCASIONS.hanukkah` lists its dates, 2026 to 2030 for now; add the years after
+that there. Each window runs from the day of the first candle to the day after the eighth night,
+since a Hebrew day starts at sundown: the menorah has one candle on the first day, eight on the
+eighth, and keeps eight on that last day.
 
 Animations listed in `DRAFTS` (`blockpeek`, `football` and `ships`, for now) are never picked at
 random: they're still being worked on, and run only by name and on the demo page.
@@ -138,7 +146,7 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    where you click, paint splatters on the drips and runs, the flow field takes an eddy, the flyby fires a burn, the fractal sprouts a root,
    ghostrider opens the throttle, a gust runs through the grass, the grid cuts the rectangle clicked,
    a harmonograph's pendulums take a push, the lighthouse swings its beam round to that side, life
-   plants a pattern, the night city banks and a flying car streaks past, a dolphin leaps from the
+   plants a pattern, a breath of air bends the menorah's flames, the night city banks and a flying car streaks past, a dolphin leaps from the
    sea under the ships, signal noise tears, the skyline lights windows or calls lightning, the
    Solari board riffles on, the terrain banks, the train whistles, a ripple runs through the
    triangles, the truchet tiles turn round the click, water skips a stone); the frame has

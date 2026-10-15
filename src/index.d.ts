@@ -14,8 +14,8 @@ export type MastheadContext = {
   stretch(): number;
   /** The day the run was picked for: today, or ?ambientDate=YYYY-MM-DD. */
   date(): Date;
-  /** Whether an occasion (OCCASIONS) or window is open on the day the run is for. */
-  during(occasion: SeasonWindow): boolean;
+  /** Whether an occasion (OCCASIONS) or window is open on the day the run is for, or on [on]. */
+  during(occasion: SeasonWindow, on?: Date): boolean;
   /** The front page's other posts' deks, as the host gives them. Maybe none. */
   deks(): string[];
   /** Makes an SVG element in parent (the layer by default). */

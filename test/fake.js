@@ -25,7 +25,7 @@ export function context(layer, opts) {
     seed: () => (opts.seed === undefined ? 7 : opts.seed),
     stretch: () => opts.stretch || 1,
     date: () => opts.date || new Date(2026, 4, 1),
-    during: (occasion) => during(occasion, opts.date || new Date(2026, 4, 1)),
+    during: (occasion, on) => during(occasion, on || opts.date || new Date(2026, 4, 1)),
     deks: () => opts.deks || [],
     el(tag, attrs, parent) {
       const e = element(tag);

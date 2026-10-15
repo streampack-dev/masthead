@@ -28,6 +28,10 @@ export var HEIGHT = 320;
    or another occasion's name. All in the visitor's own time. */
 export var OCCASIONS = {
   halloween: [10],
+  // The eight nights, and the day after the eighth: a Hebrew day starts at sundown, so each window
+  // runs from the day of the first candle to the day after the eighth. Dated; add years as they come.
+  hanukkah: ['2026-12-04..2026-12-12', '2027-12-24..2028-01-01', '2028-12-12..2028-12-20',
+    '2029-12-01..2029-12-09', '2030-12-19..2030-12-27'],
   // College and professional seasons, from late August to the championship in February. Its
   // bowls and big games are single dated days to add here, weighing heavily on the day.
   football: ['08-25..02-15']
@@ -43,6 +47,7 @@ export var SEASONS = {
   eyes: ['halloween'],
   ghosts: ['halloween'],
   graveyard: ['halloween'],
+  menorah: ['hanukkah'],
   pumpkins: ['halloween'],
   spider: ['halloween'],
   football: ['football']
@@ -329,7 +334,7 @@ export function startMasthead(svg, options) {
       seed: function () { return seed; },
       stretch: function () { return stretch; },
       date: function () { return new Date(date.getTime()); },
-      during: function (occasion) { return during(occasion, date); },
+      during: function (occasion, on) { return during(occasion, on || date); },
       deks: function () { return options.deks ? options.deks() : []; },
       el: function (tag, attrs, parent) {
         var e = document.createElementNS(NS, tag);
