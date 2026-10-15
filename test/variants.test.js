@@ -41,12 +41,13 @@ import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as
 import grid, { MIN_H, MIN_W } from '../src/variants/grid.js';
 import harmonograph, { PER_STEP, POINTS, pen, pendulums } from '../src/variants/harmonograph.js';
 import lighthouse, { REACH, REVOLUTION, SEA, SPREAD, beam, headland, lit } from '../src/variants/lighthouse.js';
+import menorah, { FIRST as MENORAH_FIRST, GAP as MENORAH_GAP, SLOTS as MENORAH_SLOTS, candles, order as menorahOrder } from '../src/variants/menorah.js';
 import nightcity from '../src/variants/nightcity.js';
 import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } from '../src/variants/skyline.js';
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, football, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, nightcity, paddles, pongwars, rocks, ships, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
+const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, football, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, nightcity, paddles, pongwars, rocks, ships, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -70,7 +71,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'nightcity', 'paddles', 'pongwars', 'rocks', 'ships', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
+  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'nightcity', 'paddles', 'pongwars', 'rocks', 'ships', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -475,6 +476,23 @@ describe('the seasons', () => {
     assert.equal(october.length, names.filter((n) => !DRAFTS.includes(n) && (!SEASONS[n] || during(SEASONS[n][0], day(2026, 10, 31)))).length);
     // A month is long enough that October's animations simply join the pool.
     assert.equal(weights(['bats', 'boids'], day(2026, 10, 15)).bats, 1);
+  });
+
+  it('keeps the menorah to Hanukkah, the window running a day past the eighth night', () => {
+    const windows = [[[2026, 12, 4], [2026, 12, 12]], [[2027, 12, 24], [2028, 1, 1]], [[2028, 12, 12], [2028, 12, 20]],
+      [[2029, 12, 1], [2029, 12, 9]], [[2030, 12, 19], [2030, 12, 27]]];
+    for (const [[y, m, d], [y2, m2, d2]] of windows) {
+      assert.ok(!during('hanukkah', day(y, m, d - 1)), `${y} before`);
+      assert.ok(during('hanukkah', day(y, m, d)) && during('hanukkah', day(y2, m2, d2)), `${y}`);
+      assert.ok(!during('hanukkah', day(y2, m2, d2 + 1)), `${y} after`);
+      assert.ok(inSeason(names, day(y, m, d)).includes('menorah'), `${y}`);
+    }
+    // 2027's crosses the year end: in on New Year's Eve and New Year's Day.
+    assert.ok(during('hanukkah', day(2027, 12, 31)) && during('hanukkah', day(2028, 1, 1)));
+    assert.ok(!inSeason(names, day(2026, 12, 25)).includes('menorah'));
+    assert.ok(!inSeason(names, day(2026, 10, 31)).includes('menorah'));
+    // Nine days weigh more than a month's animations, so it's seen while it lasts.
+    assert.equal(weights(['menorah'], day(2026, 12, 6)).menorah, REFERENCE_DAYS / 9);
   });
 
   it('never picks a draft at random, in or out of season', () => {
@@ -903,6 +921,59 @@ describe('october', () => {
     const before = faces.map((f) => f.attrs['fill-opacity']).join();
     art.step(1, 50);
     assert.notEqual(faces.map((f) => f.attrs['fill-opacity']).join(), before);
+  });
+
+  it('lights one candle a night, and keeps eight on the day after the eighth night', () => {
+    const on = (date) => (occasion, when) => during(occasion, when || date);
+    const day = (y, m, d) => new Date(y, m - 1, d, 12);
+    for (let i = 0; i < 9; i++) assert.equal(candles(day(2026, 12, 4 + i), on(day(2026, 12, 4 + i))), Math.min(8, i + 1));
+    // Across the year end, and out of season (by name, or on the demo page): all eight.
+    assert.equal(candles(day(2028, 1, 1), on(day(2028, 1, 1))), 8);
+    assert.equal(candles(day(2027, 12, 31), on(day(2027, 12, 31))), 8);
+    assert.equal(candles(day(2027, 12, 26), on(day(2027, 12, 26))), 3);
+    assert.equal(candles(day(2026, 5, 1), on(day(2026, 5, 1))), 8);
+    // Set in from the right, lit from the left: the newest first.
+    assert.deepEqual(menorahOrder(1), [7]);
+    assert.deepEqual(menorahOrder(3), [5, 6, 7]);
+    assert.deepEqual(menorahOrder(8), [0, 1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it('lights the shamash, then the night\'s candles one by one, and stays clear of the words', () => {
+    const lit = (layer) => find(layer, 'masthead-menorah-light').filter((l) => Number(l.attrs.opacity) > 0).length;
+    // The third night: the shamash and three candles, so four flames.
+    const { layer, art } = run(menorah, 0, { date: new Date(2026, 11, 6, 12) });
+    assert.equal(find(layer, 'masthead-menorah-candle').length, 4);
+    assert.equal(lit(layer), 0);
+    art.step(MENORAH_FIRST, 0);
+    assert.equal(lit(layer), 1);
+    art.step(MENORAH_FIRST + MENORAH_GAP, 0);
+    assert.equal(lit(layer), 2);
+    art.step(MENORAH_FIRST + 3 * MENORAH_GAP, 0);
+    assert.equal(lit(layer), 4);
+    // The newest candle, the leftmost of the three, lit first.
+    const flames = find(layer, 'masthead-menorah-flame').map((f) => Number(/translate\((-?[\d.]+)/.exec(f.attrs.transform || 'translate(999')[1]));
+    assert.deepEqual(flames.slice(1), [MENORAH_SLOTS[5], MENORAH_SLOTS[6], MENORAH_SLOTS[7]]);
+    // At one end, its branches outside the words (within 260 of the middle).
+    for (const seed of [1, 2, 3, 42, 99]) {
+      const g = find(run(menorah, 1, { seed }).layer, 'masthead-menorah-menorah')[0];
+      const cx = Number(/translate\(([\d.]+)/.exec(g.attrs.transform)[1]);
+      assert.ok(Math.abs(cx - 600) - 130 > 260, String(cx));
+    }
+    // Out of season, all eight.
+    assert.equal(find(run(menorah, 0).layer, 'masthead-menorah-candle').length, 9);
+  });
+
+  it('bends the flames away from a breath of air, and lets them stand again', () => {
+    const { layer, art } = run(menorah, 300, { seed: 1 });
+    const skew = () => find(layer, 'masthead-menorah-flame').map((f) => Number(/skewX\((-?[\d.]+)/.exec(f.attrs.transform)[1]));
+    art.poke(0, 100, 300, 0);
+    art.step(301, 0);
+    const bent = skew();
+    assert.ok(bent.every((s) => s !== 0));
+    // From the left, every flame leans right: its top moves away, a negative skew.
+    assert.ok(bent.every((s) => s < 0), String(bent));
+    for (let i = 302; i < 400; i++) art.step(i, 0);
+    assert.ok(skew().every((s) => Math.abs(s) < 0.5));
   });
 
   it('lets a spider down from its web and up again', () => {

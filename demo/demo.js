@@ -26,6 +26,7 @@ var BLURBS = {
   lander: 'Lunar Lander, flown by its autopilot: a slow descent, short burns, a gentle landing on the pad.',
   lighthouse: 'A lighthouse at night on a rocky headland, its beam turning: swinging out across the sea and sky, flaring as it faces you. Click to swing the beam round to that side.',
   life: "Conway's Game of Life, reseeded when it settles. Click to plant a pattern.",
+  menorah: 'Hanukkah: a menorah, the shamash lit and then the night\'s candles, newest first. Click for a breath of air across the flames.',
   nightcity: 'A slow flight between towers at night: lit windows sliding past, a warning light blinking on a roof, a flying car far off. Click to bank toward that side and send a car streaking past.',
   paddles: 'Pong, playing itself at an easy pace, scores ticking up to eleven.',
   pongwars: 'Pong Wars: two sides of a field of squares, a ball each, the border between them wandering forever.',
