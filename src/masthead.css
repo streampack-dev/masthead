@@ -236,6 +236,9 @@
 .masthead-flyby-sun { fill: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; }
 .masthead-flyby-disc { fill: color-mix(in srgb, var(--_accent) 18%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); stroke-width: 1.1; }
 .masthead-flyby-ring { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1; }
+/* Gravitywell: the sheet's grid, thin so the words read over it. */
+.masthead-gravitywell-grid { fill: none; stroke: color-mix(in srgb, var(--_accent) 60%, var(--_bg)); stroke-width: 0.9; stroke-linejoin: round; }
+.masthead-gravitywell-along { opacity: 0.75; }
 /* The harmonograph's line is thin and clear of the name, so it's lifted a little out of the art's
    strength, as the fractal's is. Its strokes don't widen when the figure is counter-scaled. */
 .masthead-art[data-masthead="harmonograph"] { opacity: max(var(--masthead-strength, 0.55), 0.8); }

@@ -10,6 +10,7 @@ import duel, { POSES, STUB, breaks, crossing, facepalms, figure, mixPose } from 
 import deadline, { ANVIL, POSES as DESK_POSES, SCENES, anvilAt, writer } from '../src/variants/deadline.js';
 import ghosts, { round, sheet } from '../src/variants/ghosts.js';
 import graveyard, { tree } from '../src/variants/graveyard.js';
+import gravitywell, { CAP, KINDS as WELLS, NEAR as WELL_NEAR, camX, dip, height as wellHeight, project as wellProject, samples as wellSamples, wellsAlong } from '../src/variants/gravitywell.js';
 import pumpkins, { FACES } from '../src/variants/pumpkins.js';
 import spider, { spider as spiderShape, web } from '../src/variants/spider.js';
 import { find, run, serialize } from './fake.js';
@@ -44,7 +45,7 @@ import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } 
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 
-const all = { bats, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
+const all = { bats, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, gravitywell, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -68,7 +69,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
+  for (const name of ['bats', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'gravitywell', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1916,6 +1917,81 @@ describe('the lighthouse', () => {
       for (let k = 1; k <= 60; k++) art.step(n + k, (n + k) * 40);
       assert.notEqual(outward(layer), r, 'turning again');
     }
+  });
+});
+
+describe('the gravity well', () => {
+  const lcg = (r) => () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000);
+
+  it('drops the sheet deepest at a well, less and less further off, and flat beyond its reach', () => {
+    for (const kind of Object.keys(WELLS)) {
+      const reach = WELLS[kind].reach;
+      assert.equal(dip(kind, reach), 0, kind);
+      assert.equal(dip(kind, reach + 5), 0, kind);
+      let last = Infinity;
+      for (let d = 0; d < reach; d += 0.1) {
+        const here = dip(kind, d);
+        assert.ok(here > 0 && here < last, `${kind} at ${d}`);
+        last = here;
+      }
+    }
+    // A black hole is far deeper than a star, down to the cap; a dropped mass grows into its dip.
+    const wells = [{ kind: 'hole', x: 0, z: 0 }, { kind: 'star', x: 30, z: 0 }];
+    assert.equal(wellHeight(wells, 0, 0), -CAP);
+    assert.ok(wellHeight(wells, 30, 0) > -2 && wellHeight(wells, 30, 0) < 0);
+    assert.equal(wellHeight(wells, 15, 40), 0);
+    assert.equal(dip('dropped', 1, 0), 0);
+    assert.equal(dip('dropped', 1, 0.5), dip('dropped', 1) / 2);
+  });
+
+  it('draws a well lower on the art than the flat sheet about it, and nothing nearer than near', () => {
+    const flat = wellProject(0, 0, 10, 0, 0, 1200, 50, 1), low = wellProject(0, -4, 10, 0, 0, 1200, 50, 1);
+    assert.ok(low.y > flat.y);
+    assert.equal(flat.x, 600);
+    assert.equal(wellProject(0, 0, WELL_NEAR - 0.1, 0, 0, 1200, 50, 1), null);
+  });
+
+  it('spaces its wells along the flight, on grid crossings, mostly to the sides', () => {
+    const wells = wellsAlong(lcg(7), 0, 2000);
+    assert.ok(wells.length > 80);
+    assert.ok(wells.some((w) => w.kind === 'hole') && wells.some((w) => w.kind === 'star'));
+    for (let i = 1; i < wells.length; i++) assert.ok(wells[i].z - wells[i - 1].z >= 10, String(wells[i].z));
+    const aside = wells.filter((w) => Math.abs(w.x - camX(w.z)) > 4).length;
+    assert.ok(aside > wells.length * 0.6, `${aside} of ${wells.length}`);
+    // Samples run end to end, in order, finer near a centre.
+    const xs = wellSamples(-10, 10, 2, [3]);
+    assert.deepEqual([xs[0], xs.at(-1)], [-10, 10]);
+    assert.deepEqual(xs, [...xs].sort((a, b) => a - b));
+    assert.ok(xs.filter((x) => x >= 2 && x <= 4).length >= 8);
+  });
+
+  it('flies on, wells coming in at the far edge and passing under', () => {
+    const { layer, art } = run(gravitywell, 0, { seed: 3 });
+    const lines = () => find(layer, 'masthead-gravitywell-grid').flatMap((g) => (g.attrs.d !== undefined ? [g.attrs.d] : g.children.map((c) => c.attrs.d))).join('');
+    const before = lines();
+    assert.match(before, /^M/);
+    for (let i = 1; i <= 3000; i++) art.step(i, i * 40);
+    assert.notEqual(lines(), before);
+    // Somewhere on the way, the bottom drops out below the masthead's foot.
+    let deepest = 0;
+    for (let i = 3001; i <= 9000; i++) {
+      art.step(i, i * 40);
+      if (i % 50 === 0) deepest = Math.max(deepest, ...[...lines().matchAll(/ (-?[\d.]+)(?=[ML]|$)/g)].map((m) => Number(m[1])));
+    }
+    assert.ok(deepest > 320, String(deepest));
+  });
+
+  it('drops a mass where you click, which dimples the sheet as it settles', () => {
+    const { layer, art } = run(gravitywell, 0, { seed: 3 });
+    const across = () => find(layer, 'masthead-gravitywell-grid')[1].children.map((c) => c.attrs.d).join('');
+    art.step(1, 40);
+    const before = across();
+    art.poke(600, 200, 1, 40);
+    for (let i = 2; i <= 30; i++) art.step(i, i * 40);
+    // Against a run that wasn't poked, from the same seed.
+    const plain = run(gravitywell, 30, { seed: 3 }).layer;
+    assert.notEqual(across(), find(plain, 'masthead-gravitywell-grid')[1].children.map((c) => c.attrs.d).join(''));
+    assert.notEqual(across(), before);
   });
 });
 

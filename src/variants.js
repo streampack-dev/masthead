@@ -18,6 +18,7 @@ export var variants = {
   ghosts: function () { return import('./variants/ghosts.js'); },
   grass: function () { return import('./variants/grass.js'); },
   graveyard: function () { return import('./variants/graveyard.js'); },
+  gravitywell: function () { return import('./variants/gravitywell.js'); },
   grid: function () { return import('./variants/grid.js'); },
   harmonograph: function () { return import('./variants/harmonograph.js'); },
   lander: function () { return import('./variants/lander.js'); },

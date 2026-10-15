@@ -30,6 +30,7 @@ only puts the art on its page and starts the runner.
 | `ghosts` | October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below. |
 | `grass` | A field of grass along the foot of the masthead, the wind moving through it. |
 | `graveyard` | October: a moon with clouds passing, headstones and bare trees, fog, a bat crossing the moon. |
+| `gravitywell` | Space as a sheet, a wireframe grid in perspective flown over at the scale of a galaxy: where a black hole sits the sheet drops into a deep funnel, and the bottom drops out as you pass; stars are shallow dimples. |
 | `grid` | A monochrome composition in the manner of De Stijl: lines of a few weights cutting the masthead into rectangles, a few small blocks in the corners toned in the theme's own tints and a hatching. Now and then a line slides, a region is cut again, or a tone passes to a neighbouring block. |
 | `harmonograph` | Two harmonographs either side of the name, taking turns: one slow line drawn by damped pendulums, spiralling inward as they die down, then fading for a new set. |
 | `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
@@ -140,7 +141,7 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    animation, if it has a fragment of its own (boids scatter from a hawk, the bytecode rain
    bursts, a tunnel appears in the chase, a surge runs through the circuit, city defense fires
    where you click, paint splatters on the drips and runs, the flow field takes an eddy, the flyby fires a burn, the fractal sprouts a root,
-   ghostrider opens the throttle, a gust runs through the grass, the grid cuts the rectangle clicked,
+   ghostrider opens the throttle, a gust runs through the grass, a mass drops on the gravity well's sheet, the grid cuts the rectangle clicked,
    a harmonograph's pendulums take a push, the lighthouse swings its beam round to that side, life
    plants a pattern, a breath of air bends the menorah's flames, the night city banks and a flying car streaks past, signal noise tears,
    the skyline lights windows or calls lightning, the
