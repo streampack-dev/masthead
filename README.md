@@ -14,7 +14,6 @@ only puts the art on its page and starts the runner.
 | Name | What it is |
 |---|---|
 | `bats` | October: bats flapping across in loose, wavering flight, now and then a little flock. |
-| `blockpeek` | Draft. Someone on the far side breaking a block to peer through at you, in the blocky style of the block-building games; a faint patch of wall shows around it. |
 | `boids` | Sixteen fireflies flocking. |
 | `bytecode` | The code rain in JVM bytecode: real instructions in hex, now and then one decoded. |
 | `chase` | A fast bird and a canine forever after it along the foot of the masthead: skids, a smack into the frame's edge, an anvil, the train. It always pops back up. |
@@ -26,12 +25,12 @@ only puts the art on its page and starts the runner.
 | `eyes` | October: eyes in the dark, opening, blinking, glancing about, and closing again. |
 | `flowfield` | A slow current drifting across the masthead, like wind over water: faint strokes turning with it, a few motes riding it with short tails, livelier low. |
 | `flyby` | A flight in through the solar system, like Voyager 1 in reverse: orbits and planets (far from scale) sweeping past on the way to the sun, then round again. |
-| `football` | Draft. Football season: a player in pads running a play: a pass, caught or dropped (hands to the helmet), or a run with a hurdle over a diving defender. |
 | `fractal` | A branching growth tracing round the name, resting when grown, then starting again. |
 | `ghostrider` | A wireframe road ahead at a slow cruise, bending and rising gently, hills sliding aside on the bends. For Neil Peart. |
 | `ghosts` | October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below. |
 | `grass` | A field of grass along the foot of the masthead, the wind moving through it. |
 | `graveyard` | October: a moon with clouds passing, headstones and bare trees, fog, a bat crossing the moon. |
+| `gravitywell` | Space as a sheet, a wireframe grid in perspective flown over at the scale of a galaxy: where a black hole sits the sheet drops into a deep funnel, and the bottom drops out as you pass; stars are shallow dimples. |
 | `grid` | A monochrome composition in the manner of De Stijl: lines of a few weights cutting the masthead into rectangles, a few small blocks in the corners toned in the theme's own tints and a hatching. Now and then a line slides, a region is cut again, or a tone passes to a neighbouring block. |
 | `harmonograph` | Two harmonographs either side of the name, taking turns: one slow line drawn by damped pendulums, spiralling inward as they die down, then fading for a new set. |
 | `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
@@ -43,7 +42,6 @@ only puts the art on its page and starts the runner.
 | `pongwars` | Two sides of a field of squares and a ball each, every square a ball touches coming over to its side; the border wanders forever. |
 | `pumpkins` | October: a row of jack-o'-lanterns, their candles flickering. |
 | `rocks` | Rocks drifting and turning; a small ship turns, fires, and splits them. |
-| `ships` | Draft. Ships gliding across a low sea in outline: a liner trailing smoke, an aircraft carrier, a tall ship under sail, a sailboat bobbing. |
 | `signalnoise` | Faint scanlines and a rolling band, with brief bursts of interference. |
 | `skyline` | A city at night in outline, windows lighting and going dark one at a time; now and then a shower of faint slanting rain, and rarely lightning off to one side. |
 | `solari` | A split-flap board showing the front page's other deks, riffling to the next every so often. |
@@ -70,8 +68,8 @@ that there. Each window runs from the day of the first candle to the day after t
 since a Hebrew day starts at sundown: the menorah has one candle on the first day, eight on the
 eighth, and keeps eight on that last day.
 
-Animations listed in `DRAFTS` (`blockpeek`, `football` and `ships`, for now) are never picked at
-random: they're still being worked on, and run only by name and on the demo page.
+Animations listed in `DRAFTS` (none, for now) are never picked at random: they're still being
+worked on, and run only by name and on the demo page.
 
 Animations that run all year weigh 1 when one is picked at random. A seasonal one weighs more the
 shorter its window, so a short occasion is seen while it lasts: a month or longer weighs 1, a
@@ -140,14 +138,13 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
 
    The runner sets `data-masthead="<name>"` on the SVG and its parent (or `frame`), and
    `.masthead-paused` while paused, for the host's own CSS. Clicking the masthead pokes the
-   animation, if it has a fragment of its own (the block peeker mines where you click, and faster
-   for a click on the block, boids scatter from a hawk, the bytecode rain
+   animation, if it has a fragment of its own (boids scatter from a hawk, the bytecode rain
    bursts, a tunnel appears in the chase, a surge runs through the circuit, city defense fires
    where you click, paint splatters on the drips and runs, the flow field takes an eddy, the flyby fires a burn, the fractal sprouts a root,
-   ghostrider opens the throttle, a gust runs through the grass, the grid cuts the rectangle clicked,
+   ghostrider opens the throttle, a gust runs through the grass, a mass drops on the gravity well's sheet, the grid cuts the rectangle clicked,
    a harmonograph's pendulums take a push, the lighthouse swings its beam round to that side, life
-   plants a pattern, a breath of air bends the menorah's flames, the night city banks and a flying car streaks past, a dolphin leaps from the
-   sea under the ships, signal noise tears, the skyline lights windows or calls lightning, the
+   plants a pattern, a breath of air bends the menorah's flames, the night city banks and a flying car streaks past, signal noise tears,
+   the skyline lights windows or calls lightning, the
    Solari board riffles on, the terrain banks, the train whistles, a ripple runs through the
    triangles, the truchet tiles turn round the click, water skips a stone); the frame has
    `data-masthead-poke` while it

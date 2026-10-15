@@ -224,13 +224,6 @@
 .masthead-train-smoke { fill: color-mix(in srgb, var(--_accent) 40%, var(--_border)); }
 
 /* Water: lines across a surface, nearer ones stronger. */
-.masthead-blockpeek-patch { fill: none; }
-.masthead-blockpeek-wall { stroke: color-mix(in srgb, var(--_accent) 40%, var(--_border)); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.masthead-blockpeek-block { fill: color-mix(in srgb, var(--_accent) 8%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-.masthead-blockpeek-crack { stroke: var(--_accent); stroke-linecap: round; }
-.masthead-blockpeek-hole path { fill: color-mix(in srgb, var(--_accent) 22%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 75%, var(--_bg)); stroke-width: 1; fill-rule: evenodd; vector-effect: non-scaling-stroke; }
-.masthead-blockpeek-face { fill: color-mix(in srgb, var(--_accent) 30%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-.masthead-blockpeek-eye { fill: var(--_accent); }
 /* Flow field: faint strokes turning with the current, strongest low, and the motes riding it. */
 .masthead-flowfield { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .masthead-flowfield-grid { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_border)); stroke-width: 1; vector-effect: non-scaling-stroke; }
@@ -243,25 +236,14 @@
 .masthead-flyby-sun { fill: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; }
 .masthead-flyby-disc { fill: color-mix(in srgb, var(--_accent) 18%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); stroke-width: 1.1; }
 .masthead-flyby-ring { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1; }
-.masthead-football { fill: none; }
-.masthead-football-field { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; opacity: 0.7; }
-.masthead-football-body, .masthead-football-mask { stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.masthead-football-mask { stroke-width: 1; }
-.masthead-football-pads, .masthead-football-helmet { fill: color-mix(in srgb, var(--_accent) 20%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); stroke-width: 1.2; }
-.masthead-football-ball ellipse { fill: color-mix(in srgb, var(--_accent) 35%, var(--_bg)); stroke: var(--_accent); stroke-width: 1; }
-.masthead-football-ball path { stroke: var(--_accent); stroke-width: 0.7; }
+/* Gravitywell: the sheet's grid, thin so the words read over it. */
+.masthead-gravitywell-grid { fill: none; stroke: color-mix(in srgb, var(--_accent) 60%, var(--_bg)); stroke-width: 0.9; stroke-linejoin: round; }
+.masthead-gravitywell-along { opacity: 0.75; }
 /* The harmonograph's line is thin and clear of the name, so it's lifted a little out of the art's
    strength, as the fractal's is. Its strokes don't widen when the figure is counter-scaled. */
 .masthead-art[data-masthead="harmonograph"] { opacity: max(var(--masthead-strength, 0.55), 0.8); }
 .masthead-harmonograph-line { fill: none; stroke: var(--_accent); stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; opacity: 0.62; }
 .masthead-harmonograph-line path { vector-effect: non-scaling-stroke; }
-.masthead-ships { fill: none; }
-.masthead-ships-horizon { stroke: color-mix(in srgb, var(--_accent) 45%, var(--_border)); stroke-width: 1; opacity: 0.6; }
-.masthead-ships-wave { stroke: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke-width: 1; stroke-linecap: round; }
-.masthead-ships-ship path { fill: color-mix(in srgb, var(--_accent) 10%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 85%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.masthead-ships-puff { fill: color-mix(in srgb, var(--_accent) 30%, var(--_border)); }
-.masthead-ships-dolphin { fill: color-mix(in srgb, var(--_accent) 25%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; stroke-linejoin: round; }
-.masthead-ships-splash { fill: none; stroke: var(--_accent); stroke-width: 1; }
 .masthead-triangles { fill: none; }
 .masthead-triangles-edge { stroke: color-mix(in srgb, var(--_accent) 60%, var(--_border)); stroke-width: 0.8; stroke-linecap: round; }
 .masthead-triangles-fill, .masthead-triangles-ring { fill: var(--_accent); stroke: none; }

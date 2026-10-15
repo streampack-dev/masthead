@@ -10,6 +10,7 @@ import duel, { POSES, STUB, breaks, crossing, facepalms, figure, mixPose } from 
 import deadline, { ANVIL, POSES as DESK_POSES, SCENES, anvilAt, writer } from '../src/variants/deadline.js';
 import ghosts, { round, sheet } from '../src/variants/ghosts.js';
 import graveyard, { tree } from '../src/variants/graveyard.js';
+import gravitywell, { CAP, KINDS as WELLS, NEAR as WELL_NEAR, camX, dip, height as wellHeight, project as wellProject, samples as wellSamples, wellsAlong } from '../src/variants/gravitywell.js';
 import pumpkins, { FACES } from '../src/variants/pumpkins.js';
 import spider, { spider as spiderShape, web } from '../src/variants/spider.js';
 import { find, run, serialize } from './fake.js';
@@ -26,7 +27,6 @@ import pongwars, { COLS as WAR_COLS, ROWS as WAR_ROWS, bounce } from '../src/var
 import stix, { GH, GW, claim, field, route } from '../src/variants/stix.js';
 import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
 import flyby, { FOCAL, PLANETS, layout as flybyLayout, project as flybyProject, speed as flybySpeed } from '../src/variants/flyby.js';
-import football, { FLIGHT, GROUND as FIELD, arc, joints } from '../src/variants/football.js';
 import fractal from '../src/variants/fractal.js';
 import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
 import life, { PLANTS } from '../src/variants/life.js';
@@ -35,8 +35,6 @@ import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/so
 import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
-import blockpeek, { BLOCK, STAGES, candidates, cellAt, cracks } from '../src/variants/blockpeek.js';
-import ships, { HORIZON, KINDS, LEAP_HEIGHT, LEAP_STEPS, MAX_SHIPS, NEAR, leap } from '../src/variants/ships.js';
 import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as flowWeight } from '../src/variants/flowfield.js';
 import grid, { MIN_H, MIN_W } from '../src/variants/grid.js';
 import harmonograph, { PER_STEP, POINTS, pen, pendulums } from '../src/variants/harmonograph.js';
@@ -47,7 +45,7 @@ import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } 
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 
-const all = { bats, blockpeek, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, pumpkins, spider, citydefense, flowfield, flyby, football, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, nightcity, paddles, pongwars, rocks, ships, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
+const all = { bats, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, gravitywell, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -71,7 +69,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'blockpeek', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'football', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'nightcity', 'paddles', 'pongwars', 'rocks', 'ships', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
+  for (const name of ['bats', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'gravitywell', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -1741,72 +1739,6 @@ describe('the fractal', () => {
   });
 });
 
-describe('the ships', () => {
-  const at = (g) => /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(g.attrs.transform).slice(1).map(Number);
-
-  it('sail on the sea, a few at a time, every kind in a long enough run', () => {
-    const { layer, art } = run(ships, 0, { seed: 5 });
-    const seen = new Set();
-    for (let n = 1; n <= 20000; n++) {
-      art.step(n, n * 40);
-      if (n % 50) continue;
-      const fleet = find(layer, 'masthead-ships-ship');
-      assert.ok(fleet.length <= MAX_SHIPS, `${fleet.length} ships at ${n}`);
-      for (const g of fleet) {
-        const [, y] = at(g);
-        assert.ok(y > HORIZON && y < NEAR, `${g.attrs.class} at y ${y}`);
-        seen.add(g.attrs.class.split(' ').pop().replace('masthead-ships-', ''));
-      }
-    }
-    assert.deepEqual([...seen].sort(), Object.keys(KINDS).sort());
-  });
-
-  it('trail smoke from a liner, which drifts up and fades', () => {
-    const { layer, art } = run(ships, 0, { seed: 5 });
-    let puff = null, n = 0;
-    while (!puff && n < 20000) {
-      n++;
-      art.step(n, n * 40);
-      puff = find(layer, 'masthead-ships-puff').at(-1) || null;
-    }
-    assert.ok(puff, 'a liner smoked');
-    const y0 = Number(puff.attrs.cy), o0 = Number(puff.attrs.opacity);
-    for (let k = 1; k <= 30; k++) art.step(n + k, (n + k) * 40);
-    assert.ok(Number(puff.attrs.cy) < y0 && Number(puff.attrs.opacity) < o0);
-  });
-
-  it('leaps a dolphin from the water and back in', () => {
-    assert.deepEqual([leap(0).y, leap(1).y].map((y) => Math.abs(y)), [0, 0]);
-    assert.equal(leap(0.5).y, -LEAP_HEIGHT);
-    assert.ok(leap(0.1).angle < 0 && leap(0.9).angle > 0, 'nose up, then down');
-  });
-
-  it('sends a dolphin from the water below a poke, with a splash in and out', () => {
-    const { layer, art } = run(ships, 10);
-    art.poke(400, 60, 10, 400);
-    const dolphin = find(layer, 'masthead-ships-dolphin')[0];
-    const [x0, y0] = at(dolphin);
-    assert.ok(Math.abs(x0 - 400) < 80 && y0 > HORIZON, `${x0}, ${y0}`);
-    assert.equal(find(layer, 'masthead-ships-splash').length, 1);
-    for (let n = 11; n <= 10 + LEAP_STEPS / 2; n++) art.step(n, n * 40);
-    assert.ok(at(dolphin)[1] < y0 - LEAP_HEIGHT / 2, 'in the air');
-    for (let n = 11 + LEAP_STEPS / 2; n <= 10 + LEAP_STEPS; n++) art.step(n, n * 40);
-    assert.equal(find(layer, 'masthead-ships-dolphin').length, 0);
-    // The splash going in has faded by now; the one coming out is where it lands, on along.
-    const out = find(layer, 'masthead-ships-splash');
-    assert.equal(out.length, 1);
-    assert.ok(Number(out[0].attrs.cx) > x0 + 60, `${out[0].attrs.cx} after ${x0}`);
-    for (let n = 11 + LEAP_STEPS; n <= 40 + LEAP_STEPS; n++) art.step(n, n * 40);
-    assert.equal(find(layer, 'masthead-ships-splash').length, 0);
-  });
-
-  it('keeps to three dolphins at once', () => {
-    const { layer, art } = run(ships, 10);
-    for (let i = 0; i < 6; i++) art.poke(100 + i * 150, 200, 10, 400);
-    assert.equal(find(layer, 'masthead-ships-dolphin').length, 3);
-  });
-});
-
 describe('the skyline', () => {
   const lcg = (r) => () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000);
 
@@ -1988,151 +1920,78 @@ describe('the lighthouse', () => {
   });
 });
 
-describe('the block peek', () => {
-  const where = (layer) => {
-    const patch = find(layer, 'masthead-blockpeek-patch')[0];
-    const t = /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(patch.attrs.transform || '');
-    return { shown: Number(patch.attrs.opacity), x: t && Number(t[1]), y: t && Number(t[2]) };
-  };
-  const opacity = (layer, cls) => Number(find(layer, cls)[0].attrs.opacity);
-  const rows = Math.floor(320 / BLOCK);
+describe('the gravity well', () => {
+  const lcg = (r) => () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 0x100000000);
 
-  it('keeps holes low, or to the sides of the name, at any stretch', () => {
-    for (const stretch of [1, 1.6, 3]) {
-      const spots = candidates(stretch, 1200, 320);
-      assert.ok(spots.length > 10);
-      for (const s of spots) {
-        assert.ok(s.y >= (rows - 2) * BLOCK || Math.abs(s.x - 600) > 360, `${s.x}, ${s.y}`);
+  it('drops the sheet deepest at a well, less and less further off, and flat beyond its reach', () => {
+    for (const kind of Object.keys(WELLS)) {
+      const reach = WELLS[kind].reach;
+      assert.equal(dip(kind, reach), 0, kind);
+      assert.equal(dip(kind, reach + 5), 0, kind);
+      let last = Infinity;
+      for (let d = 0; d < reach; d += 0.1) {
+        const here = dip(kind, d);
+        assert.ok(here > 0 && here < last, `${kind} at ${d}`);
+        last = here;
       }
     }
-    assert.deepEqual(cellAt(10, 10, 1, 320), { x: BLOCK / 2, y: BLOCK / 2 });
+    // A black hole is far deeper than a star, down to the cap; a dropped mass grows into its dip.
+    const wells = [{ kind: 'hole', x: 0, z: 0 }, { kind: 'star', x: 30, z: 0 }];
+    assert.equal(wellHeight(wells, 0, 0), -CAP);
+    assert.ok(wellHeight(wells, 30, 0) > -2 && wellHeight(wells, 30, 0) < 0);
+    assert.equal(wellHeight(wells, 15, 40), 0);
+    assert.equal(dip('dropped', 1, 0), 0);
+    assert.equal(dip('dropped', 1, 0.5), dip('dropped', 1) / 2);
   });
 
-  it('cracks a block in stages, inside the block', () => {
-    let s = 3;
-    const stages = cracks(() => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x100000000; });
-    assert.equal(stages.length, STAGES);
-    for (const stage of stages) {
-      assert.ok(stage.length >= 1);
-      for (const seg of stage) for (const v of seg) assert.ok(Math.abs(v) <= BLOCK / 2, String(v));
+  it('draws a well lower on the art than the flat sheet about it, and nothing nearer than near', () => {
+    const flat = wellProject(0, 0, 10, 0, 0, 1200, 50, 1), low = wellProject(0, -4, 10, 0, 0, 1200, 50, 1);
+    assert.ok(low.y > flat.y);
+    assert.equal(flat.x, 600);
+    assert.equal(wellProject(0, 0, WELL_NEAR - 0.1, 0, 0, 1200, 50, 1), null);
+  });
+
+  it('spaces its wells along the flight, on grid crossings, mostly to the sides', () => {
+    const wells = wellsAlong(lcg(7), 0, 2000);
+    assert.ok(wells.length > 80);
+    assert.ok(wells.some((w) => w.kind === 'hole') && wells.some((w) => w.kind === 'star'));
+    for (let i = 1; i < wells.length; i++) assert.ok(wells[i].z - wells[i - 1].z >= 10, String(wells[i].z));
+    const aside = wells.filter((w) => Math.abs(w.x - camX(w.z)) > 4).length;
+    assert.ok(aside > wells.length * 0.6, `${aside} of ${wells.length}`);
+    // Samples run end to end, in order, finer near a centre.
+    const xs = wellSamples(-10, 10, 2, [3]);
+    assert.deepEqual([xs[0], xs.at(-1)], [-10, 10]);
+    assert.deepEqual(xs, [...xs].sort((a, b) => a - b));
+    assert.ok(xs.filter((x) => x >= 2 && x <= 4).length >= 8);
+  });
+
+  it('flies on, wells coming in at the far edge and passing under', () => {
+    const { layer, art } = run(gravitywell, 0, { seed: 3 });
+    const lines = () => find(layer, 'masthead-gravitywell-grid').flatMap((g) => (g.attrs.d !== undefined ? [g.attrs.d] : g.children.map((c) => c.attrs.d))).join('');
+    const before = lines();
+    assert.match(before, /^M/);
+    for (let i = 1; i <= 3000; i++) art.step(i, i * 40);
+    assert.notEqual(lines(), before);
+    // Somewhere on the way, the bottom drops out below the masthead's foot.
+    let deepest = 0;
+    for (let i = 3001; i <= 9000; i++) {
+      art.step(i, i * 40);
+      if (i % 50 === 0) deepest = Math.max(deepest, ...[...lines().matchAll(/ (-?[\d.]+)(?=[ML]|$)/g)].map((m) => Number(m[1])));
     }
+    assert.ok(deepest > 320, String(deepest));
   });
 
-  it('breaks a block, a face peers through and ducks away, and the wall fades', () => {
-    const { layer, art } = run(blockpeek, 0, { seed: 9 });
-    const seen = { patch: false, hole: false, head: false, gone: false };
-    for (let n = 1; n <= 4000; n++) {
-      art.step(n, n * 40);
-      const at = where(layer);
-      if (at.shown > 0.9) {
-        seen.patch = true;
-        assert.ok(at.y >= (rows - 2) * BLOCK || Math.abs(at.x - 600) > 360 - BLOCK, `${at.x}, ${at.y}`);
-      }
-      if (opacity(layer, 'masthead-blockpeek-hole') === 1) seen.hole = true;
-      if (opacity(layer, 'masthead-blockpeek-head') > 0.9) seen.head = true;
-      if (seen.head && at.shown === 0) seen.gone = true;
-    }
-    assert.deepEqual(seen, { patch: true, hole: true, head: true, gone: true });
-  });
-
-  const untilMining = (art, layer) => {
-    for (let n = 1; n <= 2000; n++) {
-      art.step(n, n * 40);
-      if (where(layer).shown >= 1 && find(layer, 'masthead-blockpeek-crack')[0].attrs.d) return n;
-    }
-    throw new Error('never mined');
-  };
-  const untilBroken = (art, layer, from, poke) => {
-    for (let n = from + 1; n <= from + 2000; n++) {
-      if (poke && n % 10 === 0) { const at = where(layer); art.poke(at.x, at.y, n, n * 40); }
-      art.step(n, n * 40);
-      if (opacity(layer, 'masthead-blockpeek-hole') > 0) return n - from;
-    }
-    throw new Error('never broke');
-  };
-
-  it('breaks the block sooner for clicks on it', () => {
-    const left = run(blockpeek, 0, { seed: 4 });
-    const alone = untilBroken(left.art, left.layer, untilMining(left.art, left.layer), false);
-    const right = run(blockpeek, 0, { seed: 4 });
-    const helped = untilBroken(right.art, right.layer, untilMining(right.art, right.layer), true);
-    assert.ok(helped < alone / 2, `${helped} steps helped, ${alone} alone`);
-  });
-
-  it('mines where you click instead, the cracks there starting afresh', () => {
-    const { layer, art } = run(blockpeek, 0, { seed: 4 });
-    const n = untilMining(art, layer);
-    art.poke(1100, 40, n, n * 40);
-    const at = where(layer);
-    assert.deepEqual([at.x, at.y], [cellAt(1100, 40, 1, 320).x, BLOCK / 2]);
-    assert.equal(find(layer, 'masthead-blockpeek-crack')[0].attrs.d, '');
-  });
-
-  it('has the face duck when you click the hole', () => {
-    const { layer, art } = run(blockpeek, 0, { seed: 9 });
-    let n = 0;
-    while (opacity(layer, 'masthead-blockpeek-head') < 0.9 && n < 4000) { n++; art.step(n, n * 40); }
-    const at = where(layer);
-    art.poke(at.x, at.y, n, n * 40);
-    for (let k = 1; k <= 20; k++) art.step(n + k, (n + k) * 40);
-    assert.equal(opacity(layer, 'masthead-blockpeek-head'), 0);
-  });
-});
-
-describe('football', () => {
-  const at = (g) => {
-    const t = /translate\((-?[\d.]+) (-?[\d.]+)\).*rotate\((-?[\d.]+)\)/.exec(g.attrs.transform || '');
-    return t ? { x: Number(t[1]), y: Number(t[2]), tilt: Number(t[3]) } : null;
-  };
-  // Seeds from the whole range, as real runs have, rather than small ones.
-  const seeds = Array.from({ length: 12 }, (_, i) => Math.imul(i + 1, 2654435761) >>> 1);
-
-  it('is in season through the football season, and weighs as a long season does', () => {
-    const day = (y, m, d) => new Date(y, m - 1, d, 12);
-    // Its season, as the football occasion has it; while it's a draft, it isn't picked at all.
-    assert.ok(during('football', day(2026, 10, 4)) && during('football', day(2027, 2, 14)));
-    assert.ok(!during('football', day(2027, 6, 1)));
-    assert.deepEqual(SEASONS.football, ['football']);
-  });
-
-  it('throws a ball from one end to the other, over the top', () => {
-    const a = arc(0, 250, 300, 230, 70, 0), b = arc(0, 250, 300, 230, 70, FLIGHT), mid = arc(0, 250, 300, 230, 70, FLIGHT / 2);
-    assert.deepEqual([a.x, a.y, b.x, Math.round(b.y)], [0, 250, 300, 230]);
-    assert.ok(mid.y < 230 - 50, String(mid.y));
-  });
-
-  it('stands its players on their feet, reaching up for a catch and hands up to the helmet', () => {
-    const stand = joints(0, 'stand');
-    for (const leg of stand.legs) assert.ok(Math.abs(leg.foot[1]) < 0.5, String(leg.foot[1]));
-    for (const arm of joints(0, 'reach').arms) assert.ok(arm.hand[1] < stand.shoulder[1]);
-    for (const arm of joints(0, 'hands').arms) assert.ok(arm.hand[1] < stand.head[1]);
-  });
-
-  it('takes no clicks', () => {
-    assert.equal(run(football, 0).art.poke, undefined);
-  });
-
-  it('plays passes, caught and dropped, and runs with a hurdle over a diving defender', () => {
-    const seen = { caught: false, dropped: false, hurdle: false, dive: false };
-    for (const seed of seeds) {
-      const { layer, art } = run(football, 0, { seed });
-      for (let n = 1; n <= 2500; n++) {
-        art.step(n, n * 40);
-        const [runner, defender] = find(layer, 'masthead-football-player');
-        const ball = find(layer, 'masthead-football-ball')[0];
-        const r = at(runner), d = at(defender), b = at(ball);
-        if (r && runner.attrs.opacity === '1') {
-          assert.ok(r.y >= FIELD - 40 && r.y <= FIELD, `the runner at ${r.y}`);
-          if (r.y < FIELD - 20) seen.hurdle = true;
-        }
-        if (d && defender.attrs.opacity === '1' && d.tilt > 60) seen.dive = true;
-        if (b && ball.attrs.opacity === '1' && r && defender.attrs.opacity !== '1') {
-          if (b.y > FIELD - 6) seen.dropped = true;
-          else if (Math.abs(b.x - r.x) < 20 && b.y > FIELD - 60) seen.caught = true;
-        }
-      }
-    }
-    assert.deepEqual(seen, { caught: true, dropped: true, hurdle: true, dive: true });
+  it('drops a mass where you click, which dimples the sheet as it settles', () => {
+    const { layer, art } = run(gravitywell, 0, { seed: 3 });
+    const across = () => find(layer, 'masthead-gravitywell-grid')[1].children.map((c) => c.attrs.d).join('');
+    art.step(1, 40);
+    const before = across();
+    art.poke(600, 200, 1, 40);
+    for (let i = 2; i <= 30; i++) art.step(i, i * 40);
+    // Against a run that wasn't poked, from the same seed.
+    const plain = run(gravitywell, 30, { seed: 3 }).layer;
+    assert.notEqual(across(), find(plain, 'masthead-gravitywell-grid')[1].children.map((c) => c.attrs.d).join(''));
+    assert.notEqual(across(), before);
   });
 });
 
