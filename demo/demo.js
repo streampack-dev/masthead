@@ -3,7 +3,6 @@ import { DRAFTS, startMasthead, variants } from '../src/index.js';
 
 var BLURBS = {
   bats: 'October: bats flapping across in loose, wavering flight, now and then a little flock.',
-  blockpeek: 'Someone on the far side breaking a block to peer through at you, in the style of the block-building games. Click the block to help, or anywhere else to have them mine there.',
   boids: 'Sixteen fireflies flocking. Click to send a hawk among them.',
   bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded. Click to burst it.',
   chase: 'A fast bird and the canine forever after it: skids, a smack into the frame, an anvil, the train. It always pops back up. Click to paint a tunnel.',
@@ -15,7 +14,6 @@ var BLURBS = {
   eyes: 'October: eyes in the dark, opening, blinking, glancing about, and closing again.',
   flowfield: 'A slow current across the masthead, like wind over water: faint strokes turning with it and a few motes riding it, livelier low. Click to drop an eddy.',
   flyby: 'A flight in through the solar system, like Voyager 1 in reverse: orbits and planets (far from scale) sweeping past on the way to the sun, then round again. Click for a burn.',
-  football: 'Football season: a player in pads running a play. A pass, caught or dropped, or a run with a hurdle over a diving defender.',
   fractal: 'A branching growth tracing round the name, resting when grown, then starting again. Click to sprout a root.',
   ghostrider: 'A wireframe road ahead, bending and rising gently, the hills sliding aside on the bends. Click to open the throttle. For Neil Peart.',
   ghosts: 'October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below.',
@@ -32,7 +30,6 @@ var BLURBS = {
   pongwars: 'Pong Wars: two sides of a field of squares, a ball each, the border between them wandering forever.',
   pumpkins: "October: a row of jack-o'-lanterns, their candles flickering.",
   rocks: 'Asteroids, playing itself: rocks drifting and turning, splitting when the ship hits them.',
-  ships: 'Ships gliding across a low sea: a liner trailing smoke, a carrier, a tall ship, a sailboat bobbing. Click for a dolphin.',
   signalnoise: 'Faint scanlines and a rolling band, with brief bursts of interference. Click to tear the signal.',
   skyline: 'A city at night in outline, its windows lighting and going dark; now and then a shower, and rarely a far-off flash of lightning. Click a building to light its windows, or the sky for lightning.',
   solari: "A split-flap board showing the front page's deks, riffling to the next every so often. Click to riffle it on.",

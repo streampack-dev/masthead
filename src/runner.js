@@ -31,10 +31,7 @@ export var OCCASIONS = {
   // The eight nights, and the day after the eighth: a Hebrew day starts at sundown, so each window
   // runs from the day of the first candle to the day after the eighth. Dated; add years as they come.
   hanukkah: ['2026-12-04..2026-12-12', '2027-12-24..2028-01-01', '2028-12-12..2028-12-20',
-    '2029-12-01..2029-12-09', '2030-12-19..2030-12-27'],
-  // College and professional seasons, from late August to the championship in February. Its
-  // bowls and big games are single dated days to add here, weighing heavily on the day.
-  football: ['08-25..02-15']
+    '2029-12-01..2029-12-09', '2030-12-19..2030-12-27']
 };
 
 /* The seasonal animations and their windows (as above, or occasions by name). Out of season they
@@ -49,15 +46,14 @@ export var SEASONS = {
   graveyard: ['halloween'],
   menorah: ['hanukkah'],
   pumpkins: ['halloween'],
-  spider: ['halloween'],
-  football: ['football']
+  spider: ['halloween']
 };
 
 export var REFERENCE_DAYS = 30;
 
 /* Animations still being worked on: never picked at random, on any day, though ?ambient=<name>
    and the demo page still run them. */
-export var DRAFTS = ['blockpeek', 'football', 'ships'];
+export var DRAFTS = [];
 
 var DAY_MS = 86400000;
 
