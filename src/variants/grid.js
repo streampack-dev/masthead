@@ -5,10 +5,22 @@
    several seconds a line slides to a new place, the lines ending on it and the blocks it borders
    following; now and then a region is cut again by a line growing in from an edge, a cut is taken
    back, or a tone passes to a neighbouring block in a slow cross-fade. A click cuts the rectangle
-   clicked with a new line across it. It all comes from the seed, so ?ambientSeed=<n> replays it. */
+   clicked with a new line across it. About one run in three is in the movement's own colours
+   instead: the blocks red, yellow and blue from the paint palette, the lines still the theme's. It
+   all comes from the seed, so ?ambientSeed=<n> replays it. */
 export var MIN_W = 44, MIN_H = 26;
 var SLIDE = 45, GROW = 55, FADE = 75, REST_MIN = 90, REST_MAX = 180, MAX_CROSSING = 3, NEAR = 18;
 var KINDS = ['tint', 'hatch', 'strong', 'tint'];
+/* The paints a coloured run's blocks take, in turn: cadmium red, cadmium yellow, ultramarine. */
+export var PRIMARIES = [1, 3, 7, 1];
+
+/* Whether the run from [seed] is in colour: about one in three, from a hash of the seed of its own,
+   so the composition is the same either way. */
+export function coloured(seed) {
+  var v = Math.imul((seed >>> 0) ^ 0x2c1b3c6d, 0x297a2d39) >>> 0;
+  v = Math.imul(v ^ (v >>> 15), 0x85ebca6b) >>> 0;
+  return (v ^ (v >>> 13)) % 3 === 0;
+}
 
 function ease(t) { return 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, t))); }
 function overlaps(a, b) { return a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0; }
@@ -181,11 +193,14 @@ export default function grid(layer, m) {
   clear.filter(function (l) { return l.weight === 'thin'; }).forEach(function (l) { if (rand() < 0.35) l.weight = 'mid'; });
 
   // The tones.
+  // No two are ever neighbours, so in colour no two neighbours share a paint.
   var count = Math.min(chosen.length, rand() < 0.2 ? 2 : rand() < 0.75 ? 3 : 4);
+  var kinds = coloured(m.seed()) ? PRIMARIES : KINDS;
   for (var t = 0; t < count; t++) {
-    var kind = KINDS[t];
-    var el = m.el('rect', { 'class': 'masthead-grid-tone masthead-grid-' + kind }, toneLayer);
-    var spare = m.el('rect', { 'class': 'masthead-grid-tone masthead-grid-' + kind, opacity: 0 }, toneLayer);
+    var kind = kinds[t];
+    var cls = 'masthead-grid-tone ' + (typeof kind === 'number' ? 'masthead-paint-fill-' + kind : 'masthead-grid-' + kind);
+    var el = m.el('rect', { 'class': cls }, toneLayer);
+    var spare = m.el('rect', { 'class': cls, opacity: 0 }, toneLayer);
     if (kind === 'hatch') { el.setAttribute('fill', 'url(#masthead-grid-hatch)'); spare.setAttribute('fill', 'url(#masthead-grid-hatch)'); }
     tones.push({ kind: kind, leaf: chosen[t], next: null, el: el, spare: spare });
   }

@@ -8,8 +8,9 @@
      --masthead-mono      the Solari board's font
      --masthead-strength  the art's opacity: 0.55 sits behind a masthead's text; 1 is full
      --masthead-paint-1 to --masthead-paint-9
-                          the paint palette, for the one animation in real colours (drips):
-                          artists' pigments that read at half strength on light and dark alike
+                          the paint palette, for the animations in real colours (drips, and
+                          some runs of others): artists' pigments that read at half strength on
+                          light and dark alike
 
    The art fills its container, so the host places and sizes the container. */
 .masthead-art {
@@ -67,6 +68,16 @@
 .masthead-terrain-glow { fill: none; stroke: var(--_accent); stroke-linecap: round; stroke-linejoin: round; filter: blur(2px); }
 .masthead-life { opacity: 0.5; }
 .masthead-life-cells { fill: color-mix(in srgb, var(--_accent) 52%, var(--_bg)); shape-rendering: crispEdges; }
+/* Newscience: Life read three cells to a block; the blocks' colours are the paints, at the foot of
+   this file, and the theme's own colour for all three live. */
+.masthead-newscience { opacity: 0.5; }
+.masthead-newscience-blocks { shape-rendering: crispEdges; }
+.masthead-newscience-all { fill: var(--_accent); }
+/* Automaton: its rows, in paints from the foot of this file; read as bits, all three live is the
+   theme's own colour, as in newscience. */
+.masthead-automaton { opacity: 0.45; }
+.masthead-automaton-cells { shape-rendering: crispEdges; }
+.masthead-automaton-all { fill: var(--_accent); }
 .masthead-signalnoise { fill: color-mix(in srgb, var(--_accent) 66%, var(--_bg)); shape-rendering: crispEdges; }
 .masthead-noise-line { opacity: 0.35; }
 .masthead-noise-scan { opacity: 0.3; }
@@ -349,3 +360,25 @@
   font: 0.625rem var(--masthead-mono, ui-monospace, monospace);
   opacity: 0.7;
 }
+
+/* The paints, by class, for the animations that colour some runs (grid, harmonograph, life) or
+   draw in colour (newscience, automaton). Last in the file, so a paint wins over a variant's own
+   tone on the same element. */
+.masthead-paint-fill-1 { fill: var(--_paint-1); }
+.masthead-paint-stroke-1 { stroke: var(--_paint-1); }
+.masthead-paint-fill-2 { fill: var(--_paint-2); }
+.masthead-paint-stroke-2 { stroke: var(--_paint-2); }
+.masthead-paint-fill-3 { fill: var(--_paint-3); }
+.masthead-paint-stroke-3 { stroke: var(--_paint-3); }
+.masthead-paint-fill-4 { fill: var(--_paint-4); }
+.masthead-paint-stroke-4 { stroke: var(--_paint-4); }
+.masthead-paint-fill-5 { fill: var(--_paint-5); }
+.masthead-paint-stroke-5 { stroke: var(--_paint-5); }
+.masthead-paint-fill-6 { fill: var(--_paint-6); }
+.masthead-paint-stroke-6 { stroke: var(--_paint-6); }
+.masthead-paint-fill-7 { fill: var(--_paint-7); }
+.masthead-paint-stroke-7 { stroke: var(--_paint-7); }
+.masthead-paint-fill-8 { fill: var(--_paint-8); }
+.masthead-paint-stroke-8 { stroke: var(--_paint-8); }
+.masthead-paint-fill-9 { fill: var(--_paint-9); }
+.masthead-paint-stroke-9 { stroke: var(--_paint-9); }

@@ -4,6 +4,8 @@
    pendulums' frequencies sit near small whole ratios, a little detuned so the figure precesses.
    They come from the seed, so ?ambientSeed=<n> replays a run. A click on a side gives that
    pendulum a small push, changing the figure from there on, or starts a new one if it's resting.
+   About one run in three is drawn in coloured inks from the paint palette: each figure in a paint
+   of its own, the two sides different, drifting to a neighbouring paint as the pen spirals in.
 
    Kept cheap: a figure is a handful of paths, and only the newest is added to, a few points a
    step. */
@@ -17,6 +19,17 @@ export var FADE = 70; // steps it takes to fade
 export var REST = 30; // steps empty before the next
 export var RADIUS = 118;
 var MARGIN = 34;
+
+export var PAINTS = 9;
+export var INK_CHUNKS = 3; // paths drawn in one paint before the ink drifts to the next
+
+/* Whether the run from [seed] is in colour: about one in three, from a hash of the seed of its own,
+   so the figures are the same either way. */
+export function coloured(seed) {
+  var v = Math.imul((seed >>> 0) ^ 0x6a09e667, 0x297a2d39) >>> 0;
+  v = Math.imul(v ^ (v >>> 15), 0x85ebca6b) >>> 0;
+  return (v ^ (v >>> 13)) % 3 === 0;
+}
 
 // Frequency pairs near small whole ratios: x's pendulum and y's.
 var RATIOS = [[1, 2], [2, 1], [2, 3], [3, 2], [3, 4], [4, 3], [1, 3], [3, 1]];
@@ -54,6 +67,9 @@ export default function harmonograph(layer, m) {
   var W = m.width, H = m.height;
   var rs = (m.seed() >>> 0) || 1;
   function rand() { rs = (Math.imul(rs, 1664525) + 1013904223) >>> 0; return rs / 0x100000000; }
+  // The inks have a generator of their own, so the figures don't change with them.
+  var inked = coloured(m.seed()), is = ((m.seed() >>> 0) ^ 0x9e3779b9) || 1;
+  function inkRand() { is = (Math.imul(is, 1664525) + 1013904223) >>> 0; return is / 0x100000000; }
 
   function side(which, delay) {
     var g = m.el('g', { 'class': 'masthead-harmonograph-figure' });
@@ -72,8 +88,15 @@ export default function harmonograph(layer, m) {
     s.path = null;
     s.d = '';
     s.count = 0;
+    s.chunks = 0;
     s.age = 0;
     s.phase = 'draw';
+    if (inked) {
+      // A paint unlike the other side's, and a way to drift.
+      var other = sides[s.which < 0 ? 1 : 0].ink;
+      do { s.ink = 1 + Math.floor(inkRand() * PAINTS); } while (s.ink === other);
+      s.drift = inkRand() < 0.5 ? -1 : 1;
+    }
     s.g.setAttribute('opacity', 1);
   }
 
@@ -81,6 +104,12 @@ export default function harmonograph(layer, m) {
   function centre(s, stretch) {
     var off = MARGIN + RADIUS / stretch;
     return s.which < 0 ? off : W - off;
+  }
+
+  /* The paint for a figure's next path: its own, a step along the palette every INK_CHUNKS paths. */
+  function ink(s) {
+    var p = s.ink - 1 + s.drift * Math.floor(s.chunks / INK_CHUNKS);
+    return ((p % PAINTS) + PAINTS) % PAINTS + 1;
   }
 
   function draw(s, stretch) {
@@ -92,8 +121,9 @@ export default function harmonograph(layer, m) {
       if (!s.path || s.count >= CHUNK) {
         // A new path, starting where the last ended, so the line stays one line.
         s.d = s.path ? 'M' + s.last + 'L' + xy : 'M' + xy;
-        s.path = m.el('path', {}, s.lines);
+        s.path = m.el('path', inked ? { 'class': 'masthead-paint-stroke-' + ink(s) } : {}, s.lines);
         s.count = 0;
+        s.chunks++;
       } else s.d += 'L' + xy;
       s.count++;
       s.last = xy;

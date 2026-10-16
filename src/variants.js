@@ -1,6 +1,7 @@
 /* The variants, by name, each loaded only when chosen. A variant is a module whose default export
    is make(layer, m); see the README. Adding one is adding its file and its line here. */
 export var variants = {
+  automaton: function () { return import('./variants/automaton.js'); },
   bats: function () { return import('./variants/bats.js'); },
   boids: function () { return import('./variants/boids.js'); },
   bytecode: function () { return import('./variants/bytecode.js'); },
@@ -25,6 +26,7 @@ export var variants = {
   life: function () { return import('./variants/life.js'); },
   lighthouse: function () { return import('./variants/lighthouse.js'); },
   menorah: function () { return import('./variants/menorah.js'); },
+  newscience: function () { return import('./variants/newscience.js'); },
   nightcity: function () { return import('./variants/nightcity.js'); },
   paddles: function () { return import('./variants/paddles.js'); },
   pongwars: function () { return import('./variants/pongwars.js'); },

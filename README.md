@@ -13,6 +13,7 @@ only puts the art on its page and starts the runner.
 
 | Name | What it is |
 |---|---|
+| `automaton` | A one-dimensional cellular automaton drawn from the top down, a row a step, scrolling once the masthead is full: elementary rules such as 30, 90 and 110, and three-colour totalistic codes, in paints from the palette, each grown from a single cell anywhere across. A new rule takes over now and then. About one run in three reads its rows as bits, three cells to a block, as `newscience` does. |
 | `bats` | October: bats flapping across in loose, wavering flight, now and then a little flock. |
 | `boids` | Sixteen fireflies flocking. |
 | `bytecode` | The code rain in JVM bytecode: real instructions in hex, now and then one decoded. |
@@ -31,12 +32,13 @@ only puts the art on its page and starts the runner.
 | `grass` | A field of grass along the foot of the masthead, the wind moving through it. |
 | `graveyard` | October: a moon with clouds passing, headstones and bare trees, fog, a bat crossing the moon. |
 | `gravitywell` | Space as a sheet, a wireframe grid in perspective flown over at the scale of a galaxy: where a black hole sits the sheet drops into a deep funnel, and the bottom drops out as you pass; stars are shallow dimples. |
-| `grid` | A monochrome composition in the manner of De Stijl: lines of a few weights cutting the masthead into rectangles, a few small blocks in the corners toned in the theme's own tints and a hatching. Now and then a line slides, a region is cut again, or a tone passes to a neighbouring block. |
-| `harmonograph` | Two harmonographs either side of the name, taking turns: one slow line drawn by damped pendulums, spiralling inward as they die down, then fading for a new set. |
+| `grid` | A composition in the manner of De Stijl: lines of a few weights cutting the masthead into rectangles, a few small blocks in the corners toned in the theme's own tints and a hatching, or, about one run in three, in red, yellow and blue from the paint palette. Now and then a line slides, a region is cut again, or a tone passes to a neighbouring block. |
+| `harmonograph` | Two harmonographs either side of the name, taking turns: one slow line drawn by damped pendulums, spiralling inward as they die down, then fading for a new set. About one run in three is drawn in coloured inks from the paint palette. |
 | `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
-| `life` | Conway's Game of Life, reseeded when it settles. |
+| `life` | Conway's Game of Life, reseeded when it settles. About one run in three colours each cell by its age, newborn to old. |
 | `lighthouse` | A lighthouse at night on a rocky headland at one end, the sea in lines along the foot, the lamp's beam slowly turning; stars come out and the fog lights as the beam passes. |
 | `menorah` | Hanukkah: a menorah at one end, the shamash lit and then the night's candles, newest first, their flames flickering. |
+| `newscience` | Conway's Game of Life read as bits: every three cells across are an octal digit, drawn as one block in one of eight colours (one bit per colour channel; 000 blank). |
 | `nightcity` | A slow flight down an avenue between wireframe towers at night: rows of lit windows sliding past, warning lights blinking on the roofs, a skyline and a flying car far off. |
 | `paddles` | Two paddles and a ball, playing itself at an easy pace, scores ticking up to eleven. |
 | `pongwars` | Two sides of a field of squares and a ball each, every square a ball touches coming over to its side; the border wanders forever. |
@@ -109,10 +111,11 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    }
    ```
 
-   One animation, `drips`, is in real colours rather than the theme's: a paint palette,
-   `--masthead-paint-1` to `--masthead-paint-9`, with defaults of artists' pigments (cadmium red,
+   Some animations are in real colours rather than the theme's: `drips`, `newscience` and
+   `automaton` always, and `grid`, `harmonograph` and `life` in about one run in three, chosen from
+   the seed. They use a paint palette, `--masthead-paint-1` to `--masthead-paint-9`, with defaults of artists' pigments (cadmium red,
    cadmium orange, cadmium yellow, sap green, viridian, cerulean, ultramarine, dioxazine violet,
-   quinacridone rose) that read at the half strength it paints with on a light page or a dark one.
+   quinacridone rose) that read at the art's half strength on a light page or a dark one.
    Where the page sets `color-scheme: dark`, the defaults are lifted a little. A host may set any
    of them, like the others, to paint in its own colours:
 
@@ -138,12 +141,14 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
 
    The runner sets `data-masthead="<name>"` on the SVG and its parent (or `frame`), and
    `.masthead-paused` while paused, for the host's own CSS. Clicking the masthead pokes the
-   animation, if it has a fragment of its own (boids scatter from a hawk, the bytecode rain
+   animation, if it has a fragment of its own (the automaton flips a cell and grows a pattern
+   from it, boids scatter from a hawk, the bytecode rain
    bursts, a tunnel appears in the chase, a surge runs through the circuit, city defense fires
    where you click, paint splatters on the drips and runs, the flow field takes an eddy, the flyby fires a burn, the fractal sprouts a root,
    ghostrider opens the throttle, a gust runs through the grass, a mass drops on the gravity well's sheet, the grid cuts the rectangle clicked,
    a harmonograph's pendulums take a push, the lighthouse swings its beam round to that side, life
-   plants a pattern, a breath of air bends the menorah's flames, the night city banks and a flying car streaks past, signal noise tears,
+   plants a pattern (and newscience the same, in colour), a breath of air bends the menorah's
+   flames, the night city banks and a flying car streaks past, signal noise tears,
    the skyline lights windows or calls lightning, the
    Solari board riffles on, the terrain banks, the train whistles, a ripple runs through the
    triangles, the truchet tiles turn round the click, water skips a stone); the frame has
@@ -182,8 +187,9 @@ export default function name(layer, m) {
 Animations use no libraries and draw only into their layer. Colours come from the classes above
 or from rules on `.masthead-<name>` in `masthead.css` using its `--_accent`, `--_bg`, `--_border`
 and `--_surface`, never fixed values, so they follow each site's theme. An animation in real
-colours takes them from the paint palette, `--_paint-1` to `--_paint-9`, by class, as `drips`
-does, so a site can still change them. Add tests in
+colours takes them from the paint palette, `--_paint-1` to `--_paint-9`, by class: `drips` has
+its own, and the others use the shared `masthead-paint-fill-<n>` and `masthead-paint-stroke-<n>`
+at the foot of `masthead.css`, so a site can still change them. Add tests in
 `test/variants.test.js`: the fakes in `test/fake.js` run a variant without a browser.
 
 ## Working on it
