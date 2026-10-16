@@ -73,9 +73,11 @@
 .masthead-newscience { opacity: 0.5; }
 .masthead-newscience-blocks { shape-rendering: crispEdges; }
 .masthead-newscience-all { fill: var(--_accent); }
-/* Automaton: its rows, in paints from the foot of this file. */
+/* Automaton: its rows, in paints from the foot of this file; read as bits, all three live is the
+   theme's own colour, as in newscience. */
 .masthead-automaton { opacity: 0.45; }
 .masthead-automaton-cells { shape-rendering: crispEdges; }
+.masthead-automaton-all { fill: var(--_accent); }
 .masthead-signalnoise { fill: color-mix(in srgb, var(--_accent) 66%, var(--_bg)); shape-rendering: crispEdges; }
 .masthead-noise-line { opacity: 0.35; }
 .masthead-noise-scan { opacity: 0.3; }

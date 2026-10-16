@@ -31,7 +31,7 @@ import fractal from '../src/variants/fractal.js';
 import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
 import life, { BANDS, BAND_PAINTS, PLANTS, band, coloured as lifeColoured } from '../src/variants/life.js';
 import newscience, { COLUMNS as NS_COLUMNS, DIGIT_CLASSES, ROWS as NS_ROWS, digit, generation } from '../src/variants/newscience.js';
-import automaton, { COLUMNS as CA_COLUMNS, ROWS as CA_ROWS, RULES, nextRow } from '../src/variants/automaton.js';
+import automaton, { COLUMNS as CA_COLUMNS, DIGIT_CLASSES as CA_DIGITS, ROWS as CA_ROWS, RULES, bits as caBits, nextRow } from '../src/variants/automaton.js';
 import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
 import terrainflight from '../src/variants/terrainflight.js';
@@ -2329,7 +2329,11 @@ describe('the automaton', () => {
     const next = nextRow(row, rule);
     const sum = (i) => row[(i + 14) % 15] + row[i] + row[(i + 1) % 15];
     for (let i = 0; i < 15; i++) assert.equal(next[i], [0, 2, 0, 2, 1, 0, 2][sum(i)], String(i));
-    for (const r of RULES) assert.ok(r.k === 2 ? r.n < 256 : r.n < 2187, JSON.stringify(r));
+    for (const r of RULES) {
+      assert.ok(r.k === 2 ? r.n < 256 : r.n < 2187, JSON.stringify(r));
+      // Empty space stays empty, so the background never flips to stripes.
+      assert.ok(nextRow(new Uint8Array(9), r).every((v) => v === 0), JSON.stringify(r));
+    }
   });
 
   it('fills the masthead from the top, then scrolls, the newest row at the foot', () => {
@@ -2345,6 +2349,37 @@ describe('the automaton', () => {
     assert.ok(Math.abs(y(rows[200 % rows.length]) - (CA_ROWS - 1) * 320 / CA_ROWS) < 0.02);
     // Every cell drawn is one of the run's two paints.
     for (const g of rows) for (const p of g.children) assert.match(p.attrs.class, /masthead-paint-fill-[1-9]/);
+  });
+
+  it('starts its single cell anywhere across, not always in the middle', () => {
+    const starts = new Set();
+    for (let seed = 1; seed <= 60; seed++) {
+      const { layer } = run(automaton, 0, { seed });
+      const d = find(layer, 'masthead-automaton-row')[0].children.map((p) => p.attrs.d).join('');
+      const xs = [...d.matchAll(/M([\d.]+) 0/g)].map((m) => Number(m[1]));
+      if (xs.length === 1) starts.add(xs[0]);
+    }
+    assert.ok(starts.size > 20, String([...starts]));
+    assert.ok([...starts].some((x) => x < 300) && [...starts].some((x) => x > 900));
+  });
+
+  it('reads about a third of its runs as bits, three cells to a block in the digits\' colours', () => {
+    const seeds = Array.from({ length: 3000 }, (_, i) => Math.imul(i + 1, 2654435761) >>> 1);
+    const share = seeds.filter(caBits).length / seeds.length;
+    assert.ok(share > 0.29 && share < 0.38, String(share));
+    for (const seed of seeds.filter(caBits).slice(0, 5)) {
+      const { layer, art } = run(automaton, 120, { seed });
+      const rows = find(layer, 'masthead-automaton-row');
+      assert.equal(rows[0].children.length, 7);
+      for (const g of rows) g.children.forEach((p, k) => assert.ok(p.attrs.class.endsWith(CA_DIGITS[k + 1]), p.attrs.class));
+      // A click flips one cell of a block: the newest row's blocks change there.
+      const newest = () => rows[120 % rows.length].children.map((p) => p.attrs.d).join('|');
+      const before = newest();
+      art.poke(600, 100, 120, 0);
+      assert.notEqual(newest(), before);
+    }
+    const plain = seeds.find((x) => !caBits(x));
+    assert.equal(find(run(automaton, 0, { seed: plain }).layer, 'masthead-automaton-row')[0].children.length, 2);
   });
 
   it('flips the cell clicked, so the next rows grow from it', () => {

@@ -2,7 +2,7 @@
 import { DRAFTS, startMasthead, variants } from '../src/index.js';
 
 var BLURBS = {
-  automaton: 'A one-dimensional cellular automaton drawn from the top down, a row a step: rule 30\'s chaos, rule 90\'s nested triangles, rule 110, and three-colour codes. Click to flip a cell and grow a pattern from it.',
+  automaton: 'A one-dimensional cellular automaton drawn from the top down, a row a step: rule 30\'s chaos, rule 90\'s nested triangles, rule 110, and three-colour codes; about one run in three read as bits, as newscience is. Click to flip a cell and grow a pattern from it.',
   bats: 'October: bats flapping across in loose, wavering flight, now and then a little flock.',
   boids: 'Sixteen fireflies flocking. Click to send a hawk among them.',
   bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded. Click to burst it.',

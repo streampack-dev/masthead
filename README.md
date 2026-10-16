@@ -13,7 +13,7 @@ only puts the art on its page and starts the runner.
 
 | Name | What it is |
 |---|---|
-| `automaton` | A one-dimensional cellular automaton drawn from the top down, a row a step, scrolling once the masthead is full: elementary rules such as 30, 90 and 110, and three-colour totalistic codes, in paints from the palette. A new rule takes over now and then. |
+| `automaton` | A one-dimensional cellular automaton drawn from the top down, a row a step, scrolling once the masthead is full: elementary rules such as 30, 90 and 110, and three-colour totalistic codes, in paints from the palette, each grown from a single cell anywhere across. A new rule takes over now and then. About one run in three reads its rows as bits, three cells to a block, as `newscience` does. |
 | `bats` | October: bats flapping across in loose, wavering flight, now and then a little flock. |
 | `boids` | Sixteen fireflies flocking. |
 | `bytecode` | The code rain in JVM bytecode: real instructions in hex, now and then one decoded. |
