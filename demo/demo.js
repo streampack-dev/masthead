@@ -2,6 +2,7 @@
 import { DRAFTS, startMasthead, variants } from '../src/index.js';
 
 var BLURBS = {
+  automaton: 'A one-dimensional cellular automaton drawn from the top down, a row a step: rule 30\'s chaos, rule 90\'s nested triangles, rule 110, and three-colour codes. Click to flip a cell and grow a pattern from it.',
   bats: 'October: bats flapping across in loose, wavering flight, now and then a little flock.',
   boids: 'Sixteen fireflies flocking. Click to send a hawk among them.',
   bytecode: 'The code rain in JVM bytecode: real instructions in hex, now and then one decoded. Click to burst it.',
@@ -20,12 +21,13 @@ var BLURBS = {
   grass: 'A field of grass, the wind moving through it in slow swells and passing gusts. Click to send a gust through it.',
   graveyard: 'October: a full moon with clouds passing, headstones and bare trees, fog, and a bat crossing the moon.',
   gravitywell: 'Space as a sheet, flown over at the scale of a galaxy: the grid drops away into a deep funnel where a black hole sits, and the bottom drops out as you pass. Click to drop a mass on the sheet.',
-  harmonograph: 'Two harmonographs, one either side: each a single line drawn by damped pendulums, spiralling slowly inward, then fading for the next. Click a side to push its pendulums.',
-  grid: 'A monochrome composition in the manner of De Stijl, in the theme\'s own tones: now and then a line slides, a region is cut again, or a tone moves to the next block. Click to cut a rectangle.',
+  harmonograph: 'Two harmonographs, one either side: each a single line drawn by damped pendulums, spiralling slowly inward, then fading for the next; about one run in three in coloured inks. Click a side to push its pendulums.',
+  grid: 'A composition in the manner of De Stijl, in the theme\'s own tones, or about one run in three in red, yellow and blue: now and then a line slides, a region is cut again, or a tone moves to the next block. Click to cut a rectangle.',
   lander: 'Lunar Lander, flown by its autopilot: a slow descent, short burns, a gentle landing on the pad.',
   lighthouse: 'A lighthouse at night on a rocky headland, its beam turning: swinging out across the sea and sky, flaring as it faces you. Click to swing the beam round to that side.',
-  life: "Conway's Game of Life, reseeded when it settles. Click to plant a pattern.",
+  life: "Conway's Game of Life, reseeded when it settles; about one run in three coloured by each cell's age. Click to plant a pattern.",
   menorah: 'Hanukkah: a menorah, the shamash lit and then the night\'s candles, newest first. Click for a breath of air across the flames.',
+  newscience: 'Conway\'s Game of Life read as bits: every three cells are an octal digit, drawn as one block in one of eight colours. Click to plant a pattern.',
   nightcity: 'A slow flight between towers at night: lit windows sliding past, a warning light blinking on a roof, a flying car far off. Click to bank toward that side and send a car streaking past.',
   paddles: 'Pong, playing itself at an easy pace, scores ticking up to eleven.',
   pongwars: 'Pong Wars: two sides of a field of squares, a ball each, the border between them wandering forever.',

@@ -29,15 +29,17 @@ import windfarm, { farm, wind as farmWind } from '../src/variants/windfarm.js';
 import flyby, { FOCAL, PLANETS, layout as flybyLayout, project as flybyProject, speed as flybySpeed } from '../src/variants/flyby.js';
 import fractal from '../src/variants/fractal.js';
 import ghostrider, { BOOST, DRAW, MAX_CURVE, SPEED, course, project } from '../src/variants/ghostrider.js';
-import life, { PLANTS } from '../src/variants/life.js';
+import life, { BANDS, BAND_PAINTS, PLANTS, band, coloured as lifeColoured } from '../src/variants/life.js';
+import newscience, { COLUMNS as NS_COLUMNS, DIGIT_CLASSES, ROWS as NS_ROWS, digit, generation } from '../src/variants/newscience.js';
+import automaton, { COLUMNS as CA_COLUMNS, ROWS as CA_ROWS, RULES, nextRow } from '../src/variants/automaton.js';
 import signalnoise from '../src/variants/signalnoise.js';
 import solari, { COLS, OWN, ROWS, flaps, layout, wrap } from '../src/variants/solari.js';
 import terrainflight from '../src/variants/terrainflight.js';
 import train, { CARGO, ENGINE, car, rows } from '../src/variants/train.js';
 import water, { GRID_H, GRID_W, drop, ripple, skips } from '../src/variants/water.js';
 import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as flowWeight } from '../src/variants/flowfield.js';
-import grid, { MIN_H, MIN_W } from '../src/variants/grid.js';
-import harmonograph, { PER_STEP, POINTS, pen, pendulums } from '../src/variants/harmonograph.js';
+import grid, { MIN_H, MIN_W, PRIMARIES, coloured as gridColoured } from '../src/variants/grid.js';
+import harmonograph, { INK_CHUNKS, PER_STEP, POINTS, coloured as inkColoured, pen, pendulums } from '../src/variants/harmonograph.js';
 import lighthouse, { REACH, REVOLUTION, SEA, SPREAD, beam, headland, lit } from '../src/variants/lighthouse.js';
 import menorah, { FIRST as MENORAH_FIRST, GAP as MENORAH_GAP, SLOTS as MENORAH_SLOTS, candles, order as menorahOrder } from '../src/variants/menorah.js';
 import nightcity from '../src/variants/nightcity.js';
@@ -45,7 +47,7 @@ import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } 
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 
-const all = { bats, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, gravitywell, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
+const all = { automaton, bats, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, gravitywell, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, newscience, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -69,7 +71,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['bats', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'gravitywell', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
+  for (const name of ['automaton', 'bats', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'gravitywell', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'newscience', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -2180,5 +2182,179 @@ describe('the grid', () => {
     const all = ends(layer);
     assert.ok(joined(all, cut.attrs.x1 * 1, cut.attrs.y1 * 1, cut.attrs.x1 === cut.attrs.x2));
     assert.ok(MIN_W > 0 && MIN_H > 0);
+  });
+});
+
+describe('colour, now and then', () => {
+  const seeds = Array.from({ length: 3000 }, (_, i) => Math.imul(i + 1, 2654435761) >>> 1);
+  const paints = (layer) => {
+    const out = new Set();
+    (function walk(e) {
+      const m = /masthead-paint-(?:fill|stroke)-(\d)/.exec(e.attrs.class || '');
+      if (m) out.add(Number(m[1]));
+      e.children.forEach(walk);
+    })(layer);
+    return out;
+  };
+
+  for (const [name, colouredRun] of [['grid', gridColoured], ['harmonograph', inkColoured], ['life', lifeColoured]]) {
+    it(`colours about a third of ${name}'s runs, the same way for the same seed`, () => {
+      const share = seeds.filter(colouredRun).length / seeds.length;
+      assert.ok(share > 0.29 && share < 0.38, String(share));
+      for (const seed of seeds.slice(0, 50)) assert.equal(colouredRun(seed), colouredRun(seed));
+      const plain = seeds.find((x) => !colouredRun(x)), bright = seeds.find(colouredRun);
+      assert.equal(paints(run(all[name], 400, { seed: plain }).layer).size, 0);
+      assert.ok(paints(run(all[name], 400, { seed: bright }).layer).size > 0);
+      // The colour has its own hash, and the rest of the run is drawn the same.
+      assert.equal(serialize(run(all[name], 50, { seed: bright }).layer), serialize(run(all[name], 50, { seed: bright }).layer));
+    });
+  }
+
+  it('paints a coloured grid in red, yellow and blue only, never two neighbours alike', () => {
+    for (const seed of seeds.filter(gridColoured).slice(0, 6)) {
+      const { layer, art } = run(grid, 0, { seed });
+      for (let i = 0; i <= 1500; i += 100) {
+        for (let k = 1; k <= 100; k++) art.step(i + k, (i + k) * 40);
+        const used = paints(layer);
+        for (const p of used) assert.ok(PRIMARIES.includes(p), `${seed}: ${p}`);
+        // The blocks shown (not a fading spare) never share an edge.
+        // Each tone is a block and its spare, in turn; a tone cross-fading shows in both at once.
+        const blocks = find(layer, 'masthead-grid-tone').map((t, k) => ({ t, tone: k >> 1 }))
+          .filter(({ t }) => t.attrs.opacity !== '0' && t.attrs.x !== undefined)
+          .map(({ t, tone }) => ({ x0: +t.attrs.x, y0: +t.attrs.y, x1: +t.attrs.x + +t.attrs.width, y1: +t.attrs.y + +t.attrs.height, c: t.attrs.class, tone }));
+        for (const a of blocks) for (const b of blocks) {
+          if (a.tone === b.tone || a.c !== b.c) continue;
+          const touch = a.x0 <= b.x1 + 0.2 && b.x0 <= a.x1 + 0.2 && a.y0 <= b.y1 + 0.2 && b.y0 <= a.y1 + 0.2;
+          assert.ok(!touch || (a.x0 === b.x0 && a.y0 === b.y0), `${seed} ${i}`);
+        }
+      }
+    }
+  });
+
+  it('inks the two harmonographs differently, drifting a step along the palette as they draw', () => {
+    const seed = seeds.find(inkColoured);
+    const { layer } = run(harmonograph, POINTS / PER_STEP, { seed });
+    const figures = find(layer, 'masthead-harmonograph-line').map((g) => g.children.map((p) => Number(/stroke-(\d)/.exec(p.attrs.class)[1])));
+    const drawn = figures.filter((f) => f.length);
+    assert.ok(drawn[0].length > INK_CHUNKS);
+    // The paint holds for INK_CHUNKS paths, then moves one along, wrapping round the nine.
+    const f = drawn[0], step = (f[INK_CHUNKS] - f[0] + 9) % 9;
+    assert.ok(step === 1 || step === 8, String(f));
+    assert.deepEqual(f.slice(0, INK_CHUNKS), Array(INK_CHUNKS).fill(f[0]));
+    if (drawn.length > 1) assert.notEqual(drawn[1][0], drawn[0][0]);
+  });
+
+  it('colours a cell by its age, newborn to old', () => {
+    assert.deepEqual([1, 2, 4, 5, 19, 20, 400].map(band), [0, 1, 1, 2, 2, 3, 3]);
+    assert.equal(BANDS.length, BAND_PAINTS.length);
+    const seed = seeds.find(lifeColoured);
+    const { layer, art } = run(life, 0, { seed });
+    const count = (paint) => (find(layer, 'masthead-paint-fill-' + paint)[0].attrs.d.match(/M/g) || []).length;
+    // At first every cell is newborn; a still life ages into the last band.
+    assert.ok(count(BAND_PAINTS[0]) > 0);
+    assert.equal(count(BAND_PAINTS[3]), 0);
+    for (let i = 1; i <= 60; i++) art.step(i, i * 145);
+    assert.ok(count(BAND_PAINTS[3]) > 0);
+    // A planted pattern is newborn.
+    const before = count(BAND_PAINTS[0]);
+    art.poke(600, 160, 61, 0);
+    assert.notEqual(count(BAND_PAINTS[0]), before);
+  });
+});
+
+describe('newscience', () => {
+  const board = () => new Uint8Array(NS_COLUMNS * NS_ROWS);
+  const set = (cells, cs) => { for (const [r, c] of cs) cells[r * NS_COLUMNS + c] = 1; return cells; };
+
+  it('reads three cells as an octal digit, the left one the high bit', () => {
+    const cells = set(board(), [[0, 0], [0, 4], [0, 5], [1, 6], [1, 7], [1, 8]]);
+    assert.deepEqual([digit(cells, 0, 0), digit(cells, 0, 1), digit(cells, 1, 2), digit(cells, 2, 0)], [4, 3, 7, 0]);
+    assert.equal(DIGIT_CLASSES.length, 8);
+    assert.equal(DIGIT_CLASSES[0], null);
+  });
+
+  it('runs Life on the wide board: a blinker turns, a glider flies', () => {
+    // A blinker across blocks 1 and 2 (cells 4 to 6), so it reads 3 4, then upright, 2 2 2 down a column... of block 1.
+    let cells = set(board(), [[5, 4], [5, 5], [5, 6]]);
+    assert.deepEqual([digit(cells, 5, 1), digit(cells, 5, 2)], [3, 4]);
+    cells = generation(cells, NS_COLUMNS, NS_ROWS).cells;
+    assert.deepEqual([4, 5, 6].map((r) => digit(cells, r, 1)), [1, 1, 1]);
+    cells = generation(cells, NS_COLUMNS, NS_ROWS).cells;
+    assert.deepEqual([digit(cells, 5, 1), digit(cells, 5, 2)], [3, 4]);
+    // A glider moves a cell down and across every four generations.
+    let g = set(board(), [[10, 31], [11, 32], [12, 30], [12, 31], [12, 32]]);
+    const at = (cs) => [...cs.keys()].filter((i) => cs[i]).map((i) => [Math.floor(i / NS_COLUMNS), i % NS_COLUMNS]);
+    const first = at(g);
+    for (let i = 0; i < 4; i++) g = generation(g, NS_COLUMNS, NS_ROWS).cells;
+    assert.deepEqual(at(g), first.map(([r, c]) => [r + 1, c + 1]));
+  });
+
+  it('draws only the digits that aren\'t 000, in their colours, and plants where you click', () => {
+    const { layer, art } = run(newscience, 5);
+    const blocks = find(layer, 'masthead-newscience-blocks');
+    assert.equal(blocks.length, 7);
+    assert.ok(blocks.every((b) => (b.attrs.d || '').length > 0));
+    art.poke(600, 160, 5, 0);
+    // The cleared patch around the plant holds only the plant's cells.
+    const inPatch = blocks.flatMap((b) => [...b.attrs.d.matchAll(/M([\d.]+) ([\d.]+)/g)])
+      .filter((m) => Math.abs(Number(m[1]) - 600) < 50 && Math.abs(Number(m[2]) - 160) < 50).length;
+    assert.ok(inPatch > 0 && inPatch <= PLANTS[0].join('').split('O').length - 1);
+  });
+});
+
+describe('the automaton', () => {
+  const single = (n) => { const r = new Uint8Array(n); r[n >> 1] = 1; return r; };
+
+  it('steps an elementary rule by its number', () => {
+    // Rule 90: each cell the XOR of its neighbours, so a single cell grows Pascal's triangle mod 2.
+    let row = single(41);
+    for (let t = 1; t <= 8; t++) {
+      row = nextRow(row, { k: 2, n: 90 });
+      for (let i = 0; i < 41; i++) {
+        const d = i - 20, k = (d + t) / 2;
+        const expect = Math.abs(d) <= t && Number.isInteger(k) && (k & (t - k)) === 0 ? 1 : 0;
+        assert.equal(row[i], expect, `t ${t} i ${i}`);
+      }
+    }
+    // Rule 30 from a single cell: its first rows.
+    const r1 = nextRow(single(7), { k: 2, n: 30 }), r2 = nextRow(r1, { k: 2, n: 30 });
+    assert.deepEqual([...r1], [0, 0, 1, 1, 1, 0, 0]);
+    assert.deepEqual([...r2], [0, 1, 1, 0, 0, 1, 0]);
+  });
+
+  it('steps a three-colour totalistic code by the digit at the sum above', () => {
+    // 1599 in base 3 is 2012020: sums 0 to 6 give 0, 2, 0, 2, 1, 0, 2.
+    const rule = { k: 3, n: 1599 };
+    const row = Uint8Array.from([0, 1, 0, 0, 2, 0, 0, 2, 2, 0, 1, 1, 1, 0, 0]);
+    const next = nextRow(row, rule);
+    const sum = (i) => row[(i + 14) % 15] + row[i] + row[(i + 1) % 15];
+    for (let i = 0; i < 15; i++) assert.equal(next[i], [0, 2, 0, 2, 1, 0, 2][sum(i)], String(i));
+    for (const r of RULES) assert.ok(r.k === 2 ? r.n < 256 : r.n < 2187, JSON.stringify(r));
+  });
+
+  it('fills the masthead from the top, then scrolls, the newest row at the foot', () => {
+    const { layer, art } = run(automaton, 0, { seed: 5 });
+    const rows = find(layer, 'masthead-automaton-row');
+    assert.equal(rows.length, CA_ROWS + 1);
+    const y = (g) => Number(/translate\(0 ([\d.]+)\)/.exec(g.attrs.transform || 'translate(0 -1)')[1]);
+    assert.equal(y(rows[0]), 0);
+    for (let i = 1; i <= 10; i++) art.step(i, i * 150);
+    assert.ok(Math.abs(y(rows[10]) - 10 * 320 / CA_ROWS) < 0.02);
+    for (let i = 11; i <= 200; i++) art.step(i, i * 150);
+    // 201 rows made: the newest, slot 200 % 54, sits at the foot.
+    assert.ok(Math.abs(y(rows[200 % rows.length]) - (CA_ROWS - 1) * 320 / CA_ROWS) < 0.02);
+    // Every cell drawn is one of the run's two paints.
+    for (const g of rows) for (const p of g.children) assert.match(p.attrs.class, /masthead-paint-fill-[1-9]/);
+  });
+
+  it('flips the cell clicked, so the next rows grow from it', () => {
+    const { layer, art } = run(automaton, 3, { seed: 5 });
+    const last = () => find(layer, 'masthead-automaton-row')[3].children.map((p) => p.attrs.d).join('');
+    const cell = 'M' + (Math.floor(30 / (1200 / CA_COLUMNS)) * 1200 / CA_COLUMNS).toFixed(1) + ' 0h';
+    const was = last().includes(cell);
+    art.poke(30, 100, 3, 0);
+    assert.equal(last().includes(cell), !was);
+    art.poke(30, 100, 3, 0);
+    assert.equal(last().includes(cell), was);
   });
 });
