@@ -364,6 +364,37 @@
 .masthead-turkey-line { fill: none; stroke: var(--_accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .masthead-turkey-pencil { fill: color-mix(in srgb, var(--_accent) 12%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.1; stroke-linejoin: round; }
 
+/* Winter and Christmas. */
+/* Snowflakes: the ice, cell by cell. */
+.masthead-snowflakes-ice { fill: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); }
+/* Snowfall: the village in outline, the snow lying on it, and the falling flakes. */
+.masthead-snowfall-village { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.2; stroke-linejoin: round; }
+.masthead-snowfall-snow { fill: color-mix(in srgb, var(--_accent) 12%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.2; stroke-linejoin: round; }
+.masthead-snowfall-flake { fill: color-mix(in srgb, var(--_accent) 65%, var(--_bg)); }
+/* Fir tree: trunk, branches and twigs in outline; bulbs (filled when lit), baubles in paints, the star. */
+.masthead-firtree path { fill: none; stroke-linecap: round; }
+.masthead-firtree-trunk { stroke: color-mix(in srgb, var(--_accent) 80%, var(--_bg)); stroke-width: 2.4; }
+.masthead-firtree-branches { stroke: var(--_accent); stroke-width: 1.5; }
+.masthead-firtree-twigs { stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1; }
+.masthead-firtree-bulb { fill: var(--_bg); stroke: var(--_accent); stroke-width: 0.9; }
+.masthead-firtree-bulb.masthead-firtree-lit { fill: var(--_accent); }
+.masthead-firtree-hook { stroke: color-mix(in srgb, var(--_accent) 60%, var(--_bg)); stroke-width: 0.8; }
+.masthead-firtree-bauble { stroke: var(--_accent); stroke-width: 0.9; fill-opacity: 0.75; }
+.masthead-firtree .masthead-firtree-star { fill: color-mix(in srgb, var(--_accent) 25%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.3; stroke-linejoin: round; }
+/* Sleigh: the moon, the stars, and the team against them. */
+.masthead-sleigh-moon { fill: color-mix(in srgb, var(--_accent) 14%, var(--_bg)); stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1.2; }
+.masthead-sleigh-star { fill: none; stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); stroke-width: 1; stroke-linecap: round; }
+.masthead-sleigh-deer, .masthead-sleigh-sleigh { fill: color-mix(in srgb, var(--_accent) 55%, var(--_bg)); stroke: var(--_accent); stroke-width: 1.1; stroke-linejoin: round; stroke-linecap: round; }
+.masthead-sleigh-traces { fill: none; stroke: var(--_accent); stroke-width: 0.8; }
+/* Manger: the stable and everyone in it in outline, the star and its light. */
+.masthead-manger path { fill: none; stroke: var(--_accent); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.masthead-manger .masthead-manger-frame, .masthead-manger .masthead-manger-roof { stroke: color-mix(in srgb, var(--_accent) 70%, var(--_bg)); }
+.masthead-manger .masthead-manger-child { fill: color-mix(in srgb, var(--_accent) 18%, var(--_bg)); }
+.masthead-manger .masthead-manger-star { fill: color-mix(in srgb, var(--_accent) 30%, var(--_bg)); stroke-width: 1.2; }
+.masthead-manger .masthead-manger-rays, .masthead-manger .masthead-manger-beam { stroke: color-mix(in srgb, var(--_accent) 60%, var(--_bg)); stroke-width: 0.9; }
+.masthead-manger .masthead-manger-beam { stroke-dasharray: 2 4; }
+.masthead-manger .masthead-manger-far { stroke: color-mix(in srgb, var(--_accent) 60%, var(--_bg)); stroke-width: 1; }
+
 /* ?ambientDebug=1 names the running animation and its seed in the masthead's corner. */
 .masthead-debug {
   position: absolute;

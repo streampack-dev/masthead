@@ -25,6 +25,7 @@ only puts the art on its page and starts the runner.
 | `drips` | Wet paint in real colours along the top edge, a drip letting go now and then: fast at first, slowing and thickening to a round bead, and staying; now and then a bead falls and spots the masthead lower down. When it's well painted the paint fades and a fresh band gathers. The colours are the paint palette (below). |
 | `duel` | Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth: no touches, no winner. |
 | `eyes` | October: eyes in the dark, opening, blinking, glancing about, and closing again. |
+| `firtree` | December: a fir growing at one end, tiers of branches unfolding from the trunk, then trimmed with lights, baubles and a star; the lights twinkle in a wave up the tree, lit bulbs filled and unlit ones in outline. |
 | `flowfield` | A slow current drifting across the masthead, like wind over water: faint strokes turning with it, a few motes riding it with short tails, livelier low. |
 | `flyby` | A flight in through the solar system, like Voyager 1 in reverse: orbits and planets (far from scale) sweeping past on the way to the sun, then round again. |
 | `fractal` | A branching growth tracing round the name, resting when grown, then starting again. |
@@ -40,6 +41,7 @@ only puts the art on its page and starts the runner.
 | `leaves` | November: maple, oak and elm leaves in autumn paints, swinging from side to side as they fall, piling up along the foot; now and then a gust lifts a few. |
 | `life` | Conway's Game of Life, reseeded when it settles. About one run in three colours each cell by its age, newborn to old. |
 | `lighthouse` | A lighthouse at night on a rocky headland at one end, the sea in lines along the foot, the lamp's beam slowly turning; stars come out and the fog lights as the beam passes. |
+| `manger` | Christmas Eve and Day: the stable at one end, still, with the child in the manger, Mary, Joseph, an ox and a donkey; above it the star, its light slowly breathing. |
 | `menorah` | Hanukkah: a menorah at one end, the shamash lit and then the night's candles, newest first, their flames flickering. |
 | `newscience` | Conway's Game of Life read as bits: every three cells across are an octal digit, drawn as one block in one of eight colours (one bit per colour channel; 000 blank). |
 | `nightcity` | A slow flight down an avenue between wireframe towers at night: rows of lit windows sliding past, warning lights blinking on the roofs, a skyline and a flying car far off. |
@@ -49,6 +51,9 @@ only puts the art on its page and starts the runner.
 | `rocks` | Rocks drifting and turning; a small ship turns, fires, and splits them. |
 | `signalnoise` | Faint scanlines and a rolling band, with brief bursts of interference. |
 | `skyline` | A city at night in outline, windows lighting and going dark one at a time; now and then a shower of faint slanting rain, and rarely lightning off to one side. |
+| `sleigh` | December: a full moon among a few stars, and now and then a sleigh and four reindeer flying across it, leaping as they run. |
+| `snowfall` | Winter: snow falling on a village and settling as sand does, lying on the gentler roofs and drifting against the walls; it stops, lies, melts, and snows again. |
+| `snowflakes` | Winter: snow crystals growing either side of the name by Reiter's hexagonal model, stars, ferns, plates or lace, each with its six arms alike. |
 | `solari` | A split-flap board showing the front page's other deks, riffling to the next every so often. |
 | `spider` | October: a spider letting itself down on its thread and climbing back up; a cobweb in a corner. |
 | `stix` | The C64 claim-the-field game playing itself: a marker cuts into the field, claiming the side without the wandering Stix, hatched. |
@@ -62,7 +67,8 @@ only puts the art on its page and starts the runner.
 
 Some are seasonal: they're picked at random only in their windows of the year (in the visitor's
 own time), as `SEASONS` in `src/runner.js` lists them: the October ones above, the November ones, the
-turkey on Thanksgiving Day, and the menorah at Hanukkah. A window is a month (`10`), a day every
+turkey on Thanksgiving Day, the menorah at Hanukkah, the December ones, the manger at Christmas, and
+the snow from December to February. A window is a month (`10`), a day every
 year (`'07-04'`), days every year
 (`'12-24..12-26'`, which may wrap the year end), one dated day or range
 (`'2026-12-04..2026-12-12'`, for a feast that moves: list the coming years), or a named occasion
@@ -120,7 +126,8 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    ```
 
    Some animations are in real colours rather than the theme's: `drips`, `newscience`, `leaves` and
-   `automaton` always, and `grid`, `harmonograph` and `life` in about one run in three, chosen from
+   `automaton` always, the baubles on the `firtree`, and `grid`, `harmonograph` and `life` in about
+   one run in three, chosen from
    the seed. They use a paint palette, `--masthead-paint-1` to `--masthead-paint-9`, with defaults of artists' pigments (cadmium red,
    cadmium orange, cadmium yellow, sap green, viridian, cerulean, ultramarine, dioxazine violet,
    quinacridone rose) that read at the art's half strength on a light page or a dark one.
