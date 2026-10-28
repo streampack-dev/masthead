@@ -41,13 +41,21 @@ import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as
 import grid, { MIN_H, MIN_W, PRIMARIES, coloured as gridColoured } from '../src/variants/grid.js';
 import harmonograph, { INK_CHUNKS, PER_STEP, POINTS, coloured as inkColoured, pen, pendulums } from '../src/variants/harmonograph.js';
 import lighthouse, { REACH, REVOLUTION, SEA, SPREAD, beam, headland, lit } from '../src/variants/lighthouse.js';
+import geese, { SPEED as GOOSE_SPEED, goose, slot as gooseSlot } from '../src/variants/geese.js';
+import leaves, { GROUND as LEAF_GROUND, MAX_FALLING, MAX_RESTING, sink } from '../src/variants/leaves.js';
+import turkey, { digit as finger, partial } from '../src/variants/turkey.js';
+import firtree, { GROW as TREE_GROW, TRIM as TREE_TRIM, fir, star as treeStar } from '../src/variants/firtree.js';
+import manger, { SCENE, STAR as MANGER_STAR, star as mangerStar } from '../src/variants/manger.js';
+import sleigh, { reindeer } from '../src/variants/sleigh.js';
+import snowfall, { GRAIN, REPOSE, settle, surface, village } from '../src/variants/snowfall.js';
+import snowflakes, { ALPHA, KINDS as FLAKE_KINDS, RADIUS as FLAKE_RADIUS, grid as flakeGrid, grow as flakeGrow } from '../src/variants/snowflakes.js';
 import menorah, { FIRST as MENORAH_FIRST, GAP as MENORAH_GAP, SLOTS as MENORAH_SLOTS, candles, order as menorahOrder } from '../src/variants/menorah.js';
 import nightcity from '../src/variants/nightcity.js';
 import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } from '../src/variants/skyline.js';
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 
-const all = { automaton, bats, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, gravitywell, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, newscience, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
+const all = { automaton, bats, geese, leaves, turkey, firtree, manger, sleigh, snowfall, snowflakes, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, gravitywell, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, newscience, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -71,7 +79,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['automaton', 'bats', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'gravitywell', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'newscience', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
+  for (const name of ['automaton', 'bats', 'geese', 'leaves', 'turkey', 'firtree', 'manger', 'sleigh', 'snowfall', 'snowflakes', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'gravitywell', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'newscience', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -493,6 +501,40 @@ describe('the seasons', () => {
     assert.ok(!inSeason(names, day(2026, 10, 31)).includes('menorah'));
     // Nine days weigh more than a month's animations, so it's seen while it lasts.
     assert.equal(weights(['menorah'], day(2026, 12, 6)).menorah, REFERENCE_DAYS / 9);
+  });
+
+  it('keeps the autumn animations to November, and the turkey to Thanksgiving Day', () => {
+    for (const name of ['geese', 'leaves']) {
+      assert.ok(inSeason(names, day(2026, 11, 1)).includes(name) && inSeason(names, day(2026, 11, 30)).includes(name), name);
+      assert.ok(!inSeason(names, day(2026, 10, 31)).includes(name) && !inSeason(names, day(2026, 12, 1)).includes(name), name);
+    }
+    // Every Thanksgiving listed is the fourth Thursday of November, and the turkey has that day alone.
+    for (const win of OCCASIONS.thanksgiving) {
+      const [y, mo, d] = win.split('-').map(Number);
+      assert.equal(mo, 11, win);
+      assert.equal(day(y, mo, d).getDay(), 4, win);
+      assert.ok(d >= 22 && d <= 28, win);
+      assert.ok(inSeason(names, day(y, mo, d)).includes('turkey'), win);
+      assert.ok(!inSeason(names, day(y, mo, d - 1)).includes('turkey') && !inSeason(names, day(y, mo, d + 1)).includes('turkey'), win);
+    }
+    // One day weighs most, so the turkey is seen on the day.
+    assert.equal(weights(['turkey', 'geese'], day(2026, 11, 26)).turkey, REFERENCE_DAYS);
+  });
+
+  it('keeps the snow to winter, the tree and the sleigh to December, and the manger to Christmas', () => {
+    for (const name of ['snowfall', 'snowflakes']) {
+      for (const d of [day(2026, 12, 1), day(2027, 1, 15), day(2027, 2, 28)]) assert.ok(inSeason(names, d).includes(name), `${name} ${d}`);
+      assert.ok(!inSeason(names, day(2026, 11, 30)).includes(name) && !inSeason(names, day(2027, 3, 1)).includes(name), name);
+    }
+    for (const name of ['firtree', 'sleigh']) {
+      assert.ok(inSeason(names, day(2026, 12, 1)).includes(name) && inSeason(names, day(2026, 12, 31)).includes(name), name);
+      assert.ok(!inSeason(names, day(2027, 1, 1)).includes(name), name);
+    }
+    assert.ok(!inSeason(names, day(2026, 12, 23)).includes('manger'));
+    assert.ok(inSeason(names, day(2026, 12, 24)).includes('manger') && inSeason(names, day(2026, 12, 25)).includes('manger'));
+    assert.ok(!inSeason(names, day(2026, 12, 26)).includes('manger'));
+    // Two days weigh fifteen times a month's animations, so the manger leads on the days.
+    assert.equal(weights(['manger', 'sleigh'], day(2026, 12, 25)).manger, REFERENCE_DAYS / 2);
   });
 
   it('never picks a draft at random, in or out of season', () => {
@@ -2391,5 +2433,268 @@ describe('the automaton', () => {
     assert.equal(last().includes(cell), !was);
     art.poke(30, 100, 3, 0);
     assert.equal(last().includes(cell), was);
+  });
+});
+
+describe('november', () => {
+  const at = (e) => /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(e.attrs.transform).slice(1).map(Number);
+
+  it('slots each goose behind the goose ahead and to one side, whichever way the skein flies', () => {
+    for (const dir of [1, -1]) {
+      for (let rank = 1; rank < 4; rank++) {
+        const near = gooseSlot(rank, -1, dir), far = gooseSlot(rank + 1, -1, dir);
+        assert.ok(near.x * dir < 0 && far.x * dir < near.x * dir, `${dir} ${rank}`);
+        assert.ok(near.y < 0 && far.y < near.y && gooseSlot(rank, 1, dir).y === -near.y);
+      }
+    }
+    // Wings up, and wings down: the tips go above, then below, the body.
+    const tip = (flap) => Number(goose(flap).trim().split(' ').pop());
+    assert.ok(tip(1) < -8 && tip(-1) > 8);
+  });
+
+  it('flies a V, its point ahead, and now and then the point drops back and another leads', () => {
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const { layer, art } = run(geese, 0, { seed });
+      const birds = () => find(layer, 'masthead-geese-goose');
+      const front = () => {
+        const xs = birds().map((b) => at(b)[0]);
+        const dir = Math.sign(Number(/scale\((-?[\d.]+)/.exec(birds()[0].attrs.transform)[1]));
+        return { dir, xs, lead: xs.indexOf(dir > 0 ? Math.max(...xs) : Math.min(...xs)) };
+      };
+      for (let n = 1; n <= 120; n++) art.step(n, 0);
+      const first = front(), count = birds().length;
+      assert.ok(count >= 7 && count <= 9, `${seed}: ${count}`);
+      // Every other goose is behind the point, some above it and some below.
+      const lead = at(birds()[first.lead]);
+      const rest = birds().filter((b, i) => i !== first.lead).map(at);
+      assert.ok(rest.every(([x]) => (x - lead[0]) * first.dir < 0), `${seed}`);
+      assert.ok(rest.some(([, y]) => y < lead[1] - 5) && rest.some(([, y]) => y > lead[1] + 5), `${seed}`);
+      // Above the name, and on screen top to bottom.
+      assert.ok(birds().map(at).every(([, y]) => y > 0 && y < 125), `${seed}`);
+      let changed = false;
+      for (let n = 121; n <= 700 && birds().length === count; n++) {
+        art.step(n, 0);
+        if (n % 20 === 0 && front().lead !== first.lead) changed = true;
+      }
+      assert.ok(changed, `${seed}`);
+    }
+  });
+
+  it('keeps its geese in shape however the masthead is stretched, and flies on at its pace', () => {
+    const { layer } = run(geese, 10, { seed: 3, stretch: 2 });
+    for (const b of find(layer, 'masthead-geese-goose')) {
+      const [sx, sy] = /scale\((-?[\d.]+) (-?[\d.]+)\)/.exec(b.attrs.transform).slice(1).map(Number);
+      assert.ok(Math.abs(Math.abs(sx) * 2 - sy) < 0.01, b.attrs.transform);
+    }
+    assert.ok(GOOSE_SPEED > 1, 'not a crawl');
+    // Flight after flight: a long run never runs out of geese for long.
+    const { layer: later } = run(geese, 6000, { seed: 9 });
+    assert.ok(find(later, 'masthead-geese').length === 1);
+  });
+
+  it('sinks a leaf fastest through the middle of its swing and slowest at the ends', () => {
+    assert.equal(sink(0), 1);
+    assert.ok(Math.abs(sink(Math.PI / 2) - 0.3) < 1e-9);
+    assert.ok(sink(0.3) > sink(1.2));
+  });
+
+  it('lets leaves fall and rock, piles them along the foot, and keeps the heap in bounds', () => {
+    const { layer, art } = run(leaves, 0, { seed: 4 });
+    const all = () => find(layer, 'masthead-leaves-leaf');
+    // A falling leaf rocks: its tilt swings both ways as it comes down.
+    const tilts = new Set();
+    for (let n = 1; n <= 400; n++) {
+      art.step(n, 0);
+      for (const l of all()) {
+        const r = /rotate\((-?[\d.]+)\)/.exec(l.attrs.transform);
+        const y = at(l)[1];
+        if (r && y < 200) tilts.add(Math.sign(Number(r[1])));
+      }
+    }
+    assert.ok(tilts.has(1) && tilts.has(-1));
+    for (let n = 401; n <= 12000; n++) art.step(n, 0);
+    const ys = all().map((l) => at(l)[1]);
+    const resting = ys.filter((y) => y > LEAF_GROUND - 30);
+    assert.ok(resting.length > 20, String(resting.length));
+    assert.ok(all().length <= MAX_FALLING + 4 + MAX_RESTING + 40, String(all().length));
+    // Shapes in paints only: no colours of their own.
+    assert.ok(!/#[0-9a-f]{3,6}|rgb|hsl|"fill"|"stroke"/i.test(serialize(layer)));
+    assert.ok(all().every((l) => /masthead-paint-fill-\d masthead-paint-stroke-\d/.test(l.attrs.class)));
+  });
+
+  it('rounds a finger from its base, up one side, round the tip and down the other', () => {
+    const pts = finger([0, 0], 0, 16, 60);
+    assert.deepEqual(pts[0].map((v) => Math.round(v)), [-8, 0]);
+    assert.deepEqual(pts[pts.length - 1].map((v) => Math.round(v)), [8, 0]);
+    assert.ok(Math.abs(Math.min(...pts.map((p) => p[1])) + 68) < 0.01);
+    assert.equal(partial([[0, 0], [10, 0], [10, 10]], 15).d, 'M0.0 0.0L10.0 0.0L10.0 5.0');
+  });
+
+  it('traces the hand, adds the turkey, rests, fades and draws another, at either end', () => {
+    const sides = new Set();
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const { layer, art } = run(turkey, 0, { seed });
+      const g = find(layer, 'masthead-turkey')[0];
+      sides.add(Number(/scale\((-?[\d.]+)/.exec(g.attrs.transform)[1]) > 0);
+      const lines = () => find(layer, 'masthead-turkey-line');
+      art.step(1, 0);
+      // The outline comes first: only it has ink to begin with.
+      assert.ok(lines()[0].attrs.d.includes('L') && lines().slice(1).every((l) => l.attrs.d === ''), `${seed}`);
+      let n = 1;
+      while (lines().some((l) => l.attrs.d === '') && n < 2000) art.step(++n, 0);
+      assert.ok(lines().length >= 15 && n < 2000, `${seed}`);
+      let faded = false;
+      while (n < 3000) {
+        art.step(++n, 0);
+        if (Number(g.attrs.opacity) < 0.5) faded = true;
+        if (faded && lines().every((l) => l.attrs.d === '' || !l.attrs.d.includes('L'))) break;
+      }
+      assert.ok(faded && n < 3000, `${seed}`);
+    }
+    assert.equal(sides.size, 2, 'both ends');
+  });
+});
+
+describe('winter and christmas', () => {
+  const at = (e) => /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(e.attrs.transform).slice(1).map(Number);
+
+  it('grows every kind of snowflake with six-fold symmetry, and mirrored, as real crystals are', () => {
+    for (const [beta, gamma] of FLAKE_KINDS) {
+      const g = flakeGrid(FLAKE_RADIUS, beta);
+      let steps = 0;
+      while (g.reach < 20 && steps < 2000) { flakeGrow(g, ALPHA, beta, gamma); steps++; }
+      assert.ok(g.reach >= 20, `${beta} ${gamma}: grew to ${g.reach} in ${steps}`);
+      const index = new Map(g.cells.map((c, i) => [c.join(','), i]));
+      g.cells.forEach(([q, r], i) => {
+        if (!g.ice[i]) return;
+        // A sixth of a turn, and a reflection, both land on ice.
+        assert.equal(g.ice[index.get([-r, q + r].join(','))], 1, `${beta} ${gamma} turn ${q},${r}`);
+        assert.equal(g.ice[index.get([r, q].join(','))], 1, `${beta} ${gamma} mirror ${q},${r}`);
+      });
+      // The air at the edge stays at its own level.
+      const edge = g.cells.findIndex(([q, r]) => q === FLAKE_RADIUS && r === 0);
+      assert.equal(g.water[edge], beta);
+    }
+  });
+
+  it('grows a flake either side of the name, rests, fades and grows another', () => {
+    const { layer, art } = run(snowflakes, 0, { seed: 2 });
+    const flakes = find(layer, 'masthead-snowflakes-flake');
+    assert.equal(flakes.length, 2);
+    const xs = flakes.map((f) => Number(/translate\(([\d.]+)/.exec(f.attrs.transform || 'translate(0')[1]));
+    let grown = false, faded = false, again = false;
+    for (let n = 1; n <= 2400 && !again; n++) {
+      art.step(n, 0);
+      const ice = flakes[0].children.reduce((k, c) => k + (c.attrs.d.match(/z/g) || []).length, 0);
+      if (ice > 200) grown = true;
+      if (grown && Number(flakes[0].attrs.opacity) < 0.5) faded = true;
+      if (faded && ice < 20) again = true;
+    }
+    assert.ok(grown && faded && again);
+    const placed = flakes.map((f) => Number(/translate\(([\d.]+)/.exec(f.attrs.transform)[1]));
+    assert.ok(placed[0] < 300 && placed[1] > 900, String(placed) + ' ' + xs);
+  });
+
+  it('lets a grain lie where the snow is gentle, slides it where it is steep, and loses it off the end', () => {
+    const flat = new Float64Array(5).fill(300), snow = new Float64Array(5);
+    assert.equal(settle(flat, snow, 2), 2);
+    assert.equal(snow[2], GRAIN);
+    // A step down of more than the repose: the grain goes over it.
+    const step = Float64Array.from([290, 290, 300, 300, 300]), deep = new Float64Array(5);
+    assert.equal(settle(step, deep, 1), 2);
+    // Off the end, it's gone.
+    const edge = Float64Array.from([290, 300]);
+    assert.equal(settle(edge, new Float64Array(2), 0), -1);
+    // However much falls, the snow lies no steeper than its repose (and the grain that topped it).
+    let rs = 3;
+    const rand = () => { rs = (Math.imul(rs, 1664525) + 1013904223) >>> 0; return rs / 0x100000000; };
+    const houses = village(rand, 600), base = new Float64Array(200), lying = new Float64Array(200);
+    for (let c = 0; c < 200; c++) base[c] = surface(houses, c * 3 + 1.5);
+    for (let i = 0; i < 6000; i++) settle(base, lying, Math.floor(rand() * 200));
+    for (let c = 0; c < 200; c++) {
+      if (lying[c] < GRAIN) continue;
+      for (const n of [c - 1, c + 1]) {
+        if (n < 0 || n >= 200) continue;
+        assert.ok(base[n] - lying[n] - (base[c] - lying[c]) <= REPOSE + GRAIN + 1e-9, `${c} to ${n}`);
+      }
+    }
+  });
+
+  it('snows on the village until the snow lies deep, then lets it melt away and snows again', () => {
+    const { layer, art } = run(snowfall, 0, { seed: 5 });
+    const snow = find(layer, 'masthead-snowfall-snow')[0];
+    const depth = () => {
+      const ys = snow.attrs.d.split(/[MLZ]/).filter(Boolean).map((p) => Number(p.trim().split(' ')[1]));
+      const half = ys.length / 2;
+      let most = 0;
+      for (let i = 0; i < half; i++) most = Math.max(most, ys[ys.length - 1 - i] - ys[i]);
+      return most;
+    };
+    let deep = false, bare = false, again = false;
+    for (let n = 1; n <= 9000 && !again; n++) {
+      art.step(n, 0);
+      if (n % 50) continue;
+      const d = depth();
+      if (d > 10) { if (bare) again = true; deep = true; }
+      if (deep && d < 0.5) bare = true;
+    }
+    assert.ok(deep && bare && again, `${deep} ${bare} ${again}`);
+  });
+
+  it('grows a fir with drooping branches shorter toward the top, then trims it', () => {
+    let rs = 9;
+    const rand = () => { rs = (Math.imul(rs, 1664525) + 1013904223) >>> 0; return rs / 0x100000000; };
+    const { segs } = fir(rand);
+    const branches = segs.filter((s) => s.kind === 1 && s.x1 > 0).sort((a, b) => b.y0 - a.y0);
+    for (let i = 1; i < branches.length; i++) assert.ok(branches[i].x1 < branches[i - 1].x1 + 6, 'shorter going up');
+    assert.ok(branches.every((b) => b.y1 > b.y0), 'drooping');
+    assert.equal(treeStar(10).split('L').length, 10);
+
+    const { layer, art } = run(firtree, 0, { seed: 4 });
+    for (let n = 1; n <= TREE_GROW + TREE_TRIM + 10; n++) art.step(n, 0);
+    const bulbs = find(layer, 'masthead-firtree-bulb');
+    assert.ok(bulbs.length > 15);
+    assert.ok(find(layer, 'masthead-firtree-bauble').length > 5 && find(layer, 'masthead-firtree-star').length === 1);
+    // Lit bulbs are filled and unlit ones are outlines: both, at once, somewhere on the tree.
+    const lit = bulbs.filter((b) => b.attrs.class.includes('masthead-firtree-lit')).length;
+    assert.ok(lit > 0 && lit < bulbs.length, String(lit));
+  });
+
+  it('runs the reindeer with their legs reaching the way they go, and flies over the moon, both ways', () => {
+    // Reaching out: the front leg's hoof well ahead of the shoulder, the hind leg's well behind the hip.
+    const hooves = reindeer(Math.PI / 2).split('M').slice(-4).map((p) => Number(p.trim().split('L').pop().split(' ')[0]));
+    assert.ok(hooves[0] > 10 && hooves[2] < -12, String(hooves));
+    const dirs = new Set();
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const { layer, art } = run(sleigh, 0, { seed });
+      const moon = find(layer, 'masthead-sleigh-moon')[0], team = find(layer, 'masthead-sleigh-team')[0];
+      let last = null, over = false;
+      for (let n = 1; n <= 1200; n++) {
+        art.step(n, 0);
+        if (team.attrs.opacity !== '1') { last = null; continue; }
+        const [x, y] = at(team), sx = Number(/scale\((-?[\d.]+)/.exec(team.attrs.transform)[1]);
+        if (last !== null && x !== last) {
+          // Facing the way it flies.
+          assert.equal(Math.sign(sx), Math.sign(x - last), `${seed}`);
+          dirs.add(Math.sign(x - last));
+        }
+        if (Math.abs(x - Number(moon.attrs.cx)) < 2 && Math.abs(y - 84) < 50) over = true;
+        last = x;
+      }
+      assert.ok(over, `${seed}`);
+    }
+    assert.equal(dirs.size, 2);
+  });
+
+  it('keeps the stable still, under its star, and lets only the light and the far stars move', () => {
+    assert.equal(mangerStar(22, 10).split('L').length, 16);
+    assert.ok(MANGER_STAR.y < 100);
+    const { layer, art } = run(manger, 1, { seed: 3 });
+    const still = () => Object.keys(SCENE).map((k) => serialize(find(layer, 'masthead-manger-' + k)[0])).join();
+    const light = () => serialize(find(layer, 'masthead-manger-light')[0]);
+    const before = still(), glow = light();
+    for (let n = 2; n <= 200; n++) art.step(n, 0);
+    assert.equal(still(), before);
+    assert.notEqual(light(), glow);
   });
 });

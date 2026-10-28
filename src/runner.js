@@ -28,10 +28,13 @@ export var HEIGHT = 320;
    or another occasion's name. All in the visitor's own time. */
 export var OCCASIONS = {
   halloween: [10],
+  christmas: ['12-24..12-25'],
   // The eight nights, and the day after the eighth: a Hebrew day starts at sundown, so each window
   // runs from the day of the first candle to the day after the eighth. Dated; add years as they come.
   hanukkah: ['2026-12-04..2026-12-12', '2027-12-24..2028-01-01', '2028-12-12..2028-12-20',
-    '2029-12-01..2029-12-09', '2030-12-19..2030-12-27']
+    '2029-12-01..2029-12-09', '2030-12-19..2030-12-27'],
+  // The United States' Thanksgiving, the fourth Thursday of November. Dated; add years as they come.
+  thanksgiving: ['2026-11-26', '2027-11-25', '2028-11-23', '2029-11-22', '2030-11-28']
 };
 
 /* The seasonal animations and their windows (as above, or occasions by name). Out of season they
@@ -42,11 +45,20 @@ export var OCCASIONS = {
 export var SEASONS = {
   bats: ['halloween'],
   eyes: ['halloween'],
+  firtree: [12],
+  geese: [11],
   ghosts: ['halloween'],
   graveyard: ['halloween'],
+  leaves: [11],
+  manger: ['christmas'],
   menorah: ['hanukkah'],
   pumpkins: ['halloween'],
-  spider: ['halloween']
+  sleigh: [12],
+  // Snow is winter's, not only Christmas's.
+  snowfall: [12, 1, 2],
+  snowflakes: [12, 1, 2],
+  spider: ['halloween'],
+  turkey: ['thanksgiving']
 };
 
 export var REFERENCE_DAYS = 30;
