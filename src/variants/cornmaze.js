@@ -9,12 +9,12 @@
 export var COLS = 10;
 export var ROWS = 10;
 /* Steps to walk a cell, and to turn a quarter. */
-export var PACE = 16;
-export var TURN = 12;
+export var PACE = 32;
+export var TURN = 26;
 var FADE = 30;
 /* The corn's height and the eye's, in cells; how far you can see, and where the stalks stop. */
-var CORN = 1.3;
-var EYE = 0.38;
+var CORN = 0.78;
+var EYE = 0.45;
 var VIEW = 7;
 var STALKS = 3.5;
 var NEAR = 0.12;
@@ -113,6 +113,23 @@ export function where(legs, t) {
   return legs[legs.length - 1].to.slice();
 }
 
+/* A leaf blade from node [n] on a stalk, [length] long, arching up and out to the side [dir]
+   (1 right, -1 left; already squeezed for a stretched masthead) and drooping at its tip. */
+export function blade(n, dir, length) {
+  var L = length, x = n[0], y = n[1];
+  function p(dx, dy) { return (x + dir * dx * L).toFixed(1) + ' ' + (y + dy * L).toFixed(1); }
+  return 'M' + x.toFixed(1) + ' ' + y.toFixed(1) + 'Q' + p(0.35, -0.55) + ' ' + p(0.95, -0.2) + 'Q' + p(0.4, -0.38) + ' ' + x.toFixed(1) + ' ' + (y + 0.06 * L).toFixed(1) + 'Z';
+}
+
+/* An ear of corn in its husk from node [n], [length] long, angled up and out to [dir], with the
+   husk's tip curling off it. */
+export function ear(n, dir, length) {
+  var L = length, x = n[0], y = n[1];
+  function p(dx, dy) { return (x + dir * dx * L).toFixed(1) + ' ' + (y + dy * L).toFixed(1); }
+  return 'M' + x.toFixed(1) + ' ' + y.toFixed(1) + 'Q' + p(0.45, -0.25) + ' ' + p(0.4, -0.9) + 'Q' + p(0.1, -0.5) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + 'Z' +
+    'M' + p(0.4, -0.9) + 'Q' + p(0.45, -1.1) + ' ' + p(0.62, -1.08);
+}
+
 export default function cornmaze(layer, m) {
   var W = m.width;
   var rs = (m.seed() >>> 0) || 1;
@@ -145,7 +162,12 @@ export default function cornmaze(layer, m) {
 
   function slot(i) {
     while (pool.length <= i) {
-      pool.push({ face: m.el('path', { 'class': 'masthead-cornmaze-wall' }, g), corn: m.el('path', { 'class': 'masthead-cornmaze-corn' }, g) });
+      pool.push({
+        face: m.el('path', { 'class': 'masthead-cornmaze-wall' }, g),
+        corn: m.el('path', { 'class': 'masthead-cornmaze-corn' }, g),
+        leaves: m.el('path', { 'class': 'masthead-cornmaze-leaves' }, g),
+        ears: m.el('path', { 'class': 'masthead-cornmaze-ears' }, g)
+      });
     }
     return pool[i];
   }
@@ -186,19 +208,24 @@ export default function cornmaze(layer, m) {
       var it = slot(i), foot = s.pts.map(function (p) { return screen(p[0], p[1], 0); }), top = s.pts.map(function (p) { return screen(p[0], p[1], p[2]); });
       var ground = 'M' + foot.map(pt).join('L'), crown = 'M' + top.map(pt).join('L');
       it.face.setAttribute('d', ground + 'L' + top.slice().reverse().map(pt).join('L') + 'Z');
-      var lines = ground + crown;
-      // Near, a stalk at each point inside the wall, two leaves off it and a tassel on top.
+      var lines = ground + crown, blades = '', ears = '';
+      // Near, a stalk at each point inside the wall: leaf blades arching out from it on
+      // alternate sides, an ear in its husk, and a spray of tassel on top.
       s.pts.forEach(function (p, k) {
         if (s.far > STALKS || !p[3] || p[1] < NEAR * 2) return;
-        var leaf = FOCAL * 0.13 / p[1], wide = leaf * squeeze, lean = k % 2 ? 1 : -1, f = foot[k], c = top[k];
-        var y1 = f[1] + (c[1] - f[1]) * 0.45, y2 = f[1] + (c[1] - f[1]) * 0.7;
-        lines += 'M' + pt(f) + 'L' + pt(c) +
-          'M' + pt([f[0], y1]) + 'l' + (lean * wide * 0.8).toFixed(1) + ' ' + (-leaf * 0.5).toFixed(1) +
-          'M' + pt([f[0], y2]) + 'l' + (-lean * wide * 0.7).toFixed(1) + ' ' + (-leaf * 0.45).toFixed(1);
+        var f = foot[k], c = top[k], tall = f[1] - c[1], side = k % 2 ? 1 : -1;
+        lines += 'M' + pt(f) + 'L' + pt(c);
+        [0.28, 0.5, 0.72].forEach(function (at, j) {
+          blades += blade([f[0], f[1] - tall * at], (j % 2 ? -side : side) * squeeze, tall * (0.42 - at * 0.15));
+        });
+        ears += ear([f[0], f[1] - tall * 0.45], -side * squeeze, tall * 0.2);
+        for (var t = -2; t <= 2; t++) lines += 'M' + pt(c) + 'l' + (t * tall * 0.035 * squeeze).toFixed(1) + ' ' + (-tall * (0.09 - Math.abs(t) * 0.015)).toFixed(1);
       });
+      it.leaves.setAttribute('d', blades);
+      it.ears.setAttribute('d', ears);
       it.corn.setAttribute('d', lines);
     });
-    for (var i = seen.length; i < pool.length; i++) { pool[i].face.setAttribute('d', ''); pool[i].corn.setAttribute('d', ''); }
+    for (var i = seen.length; i < pool.length; i++) ['face', 'corn', 'leaves', 'ears'].forEach(function (k) { pool[i][k].setAttribute('d', ''); });
   }
 
   begin(0);

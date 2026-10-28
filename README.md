@@ -20,7 +20,7 @@ only puts the art on its page and starts the runner.
 | `chase` | A fast bird and a canine forever after it along the foot of the masthead: skids, a smack into the frame's edge, an anvil, the train. It always pops back up. |
 | `circuit` | Fireflies running the traces of a circuit board, moving by SVG alone. |
 | `citydefense` | Missile defense playing itself, slowly: trails from above, counter-missiles bursting into rings, cities falling and rebuilt. |
-| `cornmaze` | November: walking through a maze of corn, seen through your own eyes: walls of corn taller than you, in stalks and leaves near by; you keep your right hand on the corn, turning at the corners and about at the dead ends, until you're out, and then into another. |
+| `cornmaze` | November: walking through a maze of corn, seen through your own eyes: walls of corn a little taller than you, near by in stalks with arching leaves, ears and tassels, in green and yellow from the paints (below); you keep your right hand on the corn, turning at the corners and about at the dead ends, until you're out, and then into another. |
 | `deadline` | A writer at a desk on the left, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard. |
 | `drips` | Wet paint in real colours along the top edge, a drip letting go now and then: fast at first, slowing and thickening to a round bead, and staying; now and then a bead falls and spots the masthead lower down. When it's well painted the paint fades and a fresh band gathers. The colours are the paint palette (below). |
 | `duel` | Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth: no touches, no winner. |
@@ -126,7 +126,7 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    ```
 
    Some animations are in real colours rather than the theme's: `drips`, `newscience`, `leaves` and
-   `automaton` always, the baubles on the `firtree`, and `grid`, `harmonograph` and `life` in about
+   `automaton` always, the baubles on the `firtree`, the corn in `cornmaze`, and `grid`, `harmonograph` and `life` in about
    one run in three, chosen from
    the seed. They use a paint palette, `--masthead-paint-1` to `--masthead-paint-9`, with defaults of artists' pigments (cadmium red,
    cadmium orange, cadmium yellow, sap green, viridian, cerulean, ultramarine, dioxazine violet,

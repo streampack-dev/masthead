@@ -41,7 +41,7 @@ import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as
 import grid, { MIN_H, MIN_W, PRIMARIES, coloured as gridColoured } from '../src/variants/grid.js';
 import harmonograph, { INK_CHUNKS, PER_STEP, POINTS, coloured as inkColoured, pen, pendulums } from '../src/variants/harmonograph.js';
 import lighthouse, { REACH, REVOLUTION, SEA, SPREAD, beam, headland, lit } from '../src/variants/lighthouse.js';
-import cornmaze, { COLS as MAZE_COLS, PACE as MAZE_PACE, ROWS as MAZE_ROWS, carve, follow as mazeFollow, schedule as mazeWalk, walls as mazeWalls, where as mazeWhere } from '../src/variants/cornmaze.js';
+import cornmaze, { blade as cornBlade, ear as cornEar, COLS as MAZE_COLS, PACE as MAZE_PACE, ROWS as MAZE_ROWS, carve, follow as mazeFollow, schedule as mazeWalk, walls as mazeWalls, where as mazeWhere } from '../src/variants/cornmaze.js';
 import geese, { SPEED as GOOSE_SPEED, goose, slot as gooseSlot } from '../src/variants/geese.js';
 import leaves, { GROUND as LEAF_GROUND, MAX_FALLING, MAX_RESTING, sink } from '../src/variants/leaves.js';
 import turkey, { digit as finger, partial } from '../src/variants/turkey.js';
@@ -2578,6 +2578,18 @@ describe('november', () => {
     const all = mazeWalls(MAZE_COLS, MAZE_ROWS, links);
     assert.ok(all.some((w) => w[0] === 0 && w[1] === 1 && w[2] === 0 && w[3] === MAZE_ROWS));
     assert.ok(!all.some((w) => w[0] === 0 && w[2] === 0 && w[1] === 0));
+  });
+
+  it('draws leaf blades and ears from their node, up and out to the side they are given', () => {
+    const xs = (d) => [...d.matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map((p) => [+p[1], +p[2]]);
+    for (const dir of [1, -1]) {
+      for (const shape of [cornBlade, cornEar]) {
+        const pts = xs(shape([100, 200], dir, 40));
+        assert.deepEqual(pts[0], [100, 200]);
+        assert.ok(pts.every((p) => (p[0] - 100) * dir >= 0 && p[1] <= 200 + 40 * 0.06));
+        assert.ok(pts.some((p) => (p[0] - 100) * dir > 10 && p[1] < 190));
+      }
+    }
   });
 
   it('draws the corn far to near, so the near corn hides what is behind it, and walks maze after maze', () => {
