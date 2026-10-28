@@ -8,6 +8,7 @@ export var variants = {
   chase: function () { return import('./variants/chase.js'); },
   circuit: function () { return import('./variants/circuit.js'); },
   citydefense: function () { return import('./variants/citydefense.js'); },
+  cornmaze: function () { return import('./variants/cornmaze.js'); },
   deadline: function () { return import('./variants/deadline.js'); },
   drips: function () { return import('./variants/drips.js'); },
   duel: function () { return import('./variants/duel.js'); },
@@ -15,6 +16,7 @@ export var variants = {
   flowfield: function () { return import('./variants/flowfield.js'); },
   flyby: function () { return import('./variants/flyby.js'); },
   fractal: function () { return import('./variants/fractal.js'); },
+  geese: function () { return import('./variants/geese.js'); },
   ghostrider: function () { return import('./variants/ghostrider.js'); },
   ghosts: function () { return import('./variants/ghosts.js'); },
   grass: function () { return import('./variants/grass.js'); },
@@ -23,6 +25,7 @@ export var variants = {
   grid: function () { return import('./variants/grid.js'); },
   harmonograph: function () { return import('./variants/harmonograph.js'); },
   lander: function () { return import('./variants/lander.js'); },
+  leaves: function () { return import('./variants/leaves.js'); },
   life: function () { return import('./variants/life.js'); },
   lighthouse: function () { return import('./variants/lighthouse.js'); },
   menorah: function () { return import('./variants/menorah.js'); },
@@ -41,6 +44,7 @@ export var variants = {
   train: function () { return import('./variants/train.js'); },
   triangles: function () { return import('./variants/triangles.js'); },
   truchet: function () { return import('./variants/truchet.js'); },
+  turkey: function () { return import('./variants/turkey.js'); },
   water: function () { return import('./variants/water.js'); },
   windfarm: function () { return import('./variants/windfarm.js'); }
 };

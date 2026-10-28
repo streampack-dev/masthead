@@ -9,6 +9,7 @@ var BLURBS = {
   chase: 'A fast bird and the canine forever after it: skids, a smack into the frame, an anvil, the train. It always pops back up. Click to paint a tunnel.',
   circuit: 'Fireflies running the traces of a circuit board. Click to send a surge through it.',
   citydefense: 'The old missile-defense game, playing itself, slowly: trails from above, rings bursting, cities falling and rebuilt. Click to fire.',
+  cornmaze: 'November: a maze of hedges that builds itself, then a walker solving it, right hand on the hedge.',
   deadline: 'A writer at a desk, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard.',
   drips: 'Wet paint in real colours along the top, a drip letting go now and then: fast at first, slowing and thickening to a round bead, and staying. Now and then a bead falls. When the masthead is well painted it fades and starts again. Click to splatter paint.',
   duel: 'Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth, forever: no touches, no winner.',
@@ -16,6 +17,7 @@ var BLURBS = {
   flowfield: 'A slow current across the masthead, like wind over water: faint strokes turning with it and a few motes riding it, livelier low. Click to drop an eddy.',
   flyby: 'A flight in through the solar system, like Voyager 1 in reverse: orbits and planets (far from scale) sweeping past on the way to the sun, then round again. Click for a burn.',
   fractal: 'A branching growth tracing round the name, resting when grown, then starting again. Click to sprout a root.',
+  geese: 'November: a skein of geese flying a V, beating their wings in step with the wake; now and then the leader drops back.',
   ghostrider: 'A wireframe road ahead, bending and rising gently, the hills sliding aside on the bends. Click to open the throttle. For Neil Peart.',
   ghosts: 'October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below.',
   grass: 'A field of grass, the wind moving through it in slow swells and passing gusts. Click to send a gust through it.',
@@ -24,6 +26,7 @@ var BLURBS = {
   harmonograph: 'Two harmonographs, one either side: each a single line drawn by damped pendulums, spiralling slowly inward, then fading for the next; about one run in three in coloured inks. Click a side to push its pendulums.',
   grid: 'A composition in the manner of De Stijl, in the theme\'s own tones, or about one run in three in red, yellow and blue: now and then a line slides, a region is cut again, or a tone moves to the next block. Click to cut a rectangle.',
   lander: 'Lunar Lander, flown by its autopilot: a slow descent, short burns, a gentle landing on the pad.',
+  leaves: 'November: leaves swinging from side to side as they fall, piling up along the foot; now and then a gust.',
   lighthouse: 'A lighthouse at night on a rocky headland, its beam turning: swinging out across the sea and sky, flaring as it faces you. Click to swing the beam round to that side.',
   life: "Conway's Game of Life, reseeded when it settles; about one run in three coloured by each cell's age. Click to plant a pattern.",
   menorah: 'Hanukkah: a menorah, the shamash lit and then the night\'s candles, newest first. Click for a breath of air across the flames.',
@@ -42,6 +45,7 @@ var BLURBS = {
   train: 'An ASCII train along the foot of the masthead, trailing smoke; then the empty track. Click to blow the whistle, or call a train.',
   triangles: 'A low-poly mesh of faint triangles, breathing: every point drifting on its own small orbit, a triangle or two now and then filling faintly and fading. Click to send a ripple through it.',
   truchet: 'Quarter-circle tiles winding paths across the masthead, one tile now and then easing round a quarter turn and rewiring them; now and then a glow runs along a path. Click to turn a tile, and its neighbours after it.',
+  turkey: 'Thanksgiving Day: the hand turkey, traced round a hand and finished as children draw it.',
   water: 'A still surface, seen from just above, that drops land on now and then. Click to skip a stone.',
   windfarm: 'Turbines along low hills, each turning at its own pace in a wind that rises and falls.'
 };

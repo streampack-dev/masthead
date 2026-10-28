@@ -41,13 +41,17 @@ import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as
 import grid, { MIN_H, MIN_W, PRIMARIES, coloured as gridColoured } from '../src/variants/grid.js';
 import harmonograph, { INK_CHUNKS, PER_STEP, POINTS, coloured as inkColoured, pen, pendulums } from '../src/variants/harmonograph.js';
 import lighthouse, { REACH, REVOLUTION, SEA, SPREAD, beam, headland, lit } from '../src/variants/lighthouse.js';
+import cornmaze, { COLS as MAZE_COLS, ROWS as MAZE_ROWS, carve, follow as mazeFollow } from '../src/variants/cornmaze.js';
+import geese, { SPEED as GOOSE_SPEED, goose, slot as gooseSlot } from '../src/variants/geese.js';
+import leaves, { GROUND as LEAF_GROUND, MAX_FALLING, MAX_RESTING, sink } from '../src/variants/leaves.js';
+import turkey, { digit as finger, partial } from '../src/variants/turkey.js';
 import menorah, { FIRST as MENORAH_FIRST, GAP as MENORAH_GAP, SLOTS as MENORAH_SLOTS, candles, order as menorahOrder } from '../src/variants/menorah.js';
 import nightcity from '../src/variants/nightcity.js';
 import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } from '../src/variants/skyline.js';
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 
-const all = { automaton, bats, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, gravitywell, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, newscience, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
+const all = { automaton, bats, cornmaze, geese, leaves, turkey, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, gravitywell, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, newscience, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -71,7 +75,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['automaton', 'bats', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'gravitywell', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'newscience', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
+  for (const name of ['automaton', 'bats', 'cornmaze', 'geese', 'leaves', 'turkey', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'gravitywell', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'newscience', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -493,6 +497,24 @@ describe('the seasons', () => {
     assert.ok(!inSeason(names, day(2026, 10, 31)).includes('menorah'));
     // Nine days weigh more than a month's animations, so it's seen while it lasts.
     assert.equal(weights(['menorah'], day(2026, 12, 6)).menorah, REFERENCE_DAYS / 9);
+  });
+
+  it('keeps the autumn animations to November, and the turkey to Thanksgiving Day', () => {
+    for (const name of ['cornmaze', 'geese', 'leaves']) {
+      assert.ok(inSeason(names, day(2026, 11, 1)).includes(name) && inSeason(names, day(2026, 11, 30)).includes(name), name);
+      assert.ok(!inSeason(names, day(2026, 10, 31)).includes(name) && !inSeason(names, day(2026, 12, 1)).includes(name), name);
+    }
+    // Every Thanksgiving listed is the fourth Thursday of November, and the turkey has that day alone.
+    for (const win of OCCASIONS.thanksgiving) {
+      const [y, mo, d] = win.split('-').map(Number);
+      assert.equal(mo, 11, win);
+      assert.equal(day(y, mo, d).getDay(), 4, win);
+      assert.ok(d >= 22 && d <= 28, win);
+      assert.ok(inSeason(names, day(y, mo, d)).includes('turkey'), win);
+      assert.ok(!inSeason(names, day(y, mo, d - 1)).includes('turkey') && !inSeason(names, day(y, mo, d + 1)).includes('turkey'), win);
+    }
+    // One day weighs most, so the turkey is seen on the day.
+    assert.equal(weights(['turkey', 'geese'], day(2026, 11, 26)).turkey, REFERENCE_DAYS);
   });
 
   it('never picks a draft at random, in or out of season', () => {
@@ -2391,5 +2413,168 @@ describe('the automaton', () => {
     assert.equal(last().includes(cell), !was);
     art.poke(30, 100, 3, 0);
     assert.equal(last().includes(cell), was);
+  });
+});
+
+describe('november', () => {
+  const at = (e) => /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(e.attrs.transform).slice(1).map(Number);
+
+  it('slots each goose behind the goose ahead and to one side, whichever way the skein flies', () => {
+    for (const dir of [1, -1]) {
+      for (let rank = 1; rank < 4; rank++) {
+        const near = gooseSlot(rank, -1, dir), far = gooseSlot(rank + 1, -1, dir);
+        assert.ok(near.x * dir < 0 && far.x * dir < near.x * dir, `${dir} ${rank}`);
+        assert.ok(near.y < 0 && far.y < near.y && gooseSlot(rank, 1, dir).y === -near.y);
+      }
+    }
+    // Wings up, and wings down: the tips go above, then below, the body.
+    const tip = (flap) => Number(goose(flap).trim().split(' ').pop());
+    assert.ok(tip(1) < -8 && tip(-1) > 8);
+  });
+
+  it('flies a V, its point ahead, and now and then the point drops back and another leads', () => {
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const { layer, art } = run(geese, 0, { seed });
+      const birds = () => find(layer, 'masthead-geese-goose');
+      const front = () => {
+        const xs = birds().map((b) => at(b)[0]);
+        const dir = Math.sign(Number(/scale\((-?[\d.]+)/.exec(birds()[0].attrs.transform)[1]));
+        return { dir, xs, lead: xs.indexOf(dir > 0 ? Math.max(...xs) : Math.min(...xs)) };
+      };
+      for (let n = 1; n <= 120; n++) art.step(n, 0);
+      const first = front(), count = birds().length;
+      assert.ok(count >= 7 && count <= 9, `${seed}: ${count}`);
+      // Every other goose is behind the point, some above it and some below.
+      const lead = at(birds()[first.lead]);
+      const rest = birds().filter((b, i) => i !== first.lead).map(at);
+      assert.ok(rest.every(([x]) => (x - lead[0]) * first.dir < 0), `${seed}`);
+      assert.ok(rest.some(([, y]) => y < lead[1] - 5) && rest.some(([, y]) => y > lead[1] + 5), `${seed}`);
+      // Above the name, and on screen top to bottom.
+      assert.ok(birds().map(at).every(([, y]) => y > 0 && y < 125), `${seed}`);
+      let changed = false;
+      for (let n = 121; n <= 700 && birds().length === count; n++) {
+        art.step(n, 0);
+        if (n % 20 === 0 && front().lead !== first.lead) changed = true;
+      }
+      assert.ok(changed, `${seed}`);
+    }
+  });
+
+  it('keeps its geese in shape however the masthead is stretched, and flies on at its pace', () => {
+    const { layer } = run(geese, 10, { seed: 3, stretch: 2 });
+    for (const b of find(layer, 'masthead-geese-goose')) {
+      const [sx, sy] = /scale\((-?[\d.]+) (-?[\d.]+)\)/.exec(b.attrs.transform).slice(1).map(Number);
+      assert.ok(Math.abs(Math.abs(sx) * 2 - sy) < 0.01, b.attrs.transform);
+    }
+    assert.ok(GOOSE_SPEED > 1, 'not a crawl');
+    // Flight after flight: a long run never runs out of geese for long.
+    const { layer: later } = run(geese, 6000, { seed: 9 });
+    assert.ok(find(later, 'masthead-geese').length === 1);
+  });
+
+  it('sinks a leaf fastest through the middle of its swing and slowest at the ends', () => {
+    assert.equal(sink(0), 1);
+    assert.ok(Math.abs(sink(Math.PI / 2) - 0.3) < 1e-9);
+    assert.ok(sink(0.3) > sink(1.2));
+  });
+
+  it('lets leaves fall and rock, piles them along the foot, and keeps the heap in bounds', () => {
+    const { layer, art } = run(leaves, 0, { seed: 4 });
+    const all = () => find(layer, 'masthead-leaves-leaf');
+    // A falling leaf rocks: its tilt swings both ways as it comes down.
+    const tilts = new Set();
+    for (let n = 1; n <= 400; n++) {
+      art.step(n, 0);
+      for (const l of all()) {
+        const r = /rotate\((-?[\d.]+)\)/.exec(l.attrs.transform);
+        const y = at(l)[1];
+        if (r && y < 200) tilts.add(Math.sign(Number(r[1])));
+      }
+    }
+    assert.ok(tilts.has(1) && tilts.has(-1));
+    for (let n = 401; n <= 12000; n++) art.step(n, 0);
+    const ys = all().map((l) => at(l)[1]);
+    const resting = ys.filter((y) => y > LEAF_GROUND - 30);
+    assert.ok(resting.length > 20, String(resting.length));
+    assert.ok(all().length <= MAX_FALLING + 4 + MAX_RESTING + 40, String(all().length));
+    // Shapes in paints only: no colours of their own.
+    assert.ok(!/#[0-9a-f]{3,6}|rgb|hsl|"fill"|"stroke"/i.test(serialize(layer)));
+    assert.ok(all().every((l) => /masthead-paint-fill-\d masthead-paint-stroke-\d/.test(l.attrs.class)));
+  });
+
+  it('carves a perfect maze: every cell reached once, one way between any two', () => {
+    let rs = 11;
+    const rand = () => { rs = (Math.imul(rs, 1664525) + 1013904223) >>> 0; return rs / 0x100000000; };
+    const order = carve(MAZE_COLS, MAZE_ROWS, rand);
+    assert.equal(order.length, MAZE_COLS * MAZE_ROWS);
+    assert.equal(new Set(order.map((o) => o.cell)).size, MAZE_COLS * MAZE_ROWS);
+    const links = order.map(() => []);
+    const reached = new Set([0]);
+    for (const o of order.slice(1)) {
+      assert.ok(reached.has(o.from), 'carved from a reached cell');
+      const d = Math.abs(o.cell - o.from);
+      assert.ok(d === MAZE_COLS || (d === 1 && Math.floor(o.cell / MAZE_COLS) === Math.floor(o.from / MAZE_COLS)), 'to a neighbour');
+      reached.add(o.cell);
+      links[o.from].push(o.cell);
+      links[o.cell].push(o.from);
+    }
+    // The walker, right hand on the hedge, comes out at the bottom right, through open passages only.
+    const route = mazeFollow(MAZE_COLS, MAZE_ROWS, links);
+    assert.equal(route[0], 0);
+    assert.equal(route[route.length - 1], MAZE_COLS * MAZE_ROWS - 1);
+    for (let i = 1; i < route.length; i++) assert.ok(links[route[i - 1]].includes(route[i]));
+  });
+
+  it('builds the maze, walks it to the way out, and starts another, at one end of the masthead', () => {
+    const sides = new Set();
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const { layer, art } = run(cornmaze, 0, { seed });
+      const g = find(layer, 'masthead-cornmaze')[0];
+      const x = Number(/translate\(([\d.]+)/.exec(g.attrs.transform)[1]);
+      sides.add(x < 600);
+      const walker = find(layer, 'masthead-cornmaze-walker')[0];
+      const hedges = find(layer, 'masthead-cornmaze-hedge')[0];
+      const full = hedges.attrs.d;
+      let out = false, again = false;
+      for (let n = 1; n <= 4000 && !again; n++) {
+        art.step(n, 0);
+        if (Number(walker.attrs.cy) > 34 + (MAZE_ROWS - 1) * 21 && Math.abs(Number(walker.attrs.cx)) > (MAZE_COLS - 1) * 21 - 260 * (x < 600 ? 0 : 1)) out = true;
+        if (out && hedges.attrs.d.length >= full.length) again = true;
+      }
+      assert.ok(out && again, `${seed}`);
+    }
+    assert.equal(sides.size, 2, 'both ends');
+  });
+
+  it('rounds a finger from its base, up one side, round the tip and down the other', () => {
+    const pts = finger([0, 0], 0, 16, 60);
+    assert.deepEqual(pts[0].map((v) => Math.round(v)), [-8, 0]);
+    assert.deepEqual(pts[pts.length - 1].map((v) => Math.round(v)), [8, 0]);
+    assert.ok(Math.abs(Math.min(...pts.map((p) => p[1])) + 68) < 0.01);
+    assert.equal(partial([[0, 0], [10, 0], [10, 10]], 15).d, 'M0.0 0.0L10.0 0.0L10.0 5.0');
+  });
+
+  it('traces the hand, adds the turkey, rests, fades and draws another, at either end', () => {
+    const sides = new Set();
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const { layer, art } = run(turkey, 0, { seed });
+      const g = find(layer, 'masthead-turkey')[0];
+      sides.add(Number(/scale\((-?[\d.]+)/.exec(g.attrs.transform)[1]) > 0);
+      const lines = () => find(layer, 'masthead-turkey-line');
+      art.step(1, 0);
+      // The outline comes first: only it has ink to begin with.
+      assert.ok(lines()[0].attrs.d.includes('L') && lines().slice(1).every((l) => l.attrs.d === ''), `${seed}`);
+      let n = 1;
+      while (lines().some((l) => l.attrs.d === '') && n < 2000) art.step(++n, 0);
+      assert.ok(lines().length >= 15 && n < 2000, `${seed}`);
+      let faded = false;
+      while (n < 3000) {
+        art.step(++n, 0);
+        if (Number(g.attrs.opacity) < 0.5) faded = true;
+        if (faded && lines().every((l) => l.attrs.d === '' || !l.attrs.d.includes('L'))) break;
+      }
+      assert.ok(faded && n < 3000, `${seed}`);
+    }
+    assert.equal(sides.size, 2, 'both ends');
   });
 });

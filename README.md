@@ -20,6 +20,7 @@ only puts the art on its page and starts the runner.
 | `chase` | A fast bird and a canine forever after it along the foot of the masthead: skids, a smack into the frame's edge, an anvil, the train. It always pops back up. |
 | `circuit` | Fireflies running the traces of a circuit board, moving by SVG alone. |
 | `citydefense` | Missile defense playing itself, slowly: trails from above, counter-missiles bursting into rings, cities falling and rebuilt. |
+| `cornmaze` | November: a maze of hedges at one end that builds itself, a cell at a time, then a walker solving it with its right hand on the hedge, leaving a trail; then another. |
 | `deadline` | A writer at a desk on the left, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard. |
 | `drips` | Wet paint in real colours along the top edge, a drip letting go now and then: fast at first, slowing and thickening to a round bead, and staying; now and then a bead falls and spots the masthead lower down. When it's well painted the paint fades and a fresh band gathers. The colours are the paint palette (below). |
 | `duel` | Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth: no touches, no winner. |
@@ -27,6 +28,7 @@ only puts the art on its page and starts the runner.
 | `flowfield` | A slow current drifting across the masthead, like wind over water: faint strokes turning with it, a few motes riding it with short tails, livelier low. |
 | `flyby` | A flight in through the solar system, like Voyager 1 in reverse: orbits and planets (far from scale) sweeping past on the way to the sun, then round again. |
 | `fractal` | A branching growth tracing round the name, resting when grown, then starting again. |
+| `geese` | November: a skein of geese flying a V across the top, each goose beating its wings in step with the wake ahead of it; now and then the leader drops back and another takes the point. |
 | `ghostrider` | A wireframe road ahead at a slow cruise, bending and rising gently, hills sliding aside on the bends. For Neil Peart. |
 | `ghosts` | October: friendly sheet ghosts drifting and bobbing; now and then one peeks up from below. |
 | `grass` | A field of grass along the foot of the masthead, the wind moving through it. |
@@ -35,6 +37,7 @@ only puts the art on its page and starts the runner.
 | `grid` | A composition in the manner of De Stijl: lines of a few weights cutting the masthead into rectangles, a few small blocks in the corners toned in the theme's own tints and a hatching, or, about one run in three, in red, yellow and blue from the paint palette. Now and then a line slides, a region is cut again, or a tone passes to a neighbouring block. |
 | `harmonograph` | Two harmonographs either side of the name, taking turns: one slow line drawn by damped pendulums, spiralling inward as they die down, then fading for a new set. About one run in three is drawn in coloured inks from the paint palette. |
 | `lander` | A lunar lander flown by its autopilot: a slow descent, short burns, a gentle landing on the pad. |
+| `leaves` | November: maple, oak and elm leaves in autumn paints, swinging from side to side as they fall, piling up along the foot; now and then a gust lifts a few. |
 | `life` | Conway's Game of Life, reseeded when it settles. About one run in three colours each cell by its age, newborn to old. |
 | `lighthouse` | A lighthouse at night on a rocky headland at one end, the sea in lines along the foot, the lamp's beam slowly turning; stars come out and the fog lights as the beam passes. |
 | `menorah` | Hanukkah: a menorah at one end, the shamash lit and then the night's candles, newest first, their flames flickering. |
@@ -53,17 +56,22 @@ only puts the art on its page and starts the runner.
 | `train` | An ASCII-art train running along a track at the foot of the masthead, trailing smoke. |
 | `triangles` | A low-poly mesh, breathing: its points drift on small orbits, and now and then a triangle or a few fill faintly and fade. |
 | `truchet` | Truchet tiles: quarter-circle arcs winding paths across the masthead, one tile at a time easing round a quarter turn and rewiring them; now and then a glow runs along a path. |
+| `turkey` | Thanksgiving Day: a pencil traces round a hand, the thumb for the head and the fingers for the tail, then adds the eye, beak, wattle, wing and legs, as children draw it. |
 | `water` | A still surface seen from just above; drops land and their rings spread and cross. |
 | `windfarm` | Turbines along low hills, each turning at its own pace in a wind that rises and falls. |
 
 Some are seasonal: they're picked at random only in their windows of the year (in the visitor's
-own time), as `SEASONS` in `src/runner.js` lists them: the October ones above, and the menorah at
-Hanukkah. A window is a month (`10`), a day every year (`'07-04'`), days every year
+own time), as `SEASONS` in `src/runner.js` lists them: the October ones above, the November ones, the
+turkey on Thanksgiving Day, and the menorah at Hanukkah. A window is a month (`10`), a day every
+year (`'07-04'`), days every year
 (`'12-24..12-26'`, which may wrap the year end), one dated day or range
 (`'2026-12-04..2026-12-12'`, for a feast that moves: list the coming years), or a named occasion
 from `OCCASIONS` (`'halloween'`), so an occasion's dates are written once. Variants can ask about an
 occasion too, with `m.during('halloween')`, or about another day, with
 `m.during('hanukkah', date)`.
+
+Thanksgiving (the United States', the fourth Thursday of November) moves too, so
+`OCCASIONS.thanksgiving` lists its dates, 2026 to 2030 for now.
 
 Hanukkah moves, so `OCCASIONS.hanukkah` lists its dates, 2026 to 2030 for now; add the years after
 that there. Each window runs from the day of the first candle to the day after the eighth night,
@@ -111,7 +119,7 @@ animation and its seed in the masthead's corner. Only the chosen animation's fil
    }
    ```
 
-   Some animations are in real colours rather than the theme's: `drips`, `newscience` and
+   Some animations are in real colours rather than the theme's: `drips`, `newscience`, `leaves` and
    `automaton` always, and `grid`, `harmonograph` and `life` in about one run in three, chosen from
    the seed. They use a paint palette, `--masthead-paint-1` to `--masthead-paint-9`, with defaults of artists' pigments (cadmium red,
    cadmium orange, cadmium yellow, sap green, viridian, cerulean, ultramarine, dioxazine violet,
