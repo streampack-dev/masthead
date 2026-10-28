@@ -10,7 +10,7 @@
 export var ANGLE = 12 * Math.PI / 180;
 export var SPACING = 56;
 /* Pixels a step the skein flies, and radians a step its wings beat. */
-export var SPEED = 1.3;
+export var SPEED = 1.8;
 export var BEAT = 0.3;
 /* How much larger than its outline a goose is drawn. */
 var SIZE = 1.35;

@@ -1,18 +1,28 @@
-/* Corn maze: a maze of hedges at one end of the masthead that builds itself and is then solved.
-   A random depth-first search carves it a cell at a time, so it's a perfect maze, one way through
-   between any two cells. A walker goes in at the top left and keeps its right hand on the hedge,
-   leaving a trail, until it comes out at the bottom right; then the maze fades and another grows.
-   The mazes come from the seed, so ?ambientSeed=<n> replays them. A November animation. */
+/* Corn maze: walking through a maze of corn, seen through the walker's eyes. The corn stands
+   taller than you on either side, wall after wall in perspective, the near ones in stalks with
+   leaves and tassels. The maze is a perfect one, carved by a random depth-first search; you go in
+   at one corner and keep your right hand on the corn, turning at the corners and about at the
+   dead ends, until you come out at the far corner. Then the view fades and you're at the start
+   of another. The mazes come from the seed, so ?ambientSeed=<n> walks the same ones. A November
+   animation. */
 
-export var COLS = 12;
-export var ROWS = 12;
-export var CELL = 21;
-var TOP = 34;
-var MARGIN = 40;
-/* Steps the walker takes to cross a cell; steps the solved maze rests, then fades. */
-export var PACE = 5;
-var REST = 75;
-var FADE = 25;
+export var COLS = 10;
+export var ROWS = 10;
+/* Steps to walk a cell, and to turn a quarter. */
+export var PACE = 16;
+export var TURN = 12;
+var FADE = 30;
+/* The corn's height and the eye's, in cells; how far you can see, and where the stalks stop. */
+var CORN = 1.3;
+var EYE = 0.38;
+var VIEW = 7;
+var STALKS = 3.5;
+var NEAR = 0.12;
+/* The horizon, and the focal length, in the art's pixels. */
+var HORIZON = 150;
+var FOCAL = 330;
+/* Points along a wall where its ragged top is set, and a stalk stands. */
+var ALONG = 6;
 
 /* A perfect maze carved by a random depth-first search: the cells in the order they're reached,
    each with the cell it was carved from (-1 for the first). Cells are numbered row by row. */
@@ -34,10 +44,7 @@ export function carve(cols, rows, rand) {
   return order;
 }
 
-/* Whether the passage between neighbouring cells [a] and [b] is open, given the carved [links]. */
-function open(links, a, b) { return links[a].indexOf(b) >= 0; }
-
-/* The cells a walker visits keeping its right hand on the hedge, from the top left (coming in
+/* The cells a walker visits keeping its right hand on the corn, from the top left (coming in
    from the left) to the bottom right. [links] lists each cell's open neighbours. */
 export function follow(cols, rows, links) {
   // Headings: east, south, west, north.
@@ -46,7 +53,7 @@ export function follow(cols, rows, links) {
   while (cell !== end && route.length < cols * rows * 4) {
     for (var turn = 1; turn >= -2; turn--) {
       var h = (heading + turn + 4) % 4, c = cell % cols + DC[h], r = Math.floor(cell / cols) + DR[h];
-      if (c < 0 || r < 0 || c >= cols || r >= rows || !open(links, cell, r * cols + c)) continue;
+      if (c < 0 || r < 0 || c >= cols || r >= rows || links[cell].indexOf(r * cols + c) < 0) continue;
       heading = h;
       cell = r * cols + c;
       route.push(cell);
@@ -56,6 +63,56 @@ export function follow(cols, rows, links) {
   return route;
 }
 
+/* The walls of corn still standing, as [x0, z0, x1, z1] on the ground (a cell is 1 across, x
+   east and z south): the border, open at the way in (west of the first cell) and the way out
+   (east of the last), and between every two cells not linked. */
+export function walls(cols, rows, links) {
+  var out = [[0, 0, cols, 0], [0, rows, cols, rows], [0, 1, 0, rows], [cols, 0, cols, rows - 1]];
+  for (var i = 0; i < cols * rows; i++) {
+    var c = i % cols, r = Math.floor(i / cols);
+    if (c < cols - 1 && links[i].indexOf(i + 1) < 0) out.push([c + 1, r, c + 1, r + 1]);
+    if (r < rows - 1 && links[i].indexOf(i + cols) < 0) out.push([c, r + 1, c + 1, r + 1]);
+  }
+  return out;
+}
+
+/* The walk, as legs one after another: { from: [x, z, heading], to: [x, z, heading], steps }.
+   It starts just outside the way in, facing east, turns in place where the route turns (a
+   quarter's worth of steps, or a half's at a dead end), and ends just outside the way out. */
+export function schedule(cols, rows, route) {
+  var legs = [], at = [-0.5, 0.5, 0];
+  function go(x, z) {
+    var heading = Math.atan2(z - at[1], x - at[0]), turn = heading - at[2];
+    while (turn > Math.PI + 1e-9) turn -= Math.PI * 2;
+    while (turn < -Math.PI + 1e-9) turn += Math.PI * 2;
+    if (Math.abs(turn) > 1e-6) {
+      // About at a dead end: right round, as the right hand on the corn leads.
+      if (Math.abs(Math.abs(turn) - Math.PI) < 1e-6) turn = Math.PI;
+      legs.push({ from: at, to: [at[0], at[1], at[2] + turn], steps: Math.round(TURN * Math.abs(turn) / (Math.PI / 2)) });
+      at = [at[0], at[1], at[2] + turn];
+    }
+    legs.push({ from: at, to: [x, z, at[2]], steps: PACE });
+    at = [x, z, at[2]];
+  }
+  route.forEach(function (i) { go(i % cols + 0.5, Math.floor(i / cols) + 0.5); });
+  go(cols + 0.5, rows - 0.5);
+  return legs;
+}
+
+/* Where the walker is [t] steps into [legs]: x, z and heading, a turn eased in and out. */
+export function where(legs, t) {
+  for (var i = 0; i < legs.length; i++) {
+    var leg = legs[i];
+    if (t < leg.steps) {
+      var u = t / leg.steps;
+      if (leg.from[2] !== leg.to[2]) u = (1 - Math.cos(Math.PI * u)) / 2;
+      return [0, 1, 2].map(function (k) { return leg.from[k] + (leg.to[k] - leg.from[k]) * u; });
+    }
+    t -= leg.steps;
+  }
+  return legs[legs.length - 1].to.slice();
+}
+
 export default function cornmaze(layer, m) {
   var W = m.width;
   var rs = (m.seed() >>> 0) || 1;
@@ -63,74 +120,97 @@ export default function cornmaze(layer, m) {
   // A small seed's first draw is always about 0.24, so it's thrown away.
   rand();
 
-  var left = rand() < 0.5;
   var g = m.el('g', { 'class': 'masthead-cornmaze' });
-  var hedges = m.el('path', { 'class': 'masthead-cornmaze-hedge' }, g);
-  var trail = m.el('path', { 'class': 'masthead-cornmaze-trail' }, g);
-  var head = m.el('circle', { 'class': 'masthead-cornmaze-walker', r: 4 }, g);
-  var x0 = left ? 0 : -COLS * CELL;
+  m.el('path', { 'class': 'masthead-cornmaze-horizon', d: 'M0 ' + HORIZON + 'H' + W }, g);
+  // A pool of walls in the order they're painted, each its face and its corn.
+  var pool = [];
   var maze;
-
-  function centre(i) { return [x0 + (i % COLS + 0.5) * CELL, TOP + (Math.floor(i / COLS) + 0.5) * CELL]; }
 
   function begin(n) {
     var links = [];
     for (var i = 0; i < COLS * ROWS; i++) links.push([]);
-    maze = { order: carve(COLS, ROWS, rand), links: links, carved: 0, route: null, walked: 0, start: n, done: -1 };
-    trail.setAttribute('d', '');
+    carve(COLS, ROWS, rand).forEach(function (o) {
+      if (o.from >= 0) { links[o.from].push(o.cell); links[o.cell].push(o.from); }
+    });
+    var legs = schedule(COLS, ROWS, follow(COLS, ROWS, links));
+    maze = { walls: walls(COLS, ROWS, links), legs: legs, start: n, salt: rand() * 100, length: legs.reduce(function (a, l) { return a + l.steps; }, 0) };
     g.setAttribute('opacity', 1);
-    draw();
   }
 
-  /* Every hedge still standing: the border, open at the way in and the way out, and the walls
-     between cells that aren't linked yet. */
-  function draw() {
-    var d = 'M' + x0 + ' ' + (TOP + CELL) + 'V' + (TOP + ROWS * CELL) + 'H' + (x0 + COLS * CELL) + 'V' + (TOP + (ROWS - 1) * CELL) +
-      'M' + x0 + ' ' + TOP + 'H' + (x0 + COLS * CELL) + 'V' + (TOP + (ROWS - 1) * CELL);
-    for (var i = 0; i < COLS * ROWS; i++) {
-      var c = i % COLS, r = Math.floor(i / COLS), x = x0 + c * CELL, y = TOP + r * CELL;
-      if (c < COLS - 1 && !open(maze.links, i, i + 1)) d += 'M' + (x + CELL) + ' ' + y + 'v' + CELL;
-      if (r < ROWS - 1 && !open(maze.links, i, i + COLS)) d += 'M' + x + ' ' + (y + CELL) + 'h' + CELL;
-    }
-    hedges.setAttribute('d', d);
+  /* The corn's height at point [k] along wall [w]: ragged, but the same every time it's seen. */
+  function height(w, k) {
+    var x = Math.sin((w[0] + (w[2] - w[0]) * k / ALONG) * 12.9898 + (w[1] + (w[3] - w[1]) * k / ALONG) * 78.233 + maze.salt) * 43758.5453;
+    return CORN * (0.88 + 0.18 * (x - Math.floor(x)));
   }
 
-  function place(n) {
-    var squeeze = 1 / m.stretch();
-    g.setAttribute('transform', 'translate(' + (left ? MARGIN : W - MARGIN) + ' 0) scale(' + squeeze.toFixed(4) + ' 1)');
-    var at;
-    if (maze.carved < maze.order.length) {
-      at = centre(maze.order[Math.max(0, maze.carved - 1)].cell);
-    } else if (maze.route) {
-      // Between two cells of the route, eased, and the trail drawn up to here.
-      var k = Math.min(maze.route.length - 1, Math.floor(maze.walked / PACE)), u = (maze.walked % PACE) / PACE;
-      var a = centre(maze.route[k]), b = centre(maze.route[Math.min(k + 1, maze.route.length - 1)]);
-      at = [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
-      trail.setAttribute('d', 'M' + (x0 - CELL / 2) + ' ' + (TOP + CELL / 2) + maze.route.slice(0, k + 1).map(function (i) { var p = centre(i); return 'L' + p[0] + ' ' + p[1]; }).join('') + 'L' + at[0].toFixed(1) + ' ' + at[1].toFixed(1));
+  function slot(i) {
+    while (pool.length <= i) {
+      pool.push({ face: m.el('path', { 'class': 'masthead-cornmaze-wall' }, g), corn: m.el('path', { 'class': 'masthead-cornmaze-corn' }, g) });
     }
-    head.setAttribute('cx', at[0].toFixed(1));
-    head.setAttribute('cy', at[1].toFixed(1));
+    return pool[i];
+  }
+
+  function draw(n) {
+    var cam = where(maze.legs, n - maze.start), fx = Math.cos(cam[2]), fz = Math.sin(cam[2]);
+    var squeeze = 1 / m.stretch(), focalX = FOCAL * squeeze;
+    // Into the walker's view: how far to the right, and how far ahead.
+    function view(x, z) { var dx = x - cam[0], dz = z - cam[1]; return [dx * -fz + dz * fx, dx * fx + dz * fz]; }
+    function screen(side, depth, high) { return [W / 2 + focalX * side / depth, HORIZON - FOCAL * (high - EYE) / depth]; }
+    function pt(p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }
+
+    var seen = [];
+    maze.walls.forEach(function (w) {
+      var far = Math.hypot((w[0] + w[2]) / 2 - cam[0], (w[1] + w[3]) / 2 - cam[1]);
+      if (far > VIEW) return;
+      // Points along the wall, each with the corn's height there, those behind you cut away at
+      // the near plane, so a wall beside you runs out of the side of the view.
+      var pts = [];
+      for (var k = 0; k <= ALONG; k++) {
+        var t = k / ALONG, v = view(w[0] + (w[2] - w[0]) * t, w[1] + (w[3] - w[1]) * t);
+        pts.push([v[0], v[1], height(w, k)]);
+      }
+      var kept = [];
+      for (k = 0; k <= ALONG; k++) {
+        var p = pts[k], q = pts[k + 1];
+        if (p[1] >= NEAR) kept.push(p.concat(k > 0 && k < ALONG ? 1 : 0));
+        if (q && (p[1] < NEAR) !== (q[1] < NEAR)) {
+          var u = (NEAR - p[1]) / (q[1] - p[1]);
+          kept.push([p[0] + (q[0] - p[0]) * u, NEAR, p[2] + (q[2] - p[2]) * u, 0]);
+        }
+      }
+      if (kept.length >= 2) seen.push({ pts: kept, far: far });
+    });
+    // The painter's way: the farthest first, so the near corn hides what's behind it.
+    seen.sort(function (p, q) { return q.far - p.far; });
+    seen.forEach(function (s, i) {
+      var it = slot(i), foot = s.pts.map(function (p) { return screen(p[0], p[1], 0); }), top = s.pts.map(function (p) { return screen(p[0], p[1], p[2]); });
+      var ground = 'M' + foot.map(pt).join('L'), crown = 'M' + top.map(pt).join('L');
+      it.face.setAttribute('d', ground + 'L' + top.slice().reverse().map(pt).join('L') + 'Z');
+      var lines = ground + crown;
+      // Near, a stalk at each point inside the wall, two leaves off it and a tassel on top.
+      s.pts.forEach(function (p, k) {
+        if (s.far > STALKS || !p[3] || p[1] < NEAR * 2) return;
+        var leaf = FOCAL * 0.13 / p[1], wide = leaf * squeeze, lean = k % 2 ? 1 : -1, f = foot[k], c = top[k];
+        var y1 = f[1] + (c[1] - f[1]) * 0.45, y2 = f[1] + (c[1] - f[1]) * 0.7;
+        lines += 'M' + pt(f) + 'L' + pt(c) +
+          'M' + pt([f[0], y1]) + 'l' + (lean * wide * 0.8).toFixed(1) + ' ' + (-leaf * 0.5).toFixed(1) +
+          'M' + pt([f[0], y2]) + 'l' + (-lean * wide * 0.7).toFixed(1) + ' ' + (-leaf * 0.45).toFixed(1);
+      });
+      it.corn.setAttribute('d', lines);
+    });
+    for (var i = seen.length; i < pool.length; i++) { pool[i].face.setAttribute('d', ''); pool[i].corn.setAttribute('d', ''); }
   }
 
   begin(0);
-  place(0);
+  draw(0);
 
   return {
     interval: 40,
     step: function (n) {
-      if (maze.carved < maze.order.length) {
-        var o = maze.order[maze.carved++];
-        if (o.from >= 0) { maze.links[o.from].push(o.cell); maze.links[o.cell].push(o.from); draw(); }
-        if (maze.carved === maze.order.length) maze.route = follow(COLS, ROWS, maze.links);
-      } else if (maze.walked < (maze.route.length - 1) * PACE) {
-        maze.walked += 1;
-      } else {
-        if (maze.done < 0) maze.done = n;
-        var t = n - maze.done - REST;
-        if (t >= FADE) { begin(n); }
-        else if (t > 0) g.setAttribute('opacity', (1 - t / FADE).toFixed(2));
-      }
-      place(n);
+      var t = n - maze.start - maze.length;
+      if (t >= FADE) begin(n);
+      else if (t > 0) g.setAttribute('opacity', (1 - t / FADE).toFixed(2));
+      draw(n);
     }
   };
 }
