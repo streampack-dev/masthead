@@ -8,7 +8,6 @@ export var variants = {
   chase: function () { return import('./variants/chase.js'); },
   circuit: function () { return import('./variants/circuit.js'); },
   citydefense: function () { return import('./variants/citydefense.js'); },
-  cornmaze: function () { return import('./variants/cornmaze.js'); },
   deadline: function () { return import('./variants/deadline.js'); },
   drips: function () { return import('./variants/drips.js'); },
   duel: function () { return import('./variants/duel.js'); },

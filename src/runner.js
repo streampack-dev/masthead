@@ -44,7 +44,6 @@ export var OCCASIONS = {
    is seen while it lasts. Where several of its windows are open, the shortest decides. */
 export var SEASONS = {
   bats: ['halloween'],
-  cornmaze: [11],
   eyes: ['halloween'],
   firtree: [12],
   geese: [11],

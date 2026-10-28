@@ -10,7 +10,7 @@
 export var ANGLE = 12 * Math.PI / 180;
 export var SPACING = 56;
 /* Pixels a step the skein flies, and radians a step its wings beat. */
-export var SPEED = 1.8;
+export var SPEED = 3;
 export var BEAT = 0.3;
 /* How much larger than its outline a goose is drawn. */
 var SIZE = 1.35;
@@ -53,7 +53,8 @@ export default function geese(layer, m) {
     skein = {
       dir: dir, x: dir > 0 ? -40 : W + 40, y: 0, base: 56 + rand() * 6, drift: rand() * 6.3,
       lead: birds[0], arms: [birds.slice(1, 1 + above), birds.slice(1 + above)], all: birds,
-      swapAt: n + 260 + Math.floor(rand() * 200)
+      // Swaps come by the distance flown, so they land at the same places whatever the speed.
+      swapAt: n + Math.floor((470 + rand() * 360) / SPEED)
     };
     skein.y = skein.base;
     place(skein, true);
@@ -119,7 +120,7 @@ export default function geese(layer, m) {
       var s = skein;
       s.x += s.dir * SPEED;
       s.y = s.base + Math.sin(n * 0.012 + s.drift) * 9;
-      if (n >= s.swapAt) { swap(s); s.swapAt = n + 380 + Math.floor(rand() * 260); }
+      if (n >= s.swapAt) { swap(s); s.swapAt = n + Math.floor((680 + rand() * 470) / SPEED); }
       place(s, false);
       draw(n);
       // Gone when the last goose is past the far side; the next flight comes after a while.

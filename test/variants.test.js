@@ -41,7 +41,6 @@ import flowfield, { MOTES, current as flowCurrent, shape as flowShape, weight as
 import grid, { MIN_H, MIN_W, PRIMARIES, coloured as gridColoured } from '../src/variants/grid.js';
 import harmonograph, { INK_CHUNKS, PER_STEP, POINTS, coloured as inkColoured, pen, pendulums } from '../src/variants/harmonograph.js';
 import lighthouse, { REACH, REVOLUTION, SEA, SPREAD, beam, headland, lit } from '../src/variants/lighthouse.js';
-import cornmaze, { blade as cornBlade, ear as cornEar, COLS as MAZE_COLS, PACE as MAZE_PACE, ROWS as MAZE_ROWS, carve, follow as mazeFollow, schedule as mazeWalk, walls as mazeWalls, where as mazeWhere } from '../src/variants/cornmaze.js';
 import geese, { SPEED as GOOSE_SPEED, goose, slot as gooseSlot } from '../src/variants/geese.js';
 import leaves, { GROUND as LEAF_GROUND, MAX_FALLING, MAX_RESTING, sink } from '../src/variants/leaves.js';
 import turkey, { digit as finger, partial } from '../src/variants/turkey.js';
@@ -56,7 +55,7 @@ import skyline, { BOLT_STEPS, DROPS, GLOW_STEPS, GROUND as STREET, bolt, city } 
 import triangles, { COLS as TRI_COLS, ROWS as TRI_ROWS, mesh, place, winding } from '../src/variants/triangles.js';
 import truchet, { JOINS, ROWS as TRUCHET_ROWS, TURN_STEPS, columns, follow, strength as truchetStrength } from '../src/variants/truchet.js';
 
-const all = { automaton, bats, cornmaze, geese, leaves, turkey, firtree, manger, sleigh, snowfall, snowflakes, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, gravitywell, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, newscience, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
+const all = { automaton, bats, geese, leaves, turkey, firtree, manger, sleigh, snowfall, snowflakes, boids, bytecode, chase, circuit, deadline, drips, duel, eyes, ghosts, graveyard, gravitywell, pumpkins, spider, citydefense, flowfield, flyby, fractal, ghostrider, grass, grid, harmonograph, lander, lighthouse, menorah, newscience, nightcity, paddles, pongwars, rocks, skyline, stix, windfarm, life, signalnoise, solari, terrainflight, train, truchet, triangles, water };
 const stepping = Object.keys(all);
 
 describe('every variant', () => {
@@ -80,7 +79,7 @@ describe('every variant', () => {
   }
 
   // Solari's riffle and signal noise's bursts take Math.random and the clock; these take the seed.
-  for (const name of ['automaton', 'bats', 'cornmaze', 'geese', 'leaves', 'turkey', 'firtree', 'manger', 'sleigh', 'snowfall', 'snowflakes', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'gravitywell', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'newscience', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
+  for (const name of ['automaton', 'bats', 'geese', 'leaves', 'turkey', 'firtree', 'manger', 'sleigh', 'snowfall', 'snowflakes', 'boids', 'bytecode', 'chase', 'deadline', 'drips', 'duel', 'eyes', 'ghosts', 'graveyard', 'gravitywell', 'pumpkins', 'spider', 'citydefense', 'flowfield', 'flyby', 'fractal', 'ghostrider', 'grass', 'grid', 'harmonograph', 'lander', 'lighthouse', 'menorah', 'newscience', 'nightcity', 'paddles', 'pongwars', 'rocks', 'skyline', 'stix', 'windfarm', 'life', 'terrainflight', 'train', 'truchet', 'triangles', 'water']) {
     it(`${name} replays a run from its seed`, () => {
       const once = serialize(run(all[name], 300, { seed: 42 }).layer);
       assert.equal(serialize(run(all[name], 300, { seed: 42 }).layer), once);
@@ -505,7 +504,7 @@ describe('the seasons', () => {
   });
 
   it('keeps the autumn animations to November, and the turkey to Thanksgiving Day', () => {
-    for (const name of ['cornmaze', 'geese', 'leaves']) {
+    for (const name of ['geese', 'leaves']) {
       assert.ok(inSeason(names, day(2026, 11, 1)).includes(name) && inSeason(names, day(2026, 11, 30)).includes(name), name);
       assert.ok(!inSeason(names, day(2026, 10, 31)).includes(name) && !inSeason(names, day(2026, 12, 1)).includes(name), name);
     }
@@ -2521,93 +2520,6 @@ describe('november', () => {
     // Shapes in paints only: no colours of their own.
     assert.ok(!/#[0-9a-f]{3,6}|rgb|hsl|"fill"|"stroke"/i.test(serialize(layer)));
     assert.ok(all().every((l) => /masthead-paint-fill-\d masthead-paint-stroke-\d/.test(l.attrs.class)));
-  });
-
-  it('carves a perfect maze: every cell reached once, one way between any two', () => {
-    let rs = 11;
-    const rand = () => { rs = (Math.imul(rs, 1664525) + 1013904223) >>> 0; return rs / 0x100000000; };
-    const order = carve(MAZE_COLS, MAZE_ROWS, rand);
-    assert.equal(order.length, MAZE_COLS * MAZE_ROWS);
-    assert.equal(new Set(order.map((o) => o.cell)).size, MAZE_COLS * MAZE_ROWS);
-    const links = order.map(() => []);
-    const reached = new Set([0]);
-    for (const o of order.slice(1)) {
-      assert.ok(reached.has(o.from), 'carved from a reached cell');
-      const d = Math.abs(o.cell - o.from);
-      assert.ok(d === MAZE_COLS || (d === 1 && Math.floor(o.cell / MAZE_COLS) === Math.floor(o.from / MAZE_COLS)), 'to a neighbour');
-      reached.add(o.cell);
-      links[o.from].push(o.cell);
-      links[o.cell].push(o.from);
-    }
-    // The walker, right hand on the hedge, comes out at the bottom right, through open passages only.
-    const route = mazeFollow(MAZE_COLS, MAZE_ROWS, links);
-    assert.equal(route[0], 0);
-    assert.equal(route[route.length - 1], MAZE_COLS * MAZE_ROWS - 1);
-    for (let i = 1; i < route.length; i++) assert.ok(links[route[i - 1]].includes(route[i]));
-  });
-
-  it('walks in at one corner, through open passages only, turning a quarter or a half, and out at the far one', () => {
-    let rs = 21;
-    const rand = () => { rs = (Math.imul(rs, 1664525) + 1013904223) >>> 0; return rs / 0x100000000; };
-    const links = Array.from({ length: MAZE_COLS * MAZE_ROWS }, () => []);
-    for (const o of carve(MAZE_COLS, MAZE_ROWS, rand).slice(1)) { links[o.from].push(o.cell); links[o.cell].push(o.from); }
-    const legs = mazeWalk(MAZE_COLS, MAZE_ROWS, mazeFollow(MAZE_COLS, MAZE_ROWS, links));
-    assert.deepEqual(legs[0].from, [-0.5, 0.5, 0]);
-    const last = legs[legs.length - 1].to;
-    assert.deepEqual([last[0], last[1]], [MAZE_COLS + 0.5, MAZE_ROWS - 0.5]);
-    const cell = (x, z) => Math.floor(z) * MAZE_COLS + Math.floor(x);
-    for (const leg of legs) {
-      const [x0, z0, h0] = leg.from, [x1, z1, h1] = leg.to;
-      if (h0 !== h1) {
-        // Turning in place, a quarter or a half.
-        assert.ok(x0 === x1 && z0 === z1);
-        const quarters = Math.abs(h1 - h0) / (Math.PI / 2);
-        assert.ok(Math.abs(quarters - Math.round(quarters)) < 1e-9 && Math.round(quarters) >= 1 && Math.round(quarters) <= 2);
-      } else {
-        // A cell's walk straight ahead, between linked cells inside the maze.
-        assert.equal(Math.hypot(x1 - x0, z1 - z0), 1);
-        assert.ok(Math.abs(Math.atan2(z1 - z0, x1 - x0) - Math.atan2(Math.sin(h0), Math.cos(h0))) < 1e-9);
-        const inside = (x, z) => x > 0 && z > 0 && x < MAZE_COLS && z < MAZE_ROWS;
-        if (inside(x0, z0) && inside(x1, z1)) assert.ok(links[cell(x0, z0)].includes(cell(x1, z1)));
-        assert.equal(leg.steps, MAZE_PACE);
-      }
-    }
-    // Halfway along a leg, halfway there.
-    assert.deepEqual(mazeWhere(legs, MAZE_PACE / 2), [0, 0.5, 0]);
-    // The border is open only at the way in and the way out.
-    const all = mazeWalls(MAZE_COLS, MAZE_ROWS, links);
-    assert.ok(all.some((w) => w[0] === 0 && w[1] === 1 && w[2] === 0 && w[3] === MAZE_ROWS));
-    assert.ok(!all.some((w) => w[0] === 0 && w[2] === 0 && w[1] === 0));
-  });
-
-  it('draws leaf blades and ears from their node, up and out to the side they are given', () => {
-    const xs = (d) => [...d.matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map((p) => [+p[1], +p[2]]);
-    for (const dir of [1, -1]) {
-      for (const shape of [cornBlade, cornEar]) {
-        const pts = xs(shape([100, 200], dir, 40));
-        assert.deepEqual(pts[0], [100, 200]);
-        assert.ok(pts.every((p) => (p[0] - 100) * dir >= 0 && p[1] <= 200 + 40 * 0.06));
-        assert.ok(pts.some((p) => (p[0] - 100) * dir > 10 && p[1] < 190));
-      }
-    }
-  });
-
-  it('draws the corn far to near, so the near corn hides what is behind it, and walks maze after maze', () => {
-    const { layer, art } = run(cornmaze, 0, { seed: 2 });
-    const g = find(layer, 'masthead-cornmaze')[0];
-    const faces = () => find(layer, 'masthead-cornmaze-wall').filter((f) => f.attrs.d);
-    assert.ok(faces().length > 3);
-    // Each face is filled (so it hides what's behind) and drawn before the ones nearer you: the
-    // last face reaches lower on the masthead (nearer) than the first.
-    const low = (f) => Math.max(...f.attrs.d.split(/[MLZ]/).filter(Boolean).map((p) => Number(p.trim().split(' ')[1])));
-    assert.ok(low(faces()[faces().length - 1]) > low(faces()[0]));
-    let faded = false, again = false;
-    for (let n = 1; n <= 20000 && !again; n++) {
-      art.step(n, 0);
-      if (Number(g.attrs.opacity) < 0.5) faded = true;
-      if (faded && g.attrs.opacity === '1') again = true;
-    }
-    assert.ok(faded && again);
   });
 
   it('rounds a finger from its base, up one side, round the tip and down the other', () => {

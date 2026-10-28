@@ -354,13 +354,6 @@
 /* November. */
 /* Geese: each goose in outline, wings and all. */
 .masthead-geese-goose { fill: none; stroke: var(--_accent); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
-/* Corn maze: walls of corn in perspective, each hiding what's behind it; near, their stalks,
-   leaves and ears, in sap green and cadmium yellow from the paints. */
-.masthead-cornmaze-horizon { fill: none; stroke: color-mix(in srgb, var(--_accent) 40%, var(--_border)); stroke-width: 1; }
-.masthead-cornmaze-wall { fill: color-mix(in srgb, var(--_paint-4) 16%, var(--_bg)); }
-.masthead-cornmaze-leaves { fill: color-mix(in srgb, var(--_paint-4) 45%, var(--_bg)); stroke: color-mix(in srgb, var(--_paint-4) 80%, var(--_accent)); stroke-width: 0.8; stroke-linejoin: round; }
-.masthead-cornmaze-ears { fill: color-mix(in srgb, var(--_paint-3) 60%, var(--_bg)); stroke: color-mix(in srgb, var(--_paint-4) 70%, var(--_accent)); stroke-width: 0.8; stroke-linejoin: round; stroke-linecap: round; }
-.masthead-cornmaze-corn { fill: none; stroke: color-mix(in srgb, var(--_paint-4) 75%, var(--_accent)); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
 /* Leaves: in autumn paints (the shared paint classes), faintly filled. */
 .masthead-leaves-leaf { fill-opacity: 0.35; stroke-width: 0.9; stroke-linejoin: round; stroke-linecap: round; }
 /* Turkey: a child's pencil lines, and the pencil. */

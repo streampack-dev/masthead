@@ -9,7 +9,6 @@ var BLURBS = {
   chase: 'A fast bird and the canine forever after it: skids, a smack into the frame, an anvil, the train. It always pops back up. Click to paint a tunnel.',
   circuit: 'Fireflies running the traces of a circuit board. Click to send a surge through it.',
   citydefense: 'The old missile-defense game, playing itself, slowly: trails from above, rings bursting, cities falling and rebuilt. Click to fire.',
-  cornmaze: 'November: walking through a maze of corn, right hand on the corn, until you come out and start another.',
   deadline: 'A writer at a desk, in the jerky style of cutout animation: frantic typing, thinking, coffee, and now and then a head on the keyboard.',
   drips: 'Wet paint in real colours along the top, a drip letting go now and then: fast at first, slowing and thickening to a round bead, and staying. Now and then a bead falls. When the masthead is well painted it fades and starts again. Click to splatter paint.',
   duel: 'Two fencers along the foot of the masthead, lunging, parrying and giving ground, back and forth, forever: no touches, no winner.',
