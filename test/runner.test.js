@@ -39,6 +39,8 @@ function svgWithoutSmil() {
   svg.getBoundingClientRect = () => ({ width: 1200, height: 320, left: 0, top: 0 });
   svg.parentElement = element('div');
   svg.parentElement.classList = { toggle() {} };
+  svg.parentElement.removeEventListener = () => {};
+  svg.parentElement.removeAttribute = () => {};
   return svg;
 }
 

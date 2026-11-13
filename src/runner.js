@@ -321,9 +321,10 @@ export function startMasthead(svg, options) {
     if (still) {
       if (frame) cancelAnimationFrame(frame);
       frame = null;
-      svg.pauseAnimations();
+      // Some engines have no SMIL pause API; the steps still pause.
+      if (svg.pauseAnimations) svg.pauseAnimations();
     } else {
-      svg.unpauseAnimations();
+      if (svg.unpauseAnimations) svg.unpauseAnimations();
       if (art && !frame) {
         last = 0;
         frame = requestAnimationFrame(tick);
